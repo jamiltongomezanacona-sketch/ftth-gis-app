@@ -114,6 +114,9 @@ const CIERRE_POPUP_LAYOUT_KEYS = new Set([
   'ftth_orig_lat'
 ]);
 
+/** Ficha cierre (solo lectura): no mostrar estas claves (siguen en `p` para admin/API). */
+const CIERRE_POPUP_OMIT_KEYS = new Set(['tipo', 'molecula_codigo', 'molecula_id', 'id', 'source']);
+
 /** Misma regla que `server/cierresRepo.js` (`isUuidString`). */
 const CIERRE_DB_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -179,18 +182,7 @@ function htmlCierreMapPopup(p, coordsWgs84) {
               ? 'Cierre / punto'
               : kind || 'Punto';
 
-  const preferred = [
-    'tipo',
-    'molecula_codigo',
-    'estado',
-    'dist_odf',
-    'id',
-    'molecula_id',
-    'usuario_id',
-    'created_at',
-    'lat',
-    'lng'
-  ];
+  const preferred = ['estado', 'dist_odf', 'usuario_id', 'created_at', 'lat', 'lng'];
 
   /** @type {string[]} */
   const chunks = [];
@@ -209,9 +201,7 @@ function htmlCierreMapPopup(p, coordsWgs84) {
     if (key === 'created_at') raw = formatEventoFechaEs(raw);
     const val = escapeHtml(String(raw));
     const mono =
-      key === 'id' || key === 'molecula_id' || key === 'usuario_id' || key === 'dist_odf'
-        ? ' evento-popup__value--mono'
-        : '';
+      key === 'usuario_id' || key === 'dist_odf' ? ' evento-popup__value--mono' : '';
     pushRow(labelCierreProp(key), `<span class="evento-popup__value${mono}">${val}</span>`);
   }
 
@@ -220,9 +210,15 @@ function htmlCierreMapPopup(p, coordsWgs84) {
     `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(coordsWgs84)}</span>`
   );
 
-  const used = new Set(['nombre', 'name', 'tipo', ...preferred, ...CIERRE_POPUP_LAYOUT_KEYS]);
+  const used = new Set([
+    'nombre',
+    'name',
+    ...preferred,
+    ...CIERRE_POPUP_LAYOUT_KEYS,
+    ...CIERRE_POPUP_OMIT_KEYS
+  ]);
   const restKeys = Object.keys(p)
-    .filter((k) => !used.has(k) && k !== 'descripcion')
+    .filter((k) => !used.has(k) && k !== 'descripcion' && !CIERRE_POPUP_OMIT_KEYS.has(k))
     .sort((a, b) => a.localeCompare(b, 'es'));
   for (const key of restKeys) {
     const v = p[key];
