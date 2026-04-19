@@ -49,7 +49,8 @@ export function initReporteEventoSidebar(opts) {
     return {
       handleRouteLinePick: () => false,
       cancelMapPickMode: () => {},
-      resetForCableCleared: () => {}
+      resetForCableCleared: () => {},
+      isAwaitingRoutePick: () => false
     };
   }
 
@@ -284,6 +285,7 @@ export function initReporteEventoSidebar(opts) {
   return {
     handleRouteLinePick,
     cancelMapPickMode,
-    resetForCableCleared
+    resetForCableCleared,
+    isAwaitingRoutePick: () => awaitingMapPick
   };
 }

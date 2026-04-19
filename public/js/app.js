@@ -459,8 +459,9 @@ function readSidebarCollapsedPreference() {
 /**
  * Panel flotante (escritorio) / apilado (móvil). El mapa va a pantalla completa bajo la barra superior.
  * @param {{ resize: () => void }} mapInstance
+ * @param {{ getSuppressMapSidebarCollapse?: () => boolean }} [opts]
  */
-function initSidebarRail(mapInstance) {
+function initSidebarRail(mapInstance, opts) {
   const layout = document.getElementById('layout');
   const btn = document.getElementById('sidebar-toggle');
   if (!layout || !btn) return;
@@ -499,6 +500,13 @@ function initSidebarRail(mapInstance) {
 
   btn.addEventListener('click', () => {
     setCollapsed(!layout.classList.contains('sidebar-collapsed'));
+  });
+
+  /** Clic en el lienzo: cierra el panel para ver más mapa (salvo modos que exigen el clic en el mapa). */
+  mapInstance.on('click', () => {
+    if (layout.classList.contains('sidebar-collapsed')) return;
+    if (opts?.getSuppressMapSidebarCollapse?.()) return;
+    setCollapsed(true);
   });
 }
 
@@ -1166,8 +1174,6 @@ export async function boot() {
     setStatus('GPS: posición actualizada en el mapa.');
   });
 
-  initSidebarRail(map);
-
   {
     const vv = window.visualViewport;
     if (vv) {
@@ -1229,6 +1235,20 @@ export async function boot() {
       }
     },
     onEventoGuardado: () => void refreshEventosReporteDisplay()
+  });
+
+  initSidebarRail(map, {
+    getSuppressMapSidebarCollapse: () => {
+      if (editing) return true;
+      if (measurePolylineActive && !measurePolylineConfirmed) return true;
+      if (otdrAwaitingCableClick) return true;
+      try {
+        if (reporteCtl.isAwaitingRoutePick?.()) return true;
+      } catch {
+        /* */
+      }
+      return false;
+    }
   });
 
   function updateMetrics(geom, turfNs) {
