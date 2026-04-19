@@ -3137,8 +3137,7 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
 }
 
 /*
- * Móvil (≤900px): chrome flota (absolute global); #layout = 1 fila × 1 columna.
- * Mapa + panel comparten la misma celda a altura 100%: mapa detrás (DOM), hoja inferior con scroll.
+ * Móvil (≤900px): chrome flota; mapa a pantalla; panel = cajón lateral compacto (no media hoja).
  */
 @media (max-width: 900px) {
   #layout {
@@ -3173,24 +3172,28 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
   #layout:not(.sidebar-collapsed) #sidebar {
     grid-column: 1;
     grid-row: 1;
-    align-self: end;
-    justify-self: stretch;
-    width: 100%;
-    max-width: none;
-    margin: 0;
+    align-self: start;
+    justify-self: start;
+    width: min(340px, calc(100vw - 20px));
+    max-width: min(340px, calc(100vw - 20px));
+    margin-top: calc(var(--editor-chrome-stack, 80px) + 8px);
+    margin-left: max(10px, env(safe-area-inset-left, 0px));
+    margin-right: 0;
+    margin-bottom: max(10px, env(safe-area-inset-bottom, 0px));
     z-index: 560;
-    max-height: min(62dvh, 540px);
+    max-height: min(calc(100dvh - var(--editor-chrome-stack, 80px) - 20px), 640px);
     height: auto;
-    border-radius: 20px 20px 0 0;
-    border-bottom: none;
-    border-right: none;
-    padding-top: 12px;
-    padding-left: max(12px, env(safe-area-inset-left, 0px));
-    padding-right: max(12px, env(safe-area-inset-right, 0px));
+    min-height: 0;
+    border-radius: 0 18px 18px 0;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-left: 1px solid rgba(15, 23, 42, 0.35);
+    padding-top: 10px;
+    padding-left: 14px;
+    padding-right: 14px;
     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
     box-shadow:
-      0 -12px 40px rgba(0, 0, 0, 0.35),
-      0 -1px 0 rgba(148, 163, 184, 0.12);
+      6px 0 32px rgba(0, 0, 0, 0.28),
+      0 0 0 1px rgba(0, 0, 0, 0.12);
   }
 
   body.editor-body #sidebar {
@@ -3198,20 +3201,18 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
   }
 
   #layout:not(.sidebar-collapsed) #sidebar::before {
-    height: 4px;
-    width: 40px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    top: 6px;
-    bottom: auto;
+    inset: auto 8px auto auto;
+    height: 36px;
+    width: 3px;
+    top: 50%;
+    transform: translateY(-50%);
     border-radius: 999px;
-    background: rgba(148, 163, 184, 0.45);
+    background: rgba(148, 163, 184, 0.35);
     opacity: 1;
   }
 }
 
-/* Tablet vertical / móvil: mismo tope que #sidebar (contenido + max-height) */
+/* Tablet / pantallas altas: un poco más de alto útil en el cajón */
 @media (max-width: 900px) and (min-height: 720px) {
   #sidebar {
     max-height: min(88vh, calc(100dvh - var(--editor-chrome-h, 48px) - 20px));
@@ -3222,7 +3223,7 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
   }
 
   #layout:not(.sidebar-collapsed) #sidebar {
-    max-height: min(58dvh, 520px);
+    max-height: min(calc(100dvh - var(--editor-chrome-stack) - 20px), 680px);
   }
 }
 
