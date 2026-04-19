@@ -903,7 +903,10 @@ export async function boot() {
     return pts;
   }
 
-  async function refreshEventosReporteDisplay() {
+  /**
+   * @param {{ suppressMapPins?: boolean }} [opts] Si `suppressMapPins`, la lista se rellena pero la capa de pins queda oculta (arranque limpio).
+   */
+  async function refreshEventosReporteDisplay(opts) {
     try {
       closeEventoMapPopup();
       closeCierreMapPopup();
@@ -923,9 +926,8 @@ export async function boot() {
       eventosReporteLayer.ensureLayer();
       eventosReporteLayer.setData(fcForMap);
       const evCb = document.getElementById('reporte-ev-layer-visible');
-      if (evCb instanceof HTMLInputElement) {
-        eventosReporteLayer.setVisible(evCb.checked);
-      }
+      const wantPins = evCb instanceof HTMLInputElement ? evCb.checked : true;
+      eventosReporteLayer.setVisible(opts?.suppressMapPins ? false : wantPins);
       const introEv = document.getElementById('reporte-ev-list-intro');
       if (introEv) {
         const baseIntro =
@@ -1108,6 +1110,9 @@ export async function boot() {
 
   /** Solo el primer `reloadRoutes`: encuadre CUNI en FTTH; luego se usa el encuadre global de centrales. */
   let firstReloadRoutes = true;
+
+  /** Primera carga: mapa sin nodos catálogo, sin encuadre global y sin pins de incidencias hasta «Actualizar catálogo». */
+  let cleanMapBootstrap = true;
 
   /**
    * Entradas del manifiesto Flashfiber (solo FTTH), para «Ver molécula …».
@@ -1901,6 +1906,7 @@ export async function boot() {
   }
 
   async function reloadRoutes() {
+    const wasCleanBootstrap = cleanMapBootstrap;
     try {
       editorMoleculeFilter = null;
       closeEventoMapPopup();
@@ -1924,7 +1930,9 @@ export async function boot() {
       const fcCent = await loadCentralesFeatureCollection();
       lastCentralesFc = fcCent;
       centralesLayer.ensureLayer();
-      centralesLayer.setData(fcCent);
+      centralesLayer.setData(
+        wasCleanBootstrap ? { type: 'FeatureCollection', features: [] } : fcCent
+      );
 
       if (appNetwork === 'ftth' && firstReloadRoutes) {
         firstReloadRoutes = false;
@@ -1944,7 +1952,7 @@ export async function boot() {
       } else {
         firstReloadRoutes = false;
         const boxC = bboxFromCentralPoints(lastCentralesFc);
-        if (boxC) {
+        if (boxC && !wasCleanBootstrap) {
           try {
             map.fitBounds(boxC, { padding: 52, maxZoom: 14, duration: 720 });
           } catch {
@@ -1971,19 +1979,24 @@ export async function boot() {
       const pointsLabel =
         appNetwork === 'corporativa' ? 'nodo(s) de red' : 'central(es) ETB';
       const redNom = appNetwork === 'corporativa' ? 'corporativa' : 'FTTH';
-      setStatus(
-        nC
-          ? `Mapa ${redNom}: ${nC} ${pointsLabel} · ${nR} tendido(s) en catálogo. Solo se dibuja en el mapa el que elijas en el buscador.`
-          : appNetwork === 'ftth'
-            ? `Mapa FTTH: ${nR} tendido(s) en catálogo (sin centrales en API o /data). Solo se dibuja el buscado.`
-            : `Sin nodos en mapa · ${nR} cable(s) en catálogo corporativa. Busca por nombre o ID para dibujar uno.`
-      );
+      let msg = nC
+        ? `Mapa ${redNom}: ${nC} ${pointsLabel} · ${nR} tendido(s) en catálogo. Solo se dibuja en el mapa el que elijas en el buscador.`
+        : appNetwork === 'ftth'
+          ? `Mapa FTTH: ${nR} tendido(s) en catálogo (sin centrales en API o /data). Solo se dibuja el buscado.`
+          : `Sin nodos en mapa · ${nR} cable(s) en catálogo corporativa. Busca por nombre o ID para dibujar uno.`;
+      if (wasCleanBootstrap) {
+        msg = `Vista limpia: sin nodos ni incidencias en el mapa. ${msg} «Actualizar catálogo» muestra nodos y encuadre global.`;
+      }
+      setStatus(msg);
       syncEditorChromeBarMeta();
       updateMetrics(null, turf);
       syncButtons();
     } finally {
       /** Aunque falle `/api/rutas`, se intentan cargar eventos (otro fallo no debe bloquear la lista). */
-      void refreshEventosReporteDisplay();
+      void refreshEventosReporteDisplay({ suppressMapPins: wasCleanBootstrap });
+      if (wasCleanBootstrap) {
+        cleanMapBootstrap = false;
+      }
     }
   }
 
