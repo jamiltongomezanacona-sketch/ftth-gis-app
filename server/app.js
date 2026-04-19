@@ -28,7 +28,7 @@ const pool = createPool();
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '2mb' }));
 
-app.use('/api/auth', createAuthRouter());
+app.use('/api/auth', createAuthRouter(pool));
 
 /** Evita que proxy o navegador mezclen respuestas entre ?red=ftth y ?red=corporativa. */
 app.use((req, res, next) => {

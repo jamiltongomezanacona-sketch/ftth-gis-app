@@ -89,7 +89,9 @@ export async function ensureAuthenticated(apiBase = '') {
   };
 
   regBtn?.addEventListener('click', () =>
-    setFootMsg('Registro: contacta al administrador o usa el modo desarrollo (cualquier correo válido + contraseña de 4+ caracteres).')
+    setFootMsg(
+      'Altas: el administrador ejecuta en el servidor sql/09_gis_users.sql y npm run user:add -- correo@dominio.com "clave". En local sin usuarios en BD se usa modo desarrollo (correo válido + contraseña ≥ 4 caracteres).'
+    )
   );
   forgotBtn?.addEventListener('click', () =>
     setFootMsg('Recuperación de contraseña no está configurada en esta instalación.')
