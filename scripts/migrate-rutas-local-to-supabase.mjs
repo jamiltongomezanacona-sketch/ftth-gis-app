@@ -19,6 +19,7 @@
 import 'dotenv/config';
 import { URL } from 'node:url';
 import pg from 'pg';
+import { poolConfig } from './pg-pool-config.mjs';
 
 const { Pool } = pg;
 
@@ -57,40 +58,8 @@ function mask(u) {
   }
 }
 
-/**
- * Supabase + `sslmode=require` en la URL hace que `pg` verifique el certificado estricto y en Windows
- * suele fallar con SELF_SIGNED_CERT_IN_CHAIN. Para destino Supabase no usamos connectionString:
- * pasamos host/user/… y `ssl.rejectUnauthorized: false` (solo este script de migración).
- */
-function poolConfig(connectionString) {
-  const raw = String(connectionString);
-  const remote = raw.includes('supabase.co');
-  if (!remote) {
-    return { connectionString: raw, max: 3 };
-  }
-  let u;
-  try {
-    u = new URL(raw);
-  } catch {
-    return { connectionString: raw, max: 3, ssl: { rejectUnauthorized: false } };
-  }
-  const port = u.port ? Number(u.port) : 5432;
-  const database = (u.pathname || '/postgres').replace(/^\//, '') || 'postgres';
-  let user = u.username ? decodeURIComponent(u.username) : 'postgres';
-  let password = u.password != null ? decodeURIComponent(u.password) : '';
-  return {
-    host: u.hostname,
-    port,
-    user,
-    password,
-    database,
-    max: 3,
-    ssl: { rejectUnauthorized: false }
-  };
-}
-
-const sourcePool = new Pool(poolConfig(sourceUrl));
-const targetPool = new Pool(poolConfig(targetUrl));
+const sourcePool = new Pool(poolConfig(sourceUrl, 3));
+const targetPool = new Pool(poolConfig(targetUrl, 3));
 
 async function main() {
   console.log('[migrar] Origen:', mask(sourceUrl));

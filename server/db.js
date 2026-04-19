@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { URL } from 'node:url';
 
 const { Pool } = pg;
 
@@ -10,6 +11,17 @@ const { Pool } = pg;
 function str(v, fallback = '') {
   if (v === undefined || v === null) return fallback;
   return String(v);
+}
+
+/**
+ * Hosts Supabase (pooler `*.supabase.com` o `*.supabase.co`).
+ * Misma lógica que `scripts/pg-pool-config.mjs` para TLS en Node sin cadena de confianza corporativa.
+ * @param {string} hostname
+ */
+function isSupabasePostgresHost(hostname) {
+  if (!hostname) return false;
+  const h = String(hostname).toLowerCase();
+  return h.endsWith('.supabase.com') || h.endsWith('.supabase.co');
 }
 
 /**
@@ -35,7 +47,8 @@ export function createPool() {
       const host = u.hostname || '127.0.0.1';
       const port = Number(u.port || 5432);
       const database = str(u.pathname.replace(/^\//, ''), 'postgres');
-      return new Pool({
+      /** @type {import('pg').PoolConfig} */
+      const cfg = {
         host,
         port,
         database,
@@ -43,7 +56,11 @@ export function createPool() {
         password: str(password),
         max: 10,
         idleTimeoutMillis: 30_000
-      });
+      };
+      if (isSupabasePostgresHost(host)) {
+        cfg.ssl = { rejectUnauthorized: false };
+      }
+      return new Pool(cfg);
     } catch {
       return new Pool({
         connectionString,

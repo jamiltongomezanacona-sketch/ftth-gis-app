@@ -15,6 +15,7 @@
     "import:centrales": "node scripts/import-centrales-geojson.mjs",
     "import:flashfiber-ftth": "node scripts/import-flashfiber-ftth.mjs",
     "migrate:rutas:to-supabase": "node scripts/migrate-rutas-local-to-supabase.mjs",
+    "migrate:aux:to-supabase": "node scripts/migrate-ftth-aux-local-to-supabase.mjs",
     "db:apply-red": "node scripts/apply-red-independientes.mjs",
     "db:apply-eventos": "node scripts/apply-eventos-reporte-sql.mjs",
     "db:seed-eventos-legacy": "node scripts/seed-eventos-legacy.mjs",
