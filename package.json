@@ -18,6 +18,7 @@
     "migrate:aux:to-supabase": "node scripts/migrate-ftth-aux-local-to-supabase.mjs",
     "migrate:eventos:to-supabase": "node scripts/migrate-ftth-aux-local-to-supabase.mjs --eventos --replace-all-on-target",
     "user:add": "node scripts/add-gis-user.mjs",
+    "db:apply-gis-users": "node scripts/apply-gis-users-schema.mjs",
     "db:apply-red": "node scripts/apply-red-independientes.mjs",
     "db:apply-eventos": "node scripts/apply-eventos-reporte-sql.mjs",
     "db:seed-eventos-legacy": "node scripts/seed-eventos-legacy.mjs",
