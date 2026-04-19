@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070b12" />
+  <title>GIS · Mantenimiento de Red</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="dash">
+  <div class="dash-app" id="dash-app">
+    <aside class="dash-sidebar" id="dash-sidebar" aria-label="Navegación principal">
+      <div class="dash-sidebar__brand">
+        <div class="dash-logo" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="dash-logo-g" x1="4" y1="28" x2="28" y2="4" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#22d3ee" />
+                <stop offset="1" stop-color="#3b82f6" />
+              </linearGradient>
+            </defs>
+            <rect x="3" y="3" width="26" height="26" rx="8" stroke="url(#dash-logo-g)" stroke-width="1.5" />
+            <path d="M10 22V10l6 7 6-7v12" stroke="url(#dash-logo-g)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <span class="dash-sidebar__brand-text">GIS</span>
+      </div>
+      <nav class="dash-nav" aria-label="Secciones">
+        <a class="dash-nav__link dash-nav__link--active" href="#" data-section="dashboard">
+          <span class="dash-nav__ico" data-icon="layout"></span>
+          <span class="dash-nav__label">Dashboard</span>
+        </a>
+        <a class="dash-nav__link" href="/editor.html?red=ftth" data-section="ftth">
+          <span class="dash-nav__ico" data-icon="home"></span>
+          <span class="dash-nav__label">Red FTTH</span>
+        </a>
+        <a class="dash-nav__link" href="/editor.html?red=corporativa" data-section="corp">
+          <span class="dash-nav__ico" data-icon="building"></span>
+          <span class="dash-nav__label">Red corporativa</span>
+        </a>
+        <a class="dash-nav__link" href="#" data-section="maintenance">
+          <span class="dash-nav__ico" data-icon="wrench"></span>
+          <span class="dash-nav__label">Mantenimientos</span>
+        </a>
+        <a class="dash-nav__link" href="#" data-section="incidents">
+          <span class="dash-nav__ico" data-icon="alert"></span>
+          <span class="dash-nav__label">Incidentes</span>
+        </a>
+        <a class="dash-nav__link" href="/analitica.html" data-section="analytics">
+          <span class="dash-nav__ico" data-icon="chart"></span>
+          <span class="dash-nav__label">Analítica</span>
+        </a>
+        <a class="dash-nav__link" href="#" data-section="settings">
+          <span class="dash-nav__ico" data-icon="settings"></span>
+          <span class="dash-nav__label">Configuración</span>
+        </a>
+      </nav>
+      <button type="button" class="dash-sidebar__collapse" id="btn-sidebar-collapse" aria-expanded="true" aria-controls="dash-sidebar" title="Colapsar menú">
+        <span class="dash-nav__ico" data-icon="chevron-left"></span>
+      </button>
+    </aside>
+
+    <div class="dash-main-wrap">
+      <header class="dash-header">
+        <div class="dash-header__left">
+          <h1 class="dash-header__title">GIS — Mantenimiento de red</h1>
+          <p class="dash-header__subtitle">Inventario FTTH · PostGIS · Mapbox</p>
+        </div>
+        <div class="dash-header__right">
+          <div class="dash-api-status" id="dash-api-status" role="status" aria-live="polite">
+            <span class="dash-api-status__dot" aria-hidden="true"></span>
+            <span class="dash-api-status__text">API online</span>
+          </div>
+          <button type="button" class="dash-icon-btn" id="btn-notifications" aria-label="Notificaciones (3 sin leer)">
+            <span class="dash-nav__ico" data-icon="bell"></span>
+            <span class="dash-badge">3</span>
+          </button>
+          <div class="dash-user" id="dash-user">
+            <div class="dash-user__avatar" aria-hidden="true">OP</div>
+            <div class="dash-user__meta">
+              <span class="dash-user__name">Operador red</span>
+              <span class="dash-user__role">Mantenimiento</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="dash-main" id="dash-main">
+        <section class="dash-kpis" aria-label="Indicadores clave">
+          <article class="dash-kpi dash-kpi--alert">
+            <div class="dash-kpi__head">
+              <span class="dash-kpi__ico" data-kpi-icon="alert"></span>
+              <span class="dash-kpi__tag">Tiempo real</span>
+            </div>
+            <p class="dash-kpi__value" data-metric="incidents">129</p>
+            <p class="dash-kpi__label">Incidencias activas</p>
+          </article>
+          <article class="dash-kpi dash-kpi--maint">
+            <div class="dash-kpi__head">
+              <span class="dash-kpi__ico" data-kpi-icon="wrench"></span>
+              <span class="dash-kpi__tag dash-kpi__tag--cyan">En curso</span>
+            </div>
+            <p class="dash-kpi__value" data-metric="maintenance">14</p>
+            <p class="dash-kpi__label">Mantenimientos en curso</p>
+          </article>
+          <article class="dash-kpi">
+            <div class="dash-kpi__head">
+              <span class="dash-kpi__ico" data-kpi-icon="fiber"></span>
+              <span class="dash-kpi__tag dash-kpi__tag--green">Catálogo</span>
+            </div>
+            <p class="dash-kpi__value"><span data-metric="km">2.847</span> <span class="dash-kpi__unit">km</span></p>
+            <p class="dash-kpi__label">Fibra monitoreada</p>
+          </article>
+          <article class="dash-kpi dash-kpi--health">
+            <div class="dash-kpi__head">
+              <span class="dash-kpi__ico" data-kpi-icon="pulse"></span>
+              <span class="dash-kpi__tag dash-kpi__tag--neon">SLA</span>
+            </div>
+            <p class="dash-kpi__value"><span data-metric="health">97.2</span><span class="dash-kpi__unit">%</span></p>
+            <p class="dash-kpi__label">Salud de red</p>
+            <div class="dash-kpi__bar" role="presentation"><span class="dash-kpi__bar-fill" style="width:97.2%"></span></div>
+          </article>
+        </section>
+
+        <div class="dash-workspace">
+          <section class="dash-map-panel" aria-label="Mapa operativo">
+            <div class="dash-map-panel__toolbar">
+              <div class="dash-map-tools">
+                <button type="button" class="dash-tool-btn dash-tool-btn--active" title="Capas">Capas</button>
+                <button type="button" class="dash-tool-btn" title="Filtros">Filtros</button>
+                <button type="button" class="dash-tool-btn" title="Medición">Medición</button>
+                <button type="button" class="dash-tool-btn" id="btn-toggle-detail" title="Alternar panel derecho (detalle / activo / historial)">Panel</button>
+              </div>
+              <div class="dash-legend" aria-label="Leyenda técnica">
+                <span class="dash-legend__item dash-legend__item--nap"><span class="dash-legend__dot"></span> NAP</span>
+                <span class="dash-legend__item dash-legend__item--cierre"><span class="dash-legend__dot"></span> Cierres</span>
+                <span class="dash-legend__item dash-legend__item--troncal"><span class="dash-legend__dot"></span> Troncales</span>
+                <span class="dash-legend__item dash-legend__item--falla"><span class="dash-legend__dot"></span> Fallas</span>
+                <span class="dash-legend__item dash-legend__item--maint"><span class="dash-legend__dot"></span> Mant. programado</span>
+              </div>
+            </div>
+            <div class="dash-map" id="dash-map" role="img" aria-label="Contenedor Mapbox (integración pendiente)">
+              <div class="dash-map__placeholder">
+                <div class="dash-map__grid"></div>
+                <p class="dash-map__hint">Contenedor listo para <strong>Mapbox GL</strong> · mismos estilos que el editor GIS</p>
+              </div>
+              <div class="dash-map__zoom" aria-hidden="true">
+                <button type="button" class="dash-map-zoom-btn" tabindex="-1">+</button>
+                <button type="button" class="dash-map-zoom-btn" tabindex="-1">−</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="dash-detail-panel" id="dash-detail-panel" aria-label="Detalle selección">
+            <div class="dash-detail-panel__head">
+              <h2 class="dash-detail-panel__title">Detalle de evento</h2>
+              <button type="button" class="dash-icon-btn dash-icon-btn--sm" id="btn-close-detail" aria-label="Cerrar panel">×</button>
+            </div>
+            <div class="dash-detail-tabs" role="tablist">
+              <button type="button" class="dash-tab dash-tab--active" role="tab" aria-selected="true" data-tab="event">Evento</button>
+              <button type="button" class="dash-tab" role="tab" aria-selected="false" data-tab="asset">Activo</button>
+              <button type="button" class="dash-tab" role="tab" aria-selected="false" data-tab="history">Historial</button>
+            </div>
+            <div class="dash-detail-body" id="dash-detail-body">
+              <div class="dash-detail-block" data-panel="event">
+                <span class="dash-pill dash-pill--falla">Falla</span>
+                <h3 class="dash-detail-h3">Corte troncal zona norte</h3>
+                <dl class="dash-dl">
+                  <div><dt>ID</dt><dd>INC-2026-0142</dd></div>
+                  <div><dt>Zona</dt><dd>ETB Molécula SI22</dd></div>
+                  <div><dt>Detectado</dt><dd>Hace 2 h 14 min</dd></div>
+                  <div><dt>SLA</dt><dd class="dash-text-warn">En riesgo</dd></div>
+                </dl>
+              </div>
+              <div class="dash-detail-block dash-detail-block--hidden" data-panel="asset" hidden>
+                <span class="dash-pill dash-pill--nap">NAP</span>
+                <h3 class="dash-detail-h3">NAP-048 · Cierre E2</h3>
+                <p class="dash-detail-p">Puertos ocupados 18/24 · Potencia óptica dentro de rango.</p>
+              </div>
+              <div class="dash-detail-block dash-detail-block--hidden" data-panel="history" hidden>
+                <ul class="dash-timeline">
+                  <li><time>12 Apr 09:10</time> Inspección programada</li>
+                  <li><time>11 Apr 18:40</time> OTDR — sin anomalías</li>
+                  <li><time>10 Apr 14:02</time> Empalme reforzado</li>
+                </ul>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <section class="dash-charts" aria-label="Gráficas operativas">
+          <article class="dash-chart-card">
+            <header class="dash-chart-card__head">
+              <h3>Incidencias por zona</h3>
+              <span class="dash-chart-card__hint">Últimos 30 días</span>
+            </header>
+            <div class="dash-bars" id="chart-zones" role="img" aria-label="Gráfico de barras por zona"></div>
+          </article>
+          <article class="dash-chart-card">
+            <header class="dash-chart-card__head">
+              <h3>Estado de red en tiempo real</h3>
+              <span class="dash-chart-card__hint">Agregado FTTH + Corp</span>
+            </header>
+            <div class="dash-spark" id="chart-spark" role="img" aria-label="Tendencia de salud"></div>
+          </article>
+          <article class="dash-chart-card">
+            <header class="dash-chart-card__head">
+              <h3>Uso de fibra / saturación</h3>
+              <span class="dash-chart-card__hint">Por troncal principal</span>
+            </header>
+            <div class="dash-donut-wrap">
+              <div class="dash-donut" style="--p: 68" aria-hidden="true"></div>
+              <ul class="dash-donut-legend">
+                <li><span class="dash-dot dash-dot--cyan"></span> En servicio 68%</li>
+                <li><span class="dash-dot dash-dot--amber"></span> Margen 22%</li>
+                <li><span class="dash-dot dash-dot--rose"></span> Presión 10%</li>
+              </ul>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

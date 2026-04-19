@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 32 40" width="32" height="40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Portería — Acceso conjunto -->
+  <path d="M16,2C10.48,2,6,6.48,6,12c0,7.5,10,18,10,18s10-10.5,10-18C26,6.48,21.52,2,16,2Z" fill="#C0DD97" stroke="#3B6D11" stroke-width="0.8"/>
+  <circle cx="16" cy="11" r="7" fill="white" opacity="0.93"/>
+  <rect x="12" y="6.5" width="2.5" height="10" rx="1" fill="#27500A"/>
+<rect x="14.5" y="9" width="8" height="2.2" rx="1" fill="#27500A"/>
+<line x1="15.5" y1="9" x2="14.5" y2="11.2" stroke="#C0DD97" stroke-width="0.9" opacity="0.8"/>
+<line x1="17.5" y1="9" x2="16.5" y2="11.2" stroke="#C0DD97" stroke-width="0.9" opacity="0.8"/>
+<line x1="19.5" y1="9" x2="18.5" y2="11.2" stroke="#C0DD97" stroke-width="0.9" opacity="0.8"/>
+<circle cx="14.5" cy="10.1" r="1.6" fill="#27500A" stroke="#3B6D11" stroke-width="0.8"/>
+<line x1="11" y1="16.5" x2="23" y2="16.5" stroke="#27500A" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+</svg>

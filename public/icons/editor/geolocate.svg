@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <!-- Brújula: aros oscuros, N y mira en azul neón -->
+  <circle cx="12" cy="12" r="9.25" stroke="#475569" stroke-width="1.15" opacity="0.75" />
+  <circle cx="12" cy="12" r="7.1" stroke="#334155" stroke-width="0.9" opacity="0.85" />
+  <path d="M12 3.4v2M12 18.6v2M3.4 12h2M18.6 12h2" stroke="#475569" stroke-width="1.2" stroke-linecap="round" opacity="0.35" />
+  <path d="M12 4.6l-1.15 3.35h2.3L12 4.6z" fill="#38bdf8" />
+  <text
+    x="12"
+    y="3.55"
+    text-anchor="middle"
+    fill="#38bdf8"
+    font-size="4.2"
+    font-family="system-ui,Segoe UI,sans-serif"
+    font-weight="800"
+  >N</text>
+  <circle cx="12" cy="12" r="2.4" stroke="#38bdf8" stroke-width="1.2" />
+  <circle cx="12" cy="12" r="0.9" fill="#38bdf8" />
+  <circle cx="12" cy="12" r="0.35" fill="#0f172a" />
+</svg>

@@ -1,0 +1,36 @@
+{
+  "name": "ftth-gis-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Editor de rutas FTTH: Mapbox GL JS + mapbox-gl-draw + PostGIS",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "vendor": "node scripts/vendor-copy.mjs",
+    "postinstall": "node scripts/vendor-copy.mjs",
+    "import:kml": "node scripts/import-kml.mjs",
+    "import:rutas-geojson": "node scripts/import-rutas-geojson.mjs",
+    "import:centrales": "node scripts/import-centrales-geojson.mjs",
+    "import:flashfiber-ftth": "node scripts/import-flashfiber-ftth.mjs",
+    "db:apply-red": "node scripts/apply-red-independientes.mjs",
+    "db:apply-eventos": "node scripts/apply-eventos-reporte-sql.mjs",
+    "db:seed-eventos-legacy": "node scripts/seed-eventos-legacy.mjs",
+    "db:snapshot-red": "node scripts/db-snapshot-red.mjs",
+    "db:seed-corporativa": "node scripts/db-seed-corporativa-ejemplo.mjs",
+    "gen:ftth-mapa-icons": "node scripts/gen-ftth-mapa-svgs.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@mapbox/mapbox-gl-draw": "^1.4.3",
+    "@mapbox/togeojson": "^0.16.2",
+    "@turf/turf": "^7.2.0",
+    "@xmldom/xmldom": "^0.9.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  }
+}

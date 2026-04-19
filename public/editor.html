@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1120" />
+  <title>Operación · FTTH · GIS</title>
+  <link rel="icon" href="/icons/ui/operacion.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
+  <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body class="editor-body">
+  <div id="auth-gate-root" class="auth-gate-root"></div>
+  <div
+    id="network-gate"
+    class="network-gate"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="network-gate-title"
+    aria-describedby="network-gate-desc"
+  >
+    <div class="network-gate-inner">
+      <h2 id="network-gate-title" class="network-gate-title">Elegir red</h2>
+      <p id="network-gate-desc" class="network-gate-desc">
+        Hay dos redes <strong>independientes</strong>: FTTH y corporativa. Los cables y puntos del mapa corresponden solo a la red que elijas.
+      </p>
+      <div class="network-gate-cards">
+        <button type="button" class="network-card" id="btn-network-ftth">
+          <span class="network-card-ico" aria-hidden="true">
+            <img src="/icons/ui/home.svg" width="44" height="44" alt="" decoding="async" />
+          </span>
+          <span class="network-card-lbl">Red FTTH</span>
+          <span class="network-card-sub">Acceso residencial · centrales ETB · mismo catálogo que antes</span>
+        </button>
+        <button type="button" class="network-card" id="btn-network-corp">
+          <span class="network-card-ico" aria-hidden="true">
+            <img src="/icons/ui/building.svg" width="44" height="44" alt="" decoding="async" />
+          </span>
+          <span class="network-card-lbl">Red corporativa</span>
+          <span class="network-card-sub">Infraestructura corporativa · datos separados en base</span>
+        </button>
+      </div>
+      <p class="network-gate-foot">En esta pestaña se recuerda la red hasta que cierres la pestaña o uses «Cambiar de red».</p>
+      <p class="network-gate-direct">
+        <strong>Dos pestañas:</strong>
+        <a href="/editor.html?red=ftth" target="_blank" rel="noopener">Solo FTTH</a>
+        ·
+        <a href="/editor.html?red=corporativa" target="_blank" rel="noopener">Solo corporativa</a>
+        ·
+        <a href="/">Panel principal</a>
+      </p>
+    </div>
+  </div>
+
+  <div id="layout" class="sidebar-collapsed">
+    <header class="editor-chrome">
+      <button
+        type="button"
+        id="sidebar-toggle"
+        class="editor-chrome-toggle"
+        aria-expanded="false"
+        aria-controls="sidebar-body"
+        aria-label="Mostrar panel de herramientas"
+        title="Mostrar herramientas"
+      >
+        <span class="editor-chrome-burger" aria-hidden="true">
+          <span class="editor-chrome-burger-line"></span>
+          <span class="editor-chrome-burger-line"></span>
+          <span class="editor-chrome-burger-line"></span>
+        </span>
+      </button>
+      <div class="editor-chrome-search-slot"></div>
+      <a class="editor-chrome-home" href="/" title="Panel principal" aria-label="Ir al panel principal">
+        <img class="editor-chrome-home-img" src="/icons/ui/home.svg" width="26" height="26" alt="" decoding="async" />
+      </a>
+    </header>
+    <aside id="sidebar" aria-label="Panel de control">
+      <div class="sidebar-inner">
+        <div id="sidebar-body" class="sidebar-body">
+      <header class="sidebar-header sidebar-header--compact">
+        <div class="brand brand--compact">
+          <div class="brand-mark" aria-hidden="true">
+            <img src="/icons/ui/operacion.svg" width="22" height="22" alt="" decoding="async" />
+          </div>
+          <div class="brand-text">
+            <h1 id="app-heading">Operación</h1>
+          </div>
+        </div>
+      </header>
+
+      <section class="sidebar-group" aria-label="TRAZAR">
+      <details class="sidebar-details panel-block panel-otdr">
+        <summary class="sidebar-details-summary">
+          <span class="sidebar-details-summary-main">
+            <img class="panel-icon-img" src="/icons/ui/activity.svg" width="20" height="20" alt="" decoding="async" />
+            TRAZAR
+          </span>
+          <span class="sidebar-details-chev" aria-hidden="true"></span>
+        </summary>
+        <div class="sidebar-details-body">
+        <fieldset class="otdr-fieldset otdr-fieldset--seg" id="otdr-ref-fieldset">
+          <legend class="otdr-legend">Origen</legend>
+          <svg class="otdr-sprite" aria-hidden="true" focusable="false" width="0" height="0">
+            <defs>
+              <symbol id="otdr-ico-pin-ref" viewBox="0 0 24 24" fill="none">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="1.75" />
+              </symbol>
+            </defs>
+          </svg>
+          <div class="otdr-seg-grid" role="presentation">
+            <label class="otdr-seg-card">
+              <input type="radio" name="otdr-ref" value="start" class="otdr-seg-input" checked />
+              <span class="otdr-seg-face">
+                <span class="otdr-seg-ico-wrap" aria-hidden="true">
+                  <svg class="otdr-ref-pin-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><use href="#otdr-ico-pin-ref" width="24" height="24" /></svg>
+                </span>
+                <span class="otdr-seg-title">Inicio</span>
+              </span>
+            </label>
+            <label class="otdr-seg-card">
+              <input type="radio" name="otdr-ref" value="end" class="otdr-seg-input" />
+              <span class="otdr-seg-face">
+                <span class="otdr-seg-ico-wrap" aria-hidden="true">
+                  <svg class="otdr-ref-pin-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><use href="#otdr-ico-pin-ref" width="24" height="24" /></svg>
+                </span>
+                <span class="otdr-seg-title">Final</span>
+              </span>
+            </label>
+            <label class="otdr-seg-card otdr-seg-card--wide">
+              <input type="radio" name="otdr-ref" value="click" class="otdr-seg-input" />
+              <span class="otdr-seg-face">
+                <span class="otdr-seg-ico-wrap" aria-hidden="true">
+                  <svg class="otdr-ref-pin-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><use href="#otdr-ico-pin-ref" width="24" height="24" /></svg>
+                </span>
+                <span class="otdr-seg-title">Punto tramo</span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+        <div id="otdr-click-panel" class="otdr-click-panel" hidden>
+          <button type="button" id="btn-otdr-arm-click" class="otdr-arm-btn">
+            <span class="otdr-arm-btn-ico" aria-hidden="true">
+              <img src="/icons/ui/map-pin.svg" width="18" height="18" alt="" decoding="async" />
+            </span>
+            <span class="otdr-arm-btn-text">
+              <span class="otdr-arm-btn-title">Fijar referencia</span>
+            </span>
+          </button>
+          <p id="otdr-click-status" class="otdr-click-status">Referencia: —</p>
+          <fieldset class="otdr-fieldset otdr-fieldset--seg otdr-fieldset--dir">
+            <legend class="otdr-legend">Sentido</legend>
+            <div class="otdr-seg-grid otdr-seg-grid--dir" role="presentation">
+              <label class="otdr-seg-card otdr-seg-card--dir">
+                <input type="radio" name="otdr-dir" value="toward_end" class="otdr-seg-input" checked />
+                <span class="otdr-seg-face">
+                  <span class="otdr-seg-ico-wrap otdr-seg-ico-wrap--svg" aria-hidden="true">
+                    <svg class="otdr-arrow-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                      <path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                    </svg>
+                  </span>
+                  <span class="otdr-seg-title">Hacia final</span>
+                </span>
+              </label>
+              <label class="otdr-seg-card otdr-seg-card--dir">
+                <input type="radio" name="otdr-dir" value="toward_start" class="otdr-seg-input" />
+                <span class="otdr-seg-face">
+                  <span class="otdr-seg-ico-wrap otdr-seg-ico-wrap--svg" aria-hidden="true">
+                    <svg class="otdr-arrow-ico otdr-arrow-ico--flip" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                      <path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                    </svg>
+                  </span>
+                  <span class="otdr-seg-title">Hacia inicio</span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+        </div>
+        <div class="otdr-fiber-block">
+          <label class="otdr-input-label" for="otdr-fiber-m">
+            <img class="otdr-input-label-ico" src="/icons/ui/ruler.svg" width="14" height="14" alt="" decoding="async" />
+            Fibra (m)
+          </label>
+          <input type="number" id="otdr-fiber-m" class="otdr-input" min="0" step="0.1" placeholder="Ej. 1250" disabled inputmode="decimal" />
+        </div>
+        <div class="otdr-actions">
+          <button type="button" id="btn-otdr-mark" class="otdr-btn otdr-btn--primary" disabled>
+            <img class="otdr-btn-ico" src="/icons/ui/crosshair.svg" width="18" height="18" alt="" decoding="async" />
+            Marcar corte
+          </button>
+          <button type="button" id="btn-otdr-clear" class="otdr-btn otdr-btn--ghost" disabled>
+            <img class="otdr-btn-ico" src="/icons/ui/x.svg" width="18" height="18" alt="" decoding="async" />
+            Quitar marca
+          </button>
+        </div>
+        </div>
+      </details>
+      </section>
+
+      <section class="sidebar-group" aria-label="Reporte de evento">
+      <details id="reporte-evento-details" class="sidebar-details panel-block panel-reporte-evento">
+        <summary class="sidebar-details-summary reporte-ev-summary">
+          <span class="reporte-ev-ico-wrap" aria-hidden="true">
+            <img
+              class="reporte-ev-map-ico"
+              src="/icons/ftth/eventos-x-pin.png"
+              width="18"
+              height="18"
+              alt=""
+              decoding="async"
+            />
+          </span>
+          <span class="reporte-ev-summary-text">
+            <span class="reporte-ev-summary-title">REPORTE EVENTO</span>
+          </span>
+          <span class="sidebar-details-chev" aria-hidden="true"></span>
+        </summary>
+        <div class="sidebar-details-body reporte-ev-body">
+          <!-- Visibilidad de pins de eventos en mapa; lista sincronizada desde el API en app.js -->
+          <input type="checkbox" id="reporte-ev-layer-visible" checked hidden aria-hidden="true" />
+          <div class="reporte-ev-showcase">
+            <p class="reporte-ev-list-intro">
+              Incidencias en catálogo (máx. 40). Clic en una fila: resumen en la barra de estado.
+            </p>
+            <ul id="reporte-ev-ul" class="reporte-ev-ul" aria-label="Lista de eventos"></ul>
+          </div>
+          <div id="reporte-ev-phase-wait" class="reporte-ev-phase reporte-ev-phase-wait">
+            <p class="reporte-ev-wait-hint">
+              <strong>Modo mapa activo.</strong> Haz clic en el <strong>tendido</strong> en el punto exacto del incidente; luego se mostrará el formulario.
+            </p>
+            <button type="button" id="btn-reporte-cancel-wait" class="reporte-ev-btn reporte-ev-btn--ghost-sm">
+              Cancelar
+            </button>
+          </div>
+          <div id="reporte-ev-phase-form" class="reporte-ev-phase reporte-ev-phase-form" hidden>
+            <button type="button" id="btn-reporte-repick" class="reporte-ev-btn reporte-ev-btn--ghost-sm reporte-ev-repick">
+              Cambiar punto en mapa
+            </button>
+          <div class="reporte-ev-field">
+            <label class="reporte-ev-label" for="reporte-ev-dist-odf">Dist ODF</label>
+            <input
+              type="number"
+              id="reporte-ev-dist-odf"
+              class="reporte-ev-input"
+              min="0"
+              step="0.1"
+              inputmode="decimal"
+              placeholder="Opcional — distancia al ODF (m)"
+            />
+          </div>
+          <div class="reporte-ev-field">
+            <label class="reporte-ev-label" for="reporte-ev-tipo">Tipo de evento</label>
+            <select id="reporte-ev-tipo" class="reporte-ev-select" required>
+              <option value="">Selecciona</option>
+              <option value="VANDALISMO">VANDALISMO</option>
+              <option value="OBRAS CIVILES">OBRAS CIVILES</option>
+              <option value="DETERIORO">DETERIORO</option>
+              <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+              <option value="DAÑO POR TERCEROS">DAÑO POR TERCEROS</option>
+            </select>
+          </div>
+          <div class="reporte-ev-field">
+            <label class="reporte-ev-label" for="reporte-ev-estado">Estado</label>
+            <select id="reporte-ev-estado" class="reporte-ev-select reporte-ev-select--estado" required>
+              <option value="">Selecciona</option>
+              <option value="CRITICO" class="reporte-ev-opt--critico">CRITICO</option>
+              <option value="EN PROCESO" class="reporte-ev-opt--proceso">EN PROCESO</option>
+              <option value="RESUELTO" class="reporte-ev-opt--resuelto">RESUELTO</option>
+              <option value="PENDIENTE" class="reporte-ev-opt--pendiente">PENDIENTE</option>
+              <option value="ESCALADO" class="reporte-ev-opt--escalado">ESCALADO</option>
+            </select>
+          </div>
+          <div class="reporte-ev-field">
+            <label class="reporte-ev-label" for="reporte-ev-accion">Acción</label>
+            <select id="reporte-ev-accion" class="reporte-ev-select" required>
+              <option value="">Selecciona acción</option>
+              <option value="REEMPLAZO DE FIBRA">REEMPLAZO DE FIBRA</option>
+              <option value="SE INSTALA CIERRE">SE INSTALA CIERRE</option>
+              <option value="INTERVENCIÓN TECNICA">INTERVENCIÓN TECNICA</option>
+            </select>
+          </div>
+          <p id="reporte-evento-fecha" class="reporte-ev-fecha" aria-live="polite">Fecha: —</p>
+          <div class="reporte-ev-field">
+            <label class="reporte-ev-label" for="reporte-ev-descripcion">Descripción</label>
+            <textarea
+              id="reporte-ev-descripcion"
+              class="reporte-ev-textarea"
+              rows="4"
+              maxlength="8000"
+              placeholder="Detalle del incidente"
+            ></textarea>
+          </div>
+          <div class="reporte-ev-actions">
+            <button type="button" id="btn-reporte-evento-guardar" class="reporte-ev-btn reporte-ev-btn--guardar">Guardar evento</button>
+          </div>
+          </div>
+        </div>
+      </details>
+      </section>
+
+      <footer class="foot-hint">
+        <a href="/" class="foot-link">Panel principal</a>
+        <span class="foot-sep" aria-hidden="true">·</span>
+        <button
+          type="button"
+          class="foot-link"
+          id="btn-refresh-editor-catalog"
+          title="Recargar catálogo, centrales, incidencias y buscador desde el API (no quita el tendido dibujado)"
+        >
+          Actualizar catálogo
+        </button>
+        <span class="foot-sep" aria-hidden="true">·</span>
+        <button type="button" class="foot-link" id="btn-change-network">Cambiar de red</button>
+      </footer>
+        </div>
+      </div>
+    </aside>
+    <div id="map-wrap">
+      <!-- El mapa va primero: el dock de medida debe ir después en el DOM para quedar por encima del lienzo WebGL. -->
+      <div id="map"></div>
+      <div class="map-fab-row map-fab-row--measure" id="map-fab-row-measure">
+        <span class="map-fab-label">MEDIR</span>
+        <div class="measure-fab-dock" id="measure-fab-dock">
+        <div class="mapboxgl-ctrl-group measure-fab-mapbox-group" role="group" aria-label="Medición en mapa">
+          <button
+            type="button"
+            id="measure-fab"
+            class="measure-fab"
+            aria-pressed="false"
+            aria-label="Iniciar o detener medición por trazo libre en el mapa"
+            title="Medición por trazo libre · distancia y +20 % reserva fibra (clic para activar o desactivar)"
+          >
+            <svg class="measure-fab-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+              <!-- Regla en diagonal, marcas y puntos neón -->
+              <path
+                d="M5 19L19 5"
+                fill="none"
+                stroke="#38bdf8"
+                stroke-width="1.85"
+                stroke-linecap="round"
+              />
+              <path
+                d="M6.5 17.5l.9-.9M8.8 15.2l.85-.85M11 13l.85-.85M13.2 10.8l.85-.85M15.5 8.5l.9-.9"
+                stroke="#64748b"
+                stroke-width="0.9"
+                stroke-linecap="round"
+                opacity="0.85"
+              />
+              <circle cx="5" cy="19" r="1.85" fill="#38bdf8" />
+              <circle cx="5" cy="19" r="0.65" fill="#0f172a" />
+              <circle cx="19" cy="5" r="1.85" fill="#22d3ee" />
+              <circle cx="19" cy="5" r="0.65" fill="#0f172a" />
+            </svg>
+          </button>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medición polilínea: trazo en mapa + barra de acciones (sin panel numérico duplicado) -->
+  <div id="measure-polyline-dock" class="measure-polyline-dock" hidden>
+    <div class="measure-polyline-inner">
+      <div id="measure-poly-readout" class="measure-poly-readout" aria-live="polite">
+        <div class="measure-poly-stat-row">
+          <div class="measure-poly-stat">
+            <span class="measure-poly-stat__label">Distancia</span>
+            <strong id="measure-poly-len-dock" class="measure-poly-stat__value measure-poly-stat__value--dist">—</strong>
+          </div>
+          <div class="measure-poly-stat">
+            <span class="measure-poly-stat__label measure-poly-stat__label--accent">Reserva 20%</span>
+            <strong id="measure-poly-res-dock" class="measure-poly-stat__value measure-poly-stat__value--res">—</strong>
+          </div>
+        </div>
+      </div>
+      <div class="measure-polyline-actions">
+        <button type="button" id="measure-poly-undo" class="measure-poly-btn measure-poly-btn--undo" aria-label="Deshacer último punto" title="Deshacer último punto">
+          <span class="measure-poly-btn__swatch measure-poly-btn__swatch--undo" aria-hidden="true">
+            <svg class="measure-poly-ico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+          </span>
+        </button>
+        <button type="button" id="measure-poly-confirm" class="measure-poly-btn measure-poly-btn--ok" aria-label="Confirmar medición" title="Confirmar (deja el trazo hasta borrar)">
+          <svg class="measure-poly-ico measure-poly-ico--ok" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+        <button type="button" id="measure-poly-trash" class="measure-poly-btn measure-poly-btn--trash" aria-label="Borrar trazo" title="Borrar trazo">
+          <svg class="measure-poly-ico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado y métricas: sin paneles en sidebar; app.js sigue usando estos nodos. #status con aria-live para accesibilidad. -->
+  <div id="status" class="status-body editor-ui-sink" role="status" aria-live="polite" aria-atomic="true">
+    Iniciando…
+  </div>
+  <div class="metric-data-sink editor-ui-sink" aria-hidden="true">
+    <span id="metric-length">—</span>
+    <span id="metric-reserve">—</span>
+    <span id="metric-label-nearest-dist" class="label">A central ETB más cercana (aire)</span>
+    <span id="metric-nearest-central-dist">—</span>
+    <span id="metric-label-nearest-name" class="label">Nombre central</span>
+    <span id="metric-nearest-central-name">—</span>
+  </div>
+  <!-- Misma API que antes: app.js exige estos id; sin panel visible (Recargar sigue en barra superior). -->
+  <div class="editor-ui-sink" aria-hidden="true">
+    <button type="button" id="btn-reload" class="primary" tabindex="-1">Recargar</button>
+    <button type="button" id="btn-new-route" tabindex="-1">Nueva ruta</button>
+    <button type="button" id="btn-edit" tabindex="-1">Editar</button>
+    <button type="button" id="btn-save" class="primary" disabled tabindex="-1">Guardar</button>
+    <button type="button" id="btn-cancel" class="danger" disabled tabindex="-1">Cancelar</button>
+  </div>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+  <script src="/vendor/mapbox-gl-draw.js"></script>
+  <script src="/vendor/turf.min.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

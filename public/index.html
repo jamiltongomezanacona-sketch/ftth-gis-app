@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1120" />
+  <title>GIS FTTH · Panel principal</title>
+  <link rel="icon" href="/icons/ui/layers.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body class="home-body auth-pending">
+  <div id="auth-gate-root" class="auth-gate-root"></div>
+  <div class="home-shell">
+    <header class="home-header">
+      <div class="home-brand">
+        <img src="/icons/ui/layers.svg" width="40" height="40" alt="" decoding="async" />
+        <div>
+          <h1 class="home-title">GIS · inventario de red</h1>
+          <p class="home-sub">
+            PostGIS, Mapbox y APIs propias. Panel operativo tipo SaaS, editores por red y analítica: cada red es independiente en base de datos.
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <nav class="home-grid" aria-label="Módulos principales">
+      <a class="home-card home-card--dashboard" href="/dashboard/">
+        <span class="home-card-ico" aria-hidden="true">
+          <img src="/icons/ui/layers.svg" width="48" height="48" alt="" decoding="async" />
+        </span>
+        <h2 class="home-card-title">Dashboard operativo</h2>
+        <p class="home-card-desc">
+          Vista unificada de KPIs, mapa (Mapbox), detalle de eventos y gráficas. Enlace rápido a FTTH, corporativa y analítica desde el menú lateral.
+        </p>
+        <span class="home-card-cta">Abrir dashboard</span>
+      </a>
+
+      <a class="home-card home-card--ftth" href="/editor.html?red=ftth">
+        <span class="home-card-ico" aria-hidden="true">
+          <img src="/icons/ui/home.svg" width="48" height="48" alt="" decoding="async" />
+        </span>
+        <h2 class="home-card-title">Red FTTH</h2>
+        <p class="home-card-desc">Editor de tendidos, centrales ETB, búsqueda, medición y trazado (fibra) sobre el mapa.</p>
+        <span class="home-card-cta">Abrir editor</span>
+      </a>
+
+      <a class="home-card home-card--corp" href="/editor.html?red=corporativa">
+        <span class="home-card-ico" aria-hidden="true">
+          <img src="/icons/ui/building.svg" width="48" height="48" alt="" decoding="async" />
+        </span>
+        <h2 class="home-card-title">Red corporativa</h2>
+        <p class="home-card-desc">Mismo editor con catálogo y nodos filtrados por <code>red_tipo=corporativa</code>.</p>
+        <span class="home-card-cta">Abrir editor</span>
+      </a>
+
+      <a class="home-card home-card--analytics" href="/analitica.html">
+        <span class="home-card-ico" aria-hidden="true">
+          <img src="/icons/ui/chart.svg" width="48" height="48" alt="" decoding="async" />
+        </span>
+        <h2 class="home-card-title">Analítica</h2>
+        <p class="home-card-desc">Resumen en vivo: tablas PostgreSQL, conteos por red, longitud geodésica de tendidos y estado de API.</p>
+        <span class="home-card-cta">Ver panel</span>
+      </a>
+    </nav>
+
+    <footer class="home-foot">
+      <p>
+        Accesos directos:
+        <a href="/dashboard/">/dashboard/</a>
+        ·
+        <a href="/ftth.html">/ftth.html</a>
+        ·
+        <a href="/corporativa.html">/corporativa.html</a>
+        ·
+        <code>/api/db-check</code>
+        ·
+        <button type="button" class="auth-logout-btn" id="auth-logout">Salir</button>
+      </p>
+    </footer>
+  </div>
+  <script type="module">
+    import { ensureAuthenticated } from '/js/authGate.js';
+    import { clearAuthSession } from '/js/authSession.js';
+
+    async function loadCfg() {
+      try {
+        return await import('/js/config.local.js');
+      } catch {
+        return await import('/js/config.example.js');
+      }
+    }
+
+    (async () => {
+      const cfg = await loadCfg();
+      await ensureAuthenticated(cfg.API_BASE ?? '');
+      document.body.classList.remove('auth-pending');
+    })();
+
+    document.getElementById('auth-logout')?.addEventListener('click', () => {
+      clearAuthSession();
+      location.reload();
+    });
+  </script>
+</body>
+</html>

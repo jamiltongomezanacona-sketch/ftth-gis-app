@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1120" />
+  <title>Analítica · GIS FTTH</title>
+  <link rel="icon" href="/icons/ui/chart.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body class="home-body analitica-body analitica-body--dashboard auth-pending">
+  <div id="auth-gate-root" class="auth-gate-root"></div>
+  <div class="analitica-app">
+    <header class="analitica-topbar">
+      <div class="analitica-topbar-brand">
+        <img src="/icons/ui/chart.svg" width="36" height="36" alt="" decoding="async" />
+        <div>
+          <h1 class="analitica-topbar-title">Analítica operativa</h1>
+          <p class="analitica-topbar-sub">Misma lógica de red que el editor: <code>/api/db-check</code>, <code>/api/rutas</code>, <code>/api/centrales-etb</code></p>
+        </div>
+      </div>
+      <div class="analitica-actions">
+        <button type="button" class="primary" id="btn-refresh">Actualizar</button>
+        <a href="/" class="home-link-btn">Panel principal</a>
+        <a href="/editor.html?red=ftth" class="home-link-btn">Editor FTTH</a>
+        <a href="/editor.html?red=corporativa" class="home-link-btn">Editor corporativa</a>
+      </div>
+    </header>
+
+    <div class="analitica-split">
+      <aside class="analitica-sidebar" aria-label="Métricas y análisis">
+        <div class="analitica-sidebar-inner">
+          <div id="analitica-status" class="analitica-status" role="status">Cargando…</div>
+
+          <section class="analitica-section" aria-labelledby="h-db">
+            <h2 id="h-db" class="analitica-h2">Base de datos y API</h2>
+            <div class="analitica-kpi-grid" id="kpi-db"></div>
+          </section>
+
+          <section class="analitica-section" aria-labelledby="h-routes">
+            <h2 id="h-routes" class="analitica-h2">Tendidos por red</h2>
+            <div class="analitica-bars" id="bars-routes"></div>
+            <div class="analitica-kpi-grid" id="kpi-lengths"></div>
+          </section>
+
+          <section class="analitica-section" aria-labelledby="h-cent">
+            <h2 id="h-cent" class="analitica-h2">Puntos (centrales / nodos)</h2>
+            <div class="analitica-kpi-grid" id="kpi-cent"></div>
+          </section>
+
+          <section class="analitica-section analitica-section--deep" aria-labelledby="h-deep">
+            <h2 id="h-deep" class="analitica-h2">Análisis profundo</h2>
+            <p class="analitica-deep-lead">Comparación FTTH vs corporativa, coherencia SQL/API y lectura por longitud media.</p>
+            <div id="analitica-deep" class="analitica-deep"></div>
+          </section>
+
+          <footer class="analitica-sidebar-foot">
+            <p>Longitud: suma geodésica Turf sobre cada <code>LineString</code> (WGS84). El mapa muestra tendidos y nodos de ambas redes.</p>
+          </footer>
+        </div>
+      </aside>
+
+      <div class="analitica-map-panel">
+        <div id="analitica-map" class="analitica-map" role="application" aria-label="Mapa de tendidos y nodos"></div>
+        <div id="analitica-map-fallback" class="analitica-map-fallback" hidden>
+          <p>Configura <code>MAPBOX_ACCESS_TOKEN</code> en <code>public/js/config.local.js</code> para ver el mapa.</p>
+        </div>
+        <div class="analitica-map-legend" aria-hidden="true">
+          <span class="analitica-legend-item"><i class="analitica-legend-swatch analitica-legend-swatch--ftth"></i> FTTH</span>
+          <span class="analitica-legend-item"><i class="analitica-legend-swatch analitica-legend-swatch--corp"></i> Corporativa</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+  <script src="/vendor/turf.min.js"></script>
+  <script type="module" src="/js/analitica.js"></script>
+</body>
+</html>

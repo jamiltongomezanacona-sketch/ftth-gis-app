@@ -1,0 +1,2794 @@
+import { ensureAuthenticated } from './authGate.js';
+import { createRutasApi } from './api.js';
+import { RoutesLayer, ROUTES_LAYER_ID } from './routesLayer.js';
+import { CentralesEtBLayer } from './centralesLayer.js';
+import { OtdrCutLayer } from './otdrCutLayer.js';
+import { MedidaEventoMarkerLayer } from './medidaEventoMarkerLayer.js';
+import {
+  EventosReporteLayer,
+  EVENTOS_REPORTE_INTERACTIVE_LAYER_IDS
+} from './eventosReporteLayer.js';
+import { snapEventPointsToRouteCatalog } from './eventosReporteSnap.js';
+import { RouteDrawEditor } from './routeDrawEditor.js';
+import { createCableSearchBar } from './cableSearchBar.js';
+import { initReporteEventoSidebar } from './reporteEventoSidebar.js';
+import {
+  findManifestEntryForMolecule,
+  indexManifestEntries,
+  matchMoleculeEntries,
+  moleculeTokenFromSearchInput
+} from './flashfiberManifest.js';
+import {
+  MoleculeOverlayLayer,
+  MOLECULE_OVERLAY_INTERACTIVE_LAYER_IDS
+} from './moleculeOverlayLayer.js';
+import {
+  filterRouteLinesByMolecule,
+  loadMoleculeOverlayPointsCombined,
+  parseMoleculaCodigo,
+  parseMoleculeCentralFromRouteFeature
+} from './moleculeFlashfiberLoad.js';
+import {
+  filterRoutesByNetwork,
+  normalizeRouteFeatureProperties,
+  redTipoOfFeature
+} from './matchRutas.js';
+import {
+  lineLengthMeters,
+  lengthWithReserve20Pct,
+  geometricLengthFromFiberLengthMeters,
+  distanceFromStartAlongLineMeters,
+  snapLngLatToLine,
+  nearestCentralMeters,
+  cutPointFromOtdrFiberMeters,
+  cutPointFromFiberFromClickRef
+} from './measurements.js';
+import {
+  ensureMeasurePolylineLayers,
+  setMeasurePolylineData,
+  clearMeasurePolylineData,
+  lineLengthMetersSafe,
+  fmtTotalHuman
+} from './measurePolylineLayer.js';
+async function loadConfig() {
+  try {
+    return await import('./config.local.js');
+  } catch {
+    return await import('./config.example.js');
+  }
+}
+
+function $(id) {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`Missing #${id}`);
+  return el;
+}
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function formatEventoFechaEs(iso) {
+  if (!iso || String(iso).trim() === '') return '—';
+  try {
+    return new Date(String(iso)).toLocaleString('es-CO', {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
+  } catch {
+    return String(iso);
+  }
+}
+
+/**
+ * Contenido HTML escapado para el popup de un evento en el mapa (propiedades GeoJSON).
+ * @param {Record<string, unknown>} p
+ */
+/** Modificador CSS para píldora de estado (evento popup). */
+function eventoEstadoPillModifier(estadoRaw) {
+  const e = String(estadoRaw ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '_');
+  if (e.includes('CRITICO')) return 'evento-popup__pill--critico';
+  if (e.includes('RESUELTO')) return 'evento-popup__pill--resuelto';
+  if (e.includes('PROCESO')) return 'evento-popup__pill--proceso';
+  if (e.includes('PENDIENTE')) return 'evento-popup__pill--pendiente';
+  if (e.includes('ESCALADO')) return 'evento-popup__pill--escalado';
+  return 'evento-popup__pill--neutral';
+}
+
+/** Claves solo para layout / posición en mapa (no como filas genéricas). */
+const CIERRE_POPUP_LAYOUT_KEYS = new Set([
+  'ftth_overlay_kind',
+  'ftth_orig_lon',
+  'ftth_orig_lat'
+]);
+
+/** Misma regla que `server/cierresRepo.js` (`isUuidString`). */
+const CIERRE_DB_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * @param {unknown} id
+ * @returns {boolean}
+ */
+function isCierreDbUuidLike(id) {
+  return CIERRE_DB_UUID_RE.test(String(id ?? '').trim());
+}
+
+/**
+ * @param {unknown} id
+ * @returns {boolean}
+ */
+function isEventoReporteIdAdmin(id) {
+  const n = Number(id);
+  return Number.isInteger(n) && n >= 1;
+}
+
+/**
+ * @param {string} key
+ */
+function labelCierreProp(key) {
+  const map = /** @type {Record<string, string>} */ ({
+    nombre: 'Nombre',
+    name: 'Nombre (name)',
+    tipo: 'Tipo',
+    molecula_codigo: 'Molécula',
+    estado: 'Estado',
+    dist_odf: 'Dist. ODF (m)',
+    descripcion: 'Descripción',
+    id: 'ID',
+    molecula_id: 'Molécula ID',
+    usuario_id: 'Usuario ID',
+    created_at: 'Creado',
+    lat: 'Latitud',
+    lng: 'Longitud'
+  });
+  if (map[key]) return map[key];
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * @param {Record<string, unknown>} p
+ * @param {string} coordsWgs84 texto ya formateado lng, lat
+ */
+function htmlCierreMapPopup(p, coordsWgs84) {
+  const nombre = String(p.nombre ?? p.name ?? '').trim();
+  const title = nombre || 'Cierre / NAP';
+  const kind = String(p.ftth_overlay_kind ?? '').trim();
+  const kindLabel =
+    kind === 'cierre_e1'
+      ? 'Cierre E1'
+      : kind === 'cierre_e2'
+        ? 'Cierre E2'
+        : kind === 'cierre_e0'
+          ? 'Cierre E0'
+          : kind === 'nap'
+            ? 'NAP'
+            : kind === 'cierre_otro'
+              ? 'Cierre / punto'
+              : kind || 'Punto';
+
+  const preferred = [
+    'tipo',
+    'molecula_codigo',
+    'estado',
+    'dist_odf',
+    'id',
+    'molecula_id',
+    'usuario_id',
+    'created_at',
+    'lat',
+    'lng'
+  ];
+
+  /** @type {string[]} */
+  const chunks = [];
+  const pushRow = (dt, ddHtml) => {
+    chunks.push(`<dt>${escapeHtml(dt)}</dt><dd>${ddHtml}</dd>`);
+  };
+
+  pushRow('Clase', `<span class="evento-popup__pill evento-popup__pill--tipo">${escapeHtml(kindLabel)}</span>`);
+  if (nombre) {
+    pushRow('Nombre', `<span class="evento-popup__value evento-popup__value--tendido">${escapeHtml(nombre)}</span>`);
+  }
+
+  for (const key of preferred) {
+    if (!(key in p) || p[key] == null || String(p[key]).trim() === '') continue;
+    let raw = p[key];
+    if (key === 'created_at') raw = formatEventoFechaEs(raw);
+    const val = escapeHtml(String(raw));
+    const mono =
+      key === 'id' || key === 'molecula_id' || key === 'usuario_id' || key === 'dist_odf'
+        ? ' evento-popup__value--mono'
+        : '';
+    pushRow(labelCierreProp(key), `<span class="evento-popup__value${mono}">${val}</span>`);
+  }
+
+  pushRow(
+    'Coordenadas (WGS84)',
+    `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(coordsWgs84)}</span>`
+  );
+
+  const used = new Set(['nombre', 'name', 'tipo', ...preferred, ...CIERRE_POPUP_LAYOUT_KEYS]);
+  const restKeys = Object.keys(p)
+    .filter((k) => !used.has(k) && k !== 'descripcion')
+    .sort((a, b) => a.localeCompare(b, 'es'));
+  for (const key of restKeys) {
+    const v = p[key];
+    if (v == null || v === '') continue;
+    let s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    if (s.length > 280) s = `${s.slice(0, 280)}…`;
+    pushRow(labelCierreProp(key), `<span class="evento-popup__value">${escapeHtml(s)}</span>`);
+  }
+
+  const lo = p.ftth_orig_lon != null ? Number(p.ftth_orig_lon) : NaN;
+  const la = p.ftth_orig_lat != null ? Number(p.ftth_orig_lat) : NaN;
+  if (Number.isFinite(lo) && Number.isFinite(la)) {
+    pushRow(
+      'Coord. inventario',
+      `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(`${lo.toFixed(6)}, ${la.toFixed(6)}`)}</span>`
+    );
+  }
+
+  const desc = escapeHtml(String(p.descripcion ?? '').trim());
+  const idStr = String(p.id ?? '').trim();
+  const canAdmin = String(p.source) === 'db_cierres' && isCierreDbUuidLike(idStr);
+  const admin = canAdmin
+    ? `<div class="evento-popup__actions">
+    <button type="button" class="evento-popup__btn" data-admin="ci-edit">Editar</button>
+    <button type="button" class="evento-popup__btn evento-popup__btn--danger" data-admin="ci-del">Borrar</button>
+  </div>`
+    : '';
+  return `<div class="evento-popup">
+  <div class="evento-popup__title">${escapeHtml(title)}</div>
+  <dl class="evento-popup__grid">
+    ${chunks.join('')}
+  </dl>
+  <div class="evento-popup__desc">
+    <span class="evento-popup__desc-label">Descripción</span>
+    <p class="evento-popup__desc-text">${desc || '—'}</p>
+  </div>
+  ${admin}
+</div>`;
+}
+
+const EVENTO_TIPO_OPTS = [
+  'VANDALISMO',
+  'OBRAS CIVILES',
+  'DETERIORO',
+  'MANTENIMIENTO',
+  'DAÑO POR TERCEROS'
+];
+const EVENTO_ESTADO_OPTS = ['CRITICO', 'EN PROCESO', 'RESUELTO', 'PENDIENTE', 'ESCALADO'];
+const EVENTO_ACCION_OPTS = ['REEMPLAZO DE FIBRA', 'SE INSTALA CIERRE', 'INTERVENCIÓN TECNICA'];
+
+/**
+ * @param {string[]} values
+ * @param {unknown} current
+ */
+function htmlSelectOpts(values, current) {
+  const c = String(current ?? '').trim();
+  return values
+    .map((v) => `<option value="${escapeHtml(v)}"${v === c ? ' selected' : ''}>${escapeHtml(v)}</option>`)
+    .join('');
+}
+
+/**
+ * @param {Record<string, unknown>} p
+ */
+function htmlEventoMapPopupEditForm(p) {
+  const id = p.id != null ? String(p.id) : '';
+  const dist =
+    p.dist_odf != null && Number.isFinite(Number(p.dist_odf)) ? String(Number(p.dist_odf)) : '';
+  return `<div class="evento-popup evento-popup--edit">
+  <div class="evento-popup__title">Editar evento #${escapeHtml(id)}</div>
+  <div class="evento-popup__edit-grid">
+    <label class="evento-popup__edit-lab">Tipo</label>
+    <select class="evento-popup__edit-ctl" data-f="tipo">${htmlSelectOpts(EVENTO_TIPO_OPTS, p.tipo_evento)}</select>
+    <label class="evento-popup__edit-lab">Estado</label>
+    <select class="evento-popup__edit-ctl" data-f="estado">${htmlSelectOpts(EVENTO_ESTADO_OPTS, p.estado)}</select>
+    <label class="evento-popup__edit-lab">Acción</label>
+    <select class="evento-popup__edit-ctl" data-f="accion">${htmlSelectOpts(EVENTO_ACCION_OPTS, p.accion)}</select>
+    <label class="evento-popup__edit-lab">Dist. ODF (m)</label>
+    <input class="evento-popup__edit-ctl" type="number" min="0" step="0.1" data-f="dist_odf" value="${escapeHtml(dist)}" />
+    <label class="evento-popup__edit-lab">Descripción</label>
+    <textarea class="evento-popup__edit-ctl evento-popup__edit-ta" rows="5" maxlength="8000" data-f="desc">${escapeHtml(String(p.descripcion ?? ''))}</textarea>
+  </div>
+  <div class="evento-popup__actions">
+    <button type="button" class="evento-popup__btn" data-admin="ev-cancel">Volver</button>
+    <button type="button" class="evento-popup__btn evento-popup__btn--primary" data-admin="ev-save">Guardar</button>
+  </div>
+</div>`;
+}
+
+/**
+ * @param {Record<string, unknown>} p
+ * @param {string} coordsWgs84
+ */
+function htmlCierreMapPopupEditForm(p, coordsWgs84) {
+  const id = String(p.id ?? '').trim();
+  return `<div class="evento-popup evento-popup--edit">
+  <div class="evento-popup__title">Editar cierre</div>
+  <p class="evento-popup__hint">ID <span class="evento-popup__value--mono">${escapeHtml(id)}</span> · WGS84 ${escapeHtml(coordsWgs84)}</p>
+  <div class="evento-popup__edit-grid">
+    <label class="evento-popup__edit-lab">Nombre</label>
+    <input class="evento-popup__edit-ctl" type="text" data-f="nombre" value="${escapeHtml(String(p.nombre ?? p.name ?? ''))}" maxlength="500" />
+    <label class="evento-popup__edit-lab">Tipo</label>
+    <input class="evento-popup__edit-ctl" type="text" data-f="tipo" value="${escapeHtml(String(p.tipo ?? ''))}" maxlength="80" />
+    <label class="evento-popup__edit-lab">Estado</label>
+    <input class="evento-popup__edit-ctl" type="text" data-f="estado" value="${escapeHtml(String(p.estado ?? ''))}" maxlength="120" />
+    <label class="evento-popup__edit-lab">Molécula</label>
+    <input class="evento-popup__edit-ctl" type="text" data-f="molecula_codigo" value="${escapeHtml(String(p.molecula_codigo ?? ''))}" maxlength="200" />
+    <label class="evento-popup__edit-lab">Dist. ODF</label>
+    <input class="evento-popup__edit-ctl" type="number" data-f="dist_odf" min="0" step="0.1" value="${p.dist_odf != null && Number.isFinite(Number(p.dist_odf)) ? escapeHtml(String(Number(p.dist_odf))) : ''}" />
+    <label class="evento-popup__edit-lab">Lat / Lng</label>
+    <div class="evento-popup__edit-pair">
+      <input class="evento-popup__edit-ctl" type="number" step="any" data-f="lat" placeholder="lat" value="${p.lat != null ? escapeHtml(String(Number(p.lat))) : ''}" />
+      <input class="evento-popup__edit-ctl" type="number" step="any" data-f="lng" placeholder="lng" value="${p.lng != null ? escapeHtml(String(Number(p.lng))) : ''}" />
+    </div>
+    <label class="evento-popup__edit-lab">Descripción</label>
+    <textarea class="evento-popup__edit-ctl evento-popup__edit-ta" rows="4" maxlength="8000" data-f="desc">${escapeHtml(String(p.descripcion ?? ''))}</textarea>
+  </div>
+  <div class="evento-popup__actions">
+    <button type="button" class="evento-popup__btn" data-admin="ci-cancel">Volver</button>
+    <button type="button" class="evento-popup__btn evento-popup__btn--primary" data-admin="ci-save">Guardar</button>
+  </div>
+</div>`;
+}
+
+function htmlEventoMapPopup(p) {
+  const id = p.id != null ? String(p.id) : '?';
+  const tipo = escapeHtml(p.tipo_evento);
+  const estado = escapeHtml(p.estado);
+  const accion = escapeHtml(p.accion);
+  const nom = escapeHtml(p.nombre_tendido ?? '');
+  const desc = escapeHtml(p.descripcion ?? '');
+  const fecha = escapeHtml(formatEventoFechaEs(p.created_iso));
+  const d = p.dist_odf != null ? Number(p.dist_odf) : NaN;
+  const dist = Number.isFinite(d) ? escapeHtml(String(d)) : '—';
+  const r = p.ruta_id != null ? Number(p.ruta_id) : NaN;
+  const ruta = Number.isFinite(r) && r > 0 ? escapeHtml(String(r)) : '—';
+  let coords = '—';
+  const lo = p.lng != null ? Number(p.lng) : NaN;
+  const la = p.lat != null ? Number(p.lat) : NaN;
+  if (Number.isFinite(lo) && Number.isFinite(la)) {
+    coords = escapeHtml(`${lo.toFixed(6)}, ${la.toFixed(6)}`);
+  }
+  const stMod = eventoEstadoPillModifier(p.estado);
+  const canEventoAdmin = isEventoReporteIdAdmin(p.id);
+  const eventoActions = canEventoAdmin
+    ? `<div class="evento-popup__actions">
+    <button type="button" class="evento-popup__btn" data-admin="ev-edit">Editar</button>
+    <button type="button" class="evento-popup__btn evento-popup__btn--danger" data-admin="ev-del">Borrar</button>
+  </div>`
+    : '';
+  return `<div class="evento-popup">
+  <div class="evento-popup__title">Evento #${escapeHtml(id)}</div>
+  <dl class="evento-popup__grid">
+    <dt>Fecha</dt><dd><span class="evento-popup__value">${fecha}</span></dd>
+    <dt>Tipo</dt><dd><span class="evento-popup__pill evento-popup__pill--tipo">${tipo || '—'}</span></dd>
+    <dt>Estado</dt><dd><span class="evento-popup__pill evento-popup__pill--estado ${stMod}">${estado || '—'}</span></dd>
+    <dt>Acción</dt><dd><span class="evento-popup__pill evento-popup__pill--accion">${accion || '—'}</span></dd>
+    <dt>Molécula / tendido</dt><dd><span class="evento-popup__value evento-popup__value--tendido">${nom || '—'}</span></dd>
+    <dt>Dist. ODF</dt><dd><span class="evento-popup__value evento-popup__value--mono">${dist}</span></dd>
+    <dt>Ruta ID</dt><dd><span class="evento-popup__value evento-popup__value--mono">${ruta}</span></dd>
+    <dt>Coordenadas (WGS84)</dt><dd><span class="evento-popup__value evento-popup__value--mono">${coords}</span></dd>
+  </dl>
+  <div class="evento-popup__desc">
+    <span class="evento-popup__desc-label">Descripción</span>
+    <p class="evento-popup__desc-text">${desc || '—'}</p>
+  </div>
+  ${eventoActions}
+</div>`;
+}
+
+const STORAGE_KEY = 'ftth-gis-network';
+
+function readSessionNetwork() {
+  try {
+    const v = sessionStorage.getItem(STORAGE_KEY);
+    if (v === 'ftth' || v === 'corporativa') return v;
+  } catch {
+    /* modo privado u otro */
+  }
+  return null;
+}
+
+/**
+ * Red fijada por URL (?red=ftth|corporativa). Prioridad sobre sessionStorage.
+ * @returns {'ftth'|'corporativa'|null}
+ */
+function readNetworkFromUrl() {
+  try {
+    const u = new URL(window.location.href);
+    for (const key of ['red', 'tipo', 'network']) {
+      const raw = u.searchParams.get(key);
+      const s = String(raw ?? '')
+        .trim()
+        .toLowerCase();
+      if (s === 'ftth') return 'ftth';
+      if (s === 'corporativa' || s === 'corp' || s === 'corporate') return 'corporativa';
+    }
+  } catch {
+    /* */
+  }
+  return null;
+}
+
+/**
+ * Deja la red visible en la barra de direcciones (un proyecto por URL).
+ * @param {'ftth'|'corporativa'} red
+ */
+function syncBrowserUrlRed(red) {
+  try {
+    const u = new URL(window.location.href);
+    if (u.searchParams.get('red') === red) return;
+    u.searchParams.set('red', red);
+    const qs = u.searchParams.toString();
+    history.replaceState({}, '', qs ? `${u.pathname}?${qs}${u.hash}` : `${u.pathname}${u.hash}`);
+  } catch {
+    /* */
+  }
+}
+
+/** v2: migración para quitar estado «colapsado» heredado cuando el panel quedaba detrás del mapa. */
+const SIDEBAR_COLLAPSED_KEY = 'ftth-gis-sidebar-collapsed-v2';
+
+/** Por defecto el mapa abre con el panel cerrado; solo se expande si el usuario guardó explícitamente «abierto» (`0`). */
+function readSidebarCollapsedPreference() {
+  try {
+    const v = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+    if (v === '0') return false;
+  } catch {
+    /* */
+  }
+  return true;
+}
+
+/**
+ * Panel flotante (escritorio) / apilado (móvil). El mapa va a pantalla completa bajo la barra superior.
+ * @param {{ resize: () => void }} mapInstance
+ */
+function initSidebarRail(mapInstance) {
+  const layout = document.getElementById('layout');
+  const btn = document.getElementById('sidebar-toggle');
+  if (!layout || !btn) return;
+
+  const collapsed = readSidebarCollapsedPreference();
+
+  function applyExpandedUi(/** @type {boolean} */ expanded) {
+    btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    btn.title = expanded ? 'Ocultar herramientas' : 'Mostrar herramientas';
+    btn.setAttribute('aria-label', expanded ? 'Ocultar panel de herramientas' : 'Mostrar panel de herramientas');
+  }
+
+  function bumpMapResize() {
+    window.requestAnimationFrame(() => mapInstance.resize());
+    window.setTimeout(() => mapInstance.resize(), 120);
+  }
+
+  function setCollapsed(/** @type {boolean} */ c) {
+    layout.classList.toggle('sidebar-collapsed', c);
+    applyExpandedUi(!c);
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, c ? '1' : '0');
+    } catch {
+      /* */
+    }
+    bumpMapResize();
+  }
+
+  if (collapsed) {
+    layout.classList.add('sidebar-collapsed');
+    applyExpandedUi(false);
+  } else {
+    layout.classList.remove('sidebar-collapsed');
+    applyExpandedUi(true);
+  }
+
+  btn.addEventListener('click', () => {
+    setCollapsed(!layout.classList.contains('sidebar-collapsed'));
+  });
+}
+
+function waitForNetworkChoice() {
+  return new Promise((resolve) => {
+    const gate = document.getElementById('network-gate');
+    const ftthBtn = document.getElementById('btn-network-ftth');
+    const corpBtn = document.getElementById('btn-network-corp');
+    if (!gate || !ftthBtn || !corpBtn) {
+      resolve('ftth');
+      return;
+    }
+    gate.classList.remove('network-gate--dismissed');
+    document.body.classList.add('network-gate-open');
+    const finish = (/** @type {'ftth'|'corporativa'} */ red) => {
+      try {
+        sessionStorage.setItem(STORAGE_KEY, red);
+      } catch {
+        /* */
+      }
+      syncBrowserUrlRed(red);
+      gate.classList.add('network-gate--dismissed');
+      document.body.classList.remove('network-gate-open');
+      resolve(red);
+    };
+    ftthBtn.onclick = () => finish('ftth');
+    corpBtn.onclick = () => finish('corporativa');
+  });
+}
+
+/**
+ * @param {'ftth'|'corporativa'} network
+ */
+function applyNetworkUi(network) {
+  const isCorp = network === 'corporativa';
+  const h = document.getElementById('app-heading');
+  const chromeTitle = document.getElementById('editor-chrome-title');
+  const chromeMeta = document.getElementById('editor-chrome-meta');
+  const brandImg = document.querySelector('.brand-mark img');
+  const fav = document.querySelector('link[rel="icon"]');
+  const lblDist = document.getElementById('metric-label-nearest-dist');
+  const lblName = document.getElementById('metric-label-nearest-name');
+  if (h) h.textContent = isCorp ? 'Operación · corporativa' : 'Operación';
+  if (chromeTitle) {
+    chromeTitle.textContent = isCorp ? 'GIS · corporativa' : 'GIS · FTTH';
+    chromeTitle.setAttribute(
+      'title',
+      isCorp
+        ? 'Buscador en barra · medición (pin evento en cable) · tendidos corporativos'
+        : 'Buscador en barra · medición (pin evento) · Trazar en panel · tendidos FTTH'
+    );
+  }
+  if (chromeMeta) {
+    chromeMeta.textContent = '';
+  }
+  if (brandImg) {
+    brandImg.src = isCorp ? '/icons/ftth-mapa/edificio.svg' : '/icons/ui/operacion.svg';
+  }
+  if (fav) {
+    fav.href = isCorp ? '/icons/ftth-mapa/edificio.svg' : '/icons/ui/operacion.svg';
+  }
+  if (lblDist) {
+    lblDist.textContent = isCorp ? 'A nodo de red más cercano (aire)' : 'A central ETB más cercana (aire)';
+  }
+  if (lblName) {
+    lblName.textContent = isCorp ? 'Nombre del nodo' : 'Nombre central';
+  }
+  document.title = isCorp ? 'Operación · corporativa · GIS' : 'Operación · FTTH · GIS';
+  document.body.classList.toggle('editor-network-corporativa', isCorp);
+  document.body.classList.toggle('editor-network-ftth', !isCorp);
+}
+
+/**
+ * Subtítulo en la barra superior: totales del catálogo tras recargar rutas/centrales.
+ * @param {number} nRoutes
+ * @param {number} nCentrales
+ * @param {'ftth'|'corporativa'} network
+ */
+/**
+ * @param {number} nRoutes
+ * @param {number} nCentrales
+ * @param {'ftth'|'corporativa'} network
+ * @param {number | null} [eventosLista] total incidencias API (null = no mostrar tramo)
+ * @param {number | null} [eventosMapa] puntos con coordenadas (null = omitir)
+ */
+function updateEditorChromeMeta(nRoutes, nCentrales, network, eventosLista, eventosMapa) {
+  const el = document.getElementById('editor-chrome-meta');
+  if (!el) return;
+  const nr = Math.max(0, Number(nRoutes) || 0);
+  const nc = Math.max(0, Number(nCentrales) || 0);
+  let line;
+  if (network === 'corporativa') {
+    line = nr ? `${nr} cable(s) en catálogo` : '0 cables en catálogo';
+  } else {
+    line =
+      nc > 0 ? `${nr} tendido(s) · ${nc} central(es)` : `${nr} tendido(s) (sin centrales en mapa)`;
+  }
+  if (typeof eventosLista === 'number' && eventosLista >= 0) {
+    line += ` · ${eventosLista} incidencia(s)`;
+    if (typeof eventosMapa === 'number' && eventosMapa >= 0) {
+      line += ` (${eventosMapa} en mapa)`;
+    }
+  }
+  el.textContent = line;
+}
+
+function fmtM(n) {
+  if (!Number.isFinite(n)) return '—';
+  return `${n.toFixed(1)} m`;
+}
+
+/** Formato del dock de polilínea (km con 2 decimales si ≥ 1 km, como la referencia UI). */
+function formatPolylineDockMeters(m) {
+  if (!Number.isFinite(m)) return '—';
+  if (m >= 1000) return `${(m / 1000).toFixed(2)} km`;
+  return `${m.toFixed(1)} m`;
+}
+
+/** @param {number[][]} coords */
+function bboxFromLineCoords(coords) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const c of coords) {
+    const x = Number(c[0]);
+    const y = Number(c[1]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
+  if (!Number.isFinite(minX)) return null;
+  const padX = Math.max((maxX - minX) * 0.08, 0.0008);
+  const padY = Math.max((maxY - minY) * 0.08, 0.0008);
+  return [
+    [minX - padX, minY - padY],
+    [maxX + padX, maxY + padY]
+  ];
+}
+
+/** @param {GeoJSON.FeatureCollection} fc */
+function bboxFromCentralPoints(fc) {
+  const pts = [];
+  for (const f of fc.features || []) {
+    if (f?.geometry?.type === 'Point' && Array.isArray(f.geometry.coordinates)) {
+      pts.push(f.geometry.coordinates);
+    }
+  }
+  if (!pts.length) return null;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const c of pts) {
+    const x = Number(c[0]);
+    const y = Number(c[1]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
+  if (!Number.isFinite(minX)) return null;
+  const dx = Math.max((maxX - minX) * 0.15, 0.006);
+  const dy = Math.max((maxY - minY) * 0.15, 0.006);
+  return [
+    [minX - dx, minY - dy],
+    [maxX + dx, maxY + dy]
+  ];
+}
+
+/** Vista inicial en red FTTH: central CUNI (catálogo ETB / GeoJSON local). */
+const MAP_FTTH_CUNI_VIEW = {
+  center: /** @type {[number, number]} */ ([-74.087926, 4.62991]),
+  zoom: 14.25,
+  centralAliases: ['cuni']
+};
+
+/**
+ * @param {GeoJSON.FeatureCollection} fc
+ * @param {string[]} needles
+ * @returns {{ lng: number, lat: number } | null}
+ */
+function findCentralLngLatByAliases(fc, needles) {
+  const set = new Set(
+    needles
+      .map((n) => String(n).trim().toLowerCase())
+      .filter((n) => n.length > 0)
+  );
+  if (!set.size) return null;
+  for (const f of fc?.features || []) {
+    if (!f || f.geometry?.type !== 'Point' || !Array.isArray(f.geometry.coordinates)) continue;
+    const nom = String(f.properties?.nombre ?? f.properties?.name ?? '')
+      .trim()
+      .toLowerCase();
+    if (!nom || !set.has(nom)) continue;
+    const c = f.geometry.coordinates;
+    const lng = Number(c[0]);
+    const lat = Number(c[1]);
+    if (Number.isFinite(lng) && Number.isFinite(lat)) return { lng, lat };
+  }
+  return null;
+}
+
+export async function boot() {
+  const { MAPBOX_ACCESS_TOKEN, API_BASE } = await loadConfig();
+  await ensureAuthenticated(API_BASE ?? '');
+  if (!MAPBOX_ACCESS_TOKEN || MAPBOX_ACCESS_TOKEN.includes('YOUR_')) {
+    $('status').textContent =
+      'Configura MAPBOX_ACCESS_TOKEN en public/js/config.local.js (copia desde config.example.js).';
+    return;
+  }
+
+  const turf = globalThis.turf;
+  if (!turf) {
+    $('status').textContent = 'Turf.js no está cargado.';
+    return;
+  }
+
+  const mapboxgl = globalThis.mapboxgl;
+  if (!mapboxgl) {
+    $('status').textContent = 'Mapbox GL JS no está cargado.';
+    return;
+  }
+
+  const urlRed = readNetworkFromUrl();
+  let appNetwork = urlRed;
+  if (urlRed) {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, urlRed);
+    } catch {
+      /* */
+    }
+  }
+  if (!appNetwork) {
+    appNetwork = readSessionNetwork();
+  }
+  const gateEl = document.getElementById('network-gate');
+  if (appNetwork && gateEl) {
+    gateEl.classList.add('network-gate--dismissed');
+  }
+  if (!appNetwork) {
+    appNetwork = await waitForNetworkChoice();
+  } else if (!urlRed) {
+    syncBrowserUrlRed(appNetwork);
+  }
+  applyNetworkUi(appNetwork);
+
+  mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
+  const api = createRutasApi(API_BASE, appNetwork);
+
+  /** FTTH: arranque cerca de la central CUNI; corporativa: Bogotá amplio. */
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: appNetwork === 'ftth' ? MAP_FTTH_CUNI_VIEW.center : [-74.0817, 4.6097],
+    zoom: appNetwork === 'ftth' ? MAP_FTTH_CUNI_VIEW.zoom : 11.5
+  });
+
+  window.requestAnimationFrame(() => {
+    map.resize();
+  });
+  window.setTimeout(() => map.resize(), 250);
+
+  const routesLayer = new RoutesLayer(map);
+  const moleculeOverlayLayer = new MoleculeOverlayLayer(map);
+  const centralesLayer = new CentralesEtBLayer(map);
+  const otdrCutLayer = new OtdrCutLayer(map);
+  const medidaEventoMarkerLayer = new MedidaEventoMarkerLayer(map);
+  const eventosReporteLayer = new EventosReporteLayer(map);
+
+  /** Conteos de eventos tras último GET exitoso (para la barra superior). */
+  let lastChromeEventCounts = /** @type {{ list: number | null, map: number | null }} */ ({
+    list: null,
+    map: null
+  });
+
+  /**
+   * FTTH: molécula asociada al contexto actual (tendido o vista «Ver molécula …» / cierre).
+   * Filtra GET `/api/eventos-reporte` para mapa + lista.
+   */
+  let editorMoleculeFilter = /** @type {{ central: string, molecula: string } | null} */ (null);
+
+  /** Popup Mapbox al hacer clic en un pin de evento (se cierra al recargar datos o limpiar cable). */
+  let eventoMapPopup = /** @type {import('mapbox-gl').Popup | null} */ (null);
+
+  function closeEventoMapPopup() {
+    try {
+      eventoMapPopup?.remove();
+    } catch {
+      /* */
+    }
+    eventoMapPopup = null;
+  }
+
+  /** Popup al clic en cierre / NAP del overlay FTTH. */
+  let cierreMapPopup = /** @type {import('mapbox-gl').Popup | null} */ (null);
+
+  function closeCierreMapPopup() {
+    try {
+      cierreMapPopup?.remove();
+    } catch {
+      /* */
+    }
+    cierreMapPopup = null;
+  }
+
+  /** Se asignan al montar el mapa (callbacks de popups con acceso a `api`). */
+  let attachEventoPopupAdmin = /** @type {((popup: import('mapbox-gl').Popup, p: Record<string, unknown>) => void) | null} */ (
+    null
+  );
+  let attachCierrePopupAdmin =
+    /** @type {((popup: import('mapbox-gl').Popup, p: Record<string, unknown>, coords: string) => void) | null} */ (
+      null
+    );
+
+  /**
+   * @param {import('mapbox-gl').PointLike} point
+   * @returns {GeoJSON.Feature | null}
+   */
+  function queryMoleculeOverlayFeatureAtPoint(point) {
+    const layers = MOLECULE_OVERLAY_INTERACTIVE_LAYER_IDS.filter((id) => map.getLayer(id));
+    if (!layers.length) return null;
+    const hits = map.queryRenderedFeatures(point, { layers });
+    return hits[0] || null;
+  }
+
+  /**
+   * @param {GeoJSON.Feature} feature
+   * @param {mapboxgl.LngLat} lngLatDefault
+   */
+  function openCierreMapPopupFromFeature(feature, lngLatDefault) {
+    const polyBusy = measurePolylineActive && !measurePolylineConfirmed;
+    if (editing || polyBusy) return;
+    const raw = feature?.properties;
+    if (!raw || typeof raw !== 'object') return;
+    const p = /** @type {Record<string, unknown>} */ (raw);
+    if (!String(p.ftth_overlay_kind ?? '').trim()) return;
+
+    const loOrig = p.ftth_orig_lon != null ? Number(p.ftth_orig_lon) : NaN;
+    const laOrig = p.ftth_orig_lat != null ? Number(p.ftth_orig_lat) : NaN;
+    const g = feature.geometry;
+    const gc =
+      g && g.type === 'Point' && Array.isArray(g.coordinates)
+        ? [Number(g.coordinates[0]), Number(g.coordinates[1])]
+        : [NaN, NaN];
+
+    const lo = Number.isFinite(loOrig) ? loOrig : gc[0];
+    const la = Number.isFinite(laOrig) ? laOrig : gc[1];
+    const coordsWgs84 =
+      Number.isFinite(lo) && Number.isFinite(la) ? `${lo.toFixed(6)}, ${la.toFixed(6)}` : '—';
+
+    const anchorLng = Number.isFinite(loOrig) ? loOrig : lngLatDefault.lng;
+    const anchorLat = Number.isFinite(laOrig) ? laOrig : lngLatDefault.lat;
+
+    closeEventoMapPopup();
+    closeCierreMapPopup();
+
+    const nom = String(p.nombre ?? p.name ?? 'Cierre').trim();
+    const kindShort = String(p.ftth_overlay_kind ?? '');
+    setStatus(`Cierre / punto: ${nom || kindShort} · ${coordsWgs84}`);
+
+    try {
+      const popup = new mapboxgl.Popup({
+        className: 'evento-popup-wrap',
+        offset: 14,
+        maxWidth: 'min(92vw, 360px)',
+        closeButton: true,
+        closeOnClick: true
+      })
+        .setLngLat([anchorLng, anchorLat])
+        .setHTML(htmlCierreMapPopup(p, coordsWgs84))
+        .addTo(map);
+      cierreMapPopup = popup;
+      popup.on('close', () => {
+        if (cierreMapPopup === popup) cierreMapPopup = null;
+      });
+      attachCierrePopupAdmin?.(popup, p, coordsWgs84);
+    } catch (err) {
+      console.warn('Popup cierre:', err);
+    }
+  }
+
+  function getMoleculeFilterForEventosApi() {
+    if (appNetwork !== 'ftth' || !editorMoleculeFilter) return null;
+    return {
+      central: editorMoleculeFilter.central,
+      molecula: editorMoleculeFilter.molecula
+    };
+  }
+
+  /**
+   * Puntos del overlay de molécula (cierres E1/E2, etc.): coordenadas originales del GeoJSON/API.
+   * (Sin proyección al tendido/troncal; `linesFc` se ignora.)
+   * @param {GeoJSON.Feature[]} pts
+   * @param {GeoJSON.FeatureCollection} _linesFc
+   * @returns {GeoJSON.Feature[]}
+   */
+  function snapMoleculeOverlayE1Features(pts, _linesFc) {
+    return pts;
+  }
+
+  async function refreshEventosReporteDisplay() {
+    try {
+      closeEventoMapPopup();
+      closeCierreMapPopup();
+      const res = await api.listEventosReporte(getMoleculeFilterForEventosApi());
+      const fc = res?.featureCollection;
+      const items = Array.isArray(res?.items) ? res.items : [];
+      const fcBase =
+        fc && fc.type === 'FeatureCollection'
+          ? fc
+          : { type: 'FeatureCollection', features: [] };
+      const fcRoutesForSnap = filterRoutesByNetwork(allRoutesFc, appNetwork);
+      const fcForMap =
+        turf && fcBase.features?.length
+          ? snapEventPointsToRouteCatalog(fcBase, fcRoutesForSnap, turf, 400)
+          : fcBase;
+      const nMapPoints = fcForMap.features?.length ?? 0;
+      eventosReporteLayer.ensureLayer();
+      eventosReporteLayer.setData(fcForMap);
+      const evCb = document.getElementById('reporte-ev-layer-visible');
+      if (evCb instanceof HTMLInputElement) {
+        eventosReporteLayer.setVisible(evCb.checked);
+      }
+      const ul = document.getElementById('reporte-ev-ul');
+      if (ul) {
+        ul.replaceChildren();
+        const molFilt = getMoleculeFilterForEventosApi();
+        if (!items.length) {
+          const li = document.createElement('li');
+          li.className = 'reporte-ev-li reporte-ev-li--empty';
+          li.textContent = molFilt
+            ? `Sin eventos para la molécula «${molFilt.central} · ${molFilt.molecula}». Limpia el tendido del mapa (× en buscador) o elige otro cable para ver todas las incidencias de la red.`
+            : 'No hay eventos en el API para esta red. Si la tabla no existe: npm run db:apply-eventos (sql/06_eventos_reporte.sql).';
+          ul.appendChild(li);
+        } else {
+          for (const it of items.slice(0, 40)) {
+            const li = document.createElement('li');
+            li.className = 'reporte-ev-li';
+            const l1 = document.createElement('div');
+            l1.className = 'reporte-ev-li-line1';
+            l1.textContent = `${it.estado} · ${it.tipo_evento}`;
+            const l2 = document.createElement('div');
+            l2.className = 'reporte-ev-li-line2';
+            const fecha = it.created_at
+              ? new Date(it.created_at).toLocaleString('es-CO', {
+                  dateStyle: 'short',
+                  timeStyle: 'short'
+                })
+              : '—';
+            l2.textContent =
+              `${fecha}` + (it.has_map_point === false ? ' · sin coordenadas en mapa' : '');
+            li.appendChild(l1);
+            li.appendChild(l2);
+            li.addEventListener('click', () => {
+              const desc = String(it.descripcion ?? '').slice(0, 500);
+              setStatus(
+                `Evento #${it.id}: ${it.tipo_evento} · ${it.estado} · ${it.accion}. ${desc}${desc.length >= 500 ? '…' : ''}`
+              );
+            });
+            ul.appendChild(li);
+          }
+        }
+      }
+      lastChromeEventCounts = { list: items.length, map: nMapPoints };
+      try {
+        bumpLayersAfterPolylineMeasure();
+      } catch (e) {
+        console.warn('Orden de capas (eventos):', e);
+      }
+      map.once('idle', () => {
+        try {
+          eventosReporteLayer.bringToFront();
+          bumpLayersAfterPolylineMeasure();
+        } catch {
+          /* */
+        }
+      });
+      syncEditorChromeBarMeta();
+    } catch (e) {
+      let msg = e instanceof Error ? e.message : String(e);
+      if (/^503:/.test(msg) || msg.includes('eventos_reporte')) {
+        msg += ' · En el proyecto: npm run db:apply-eventos (o sql/06_eventos_reporte.sql).';
+      }
+      setStatus(`Eventos: ${msg}`);
+    }
+  }
+
+  const editor = new RouteDrawEditor(map, {
+    onGeometryChange: (geom) => {
+      updateMetrics(geom, turf);
+      syncButtons();
+    }
+  });
+
+  /** @type {GeoJSON.Feature<GeoJSON.LineString>|null} */
+  let selectedFeature = null;
+  let editing = false;
+  /** Alta nueva vía POST (nombre ya pedido al usuario). */
+  let isNewRoute = false;
+  let newRouteNombre = '';
+  /** Polilínea en mapa (clics sucesivos): distancia total + reserva 20 %. */
+  let measurePolylineActive = false;
+  /** Tras «Cerrar» no se añaden vértices hasta deshacer o borrar. */
+  let measurePolylineConfirmed = false;
+  /** @type {[number, number][]} */
+  let measurePolylineCoords = [];
+
+  /** Esperando clic en el cable para fijar referencia de trazado (fibra) en el tramo. */
+  let otdrAwaitingCableClick = false;
+  /** Metros desde el inicio del cable hasta el punto de referencia (modo clic). */
+  let otdrClickRefFromStartM = /** @type {number | null} */ (null);
+  /** Coordenadas WGS84 del punto de referencia por clic (pin de evento) para trazado. */
+  let otdrClickRefLngLat = /** @type {[number, number] | null} */ (null);
+  /** Pin en mapa: coordenada del reporte de evento (clic en tendido). */
+  let reporteEventoPinLngLat = /** @type {[number, number] | null} */ (null);
+  const btnEdit = $('btn-edit');
+  const btnSave = $('btn-save');
+  const btnCancel = $('btn-cancel');
+  const btnReload = $('btn-reload');
+  const btnNewRoute = $('btn-new-route');
+  const statusEl = $('status');
+  const lenEl = $('metric-length');
+  const resEl = $('metric-reserve');
+  const metricNearestCentralDist = $('metric-nearest-central-dist');
+  const metricNearestCentralName = $('metric-nearest-central-name');
+
+  const measureFab = $('measure-fab');
+  const measurePolyLenDock = $('measure-poly-len-dock');
+  const measurePolyResDock = $('measure-poly-res-dock');
+
+  const measurePolyDock = $('measure-polyline-dock');
+  const measurePolyUndo = /** @type {HTMLButtonElement} */ ($('measure-poly-undo'));
+  const measurePolyConfirm = /** @type {HTMLButtonElement} */ ($('measure-poly-confirm'));
+  const measurePolyTrash = /** @type {HTMLButtonElement} */ ($('measure-poly-trash'));
+
+  const otdrRefFieldset = $('otdr-ref-fieldset');
+  const otdrClickPanel = $('otdr-click-panel');
+  const otdrClickStatus = $('otdr-click-status');
+  const btnOtdrArmClick = $('btn-otdr-arm-click');
+  const otdrFiberInput = /** @type {HTMLInputElement} */ ($('otdr-fiber-m'));
+  const btnOtdrMark = $('btn-otdr-mark');
+  const btnOtdrClear = $('btn-otdr-clear');
+
+  document.getElementById('btn-change-network')?.addEventListener('click', () => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* */
+    }
+    window.location.href = '/';
+  });
+
+  /** Última colección de centrales (API o /data) para distancia en aire desde el cable. */
+  let lastCentralesFc = /** @type {GeoJSON.FeatureCollection} */ ({
+    type: 'FeatureCollection',
+    features: []
+  });
+
+  /** Todas las rutas desde API (memoria para buscador). En el mapa solo se pinta el cable elegido (FTTH y corporativa). */
+  let allRoutesFc = /** @type {GeoJSON.FeatureCollection} */ ({
+    type: 'FeatureCollection',
+    features: []
+  });
+
+  /** Solo el primer `reloadRoutes`: encuadre CUNI en FTTH; luego se usa el encuadre global de centrales. */
+  let firstReloadRoutes = true;
+
+  /**
+   * Entradas del manifiesto Flashfiber (solo FTTH), para «Ver molécula …».
+   * @type {{ central: string, molecula: string, label: string, paths: string[] }[]}
+   */
+  let ftthManifestEntries = [];
+
+  function ftthGeojsonBaseUrl() {
+    try {
+      return new URL('/geojson/ftth/', window.location.href).href;
+    } catch {
+      return '/geojson/ftth/';
+    }
+  }
+
+  async function loadFtthManifestIfNeeded() {
+    ftthManifestEntries = [];
+    if (appNetwork !== 'ftth') return;
+    try {
+      const url = new URL('moleculas-manifest.json', ftthGeojsonBaseUrl()).href;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) return;
+      const doc = await res.json();
+      ftthManifestEntries = indexManifestEntries(doc);
+    } catch {
+      ftthManifestEntries = [];
+    }
+  }
+
+  /** @type {ReturnType<typeof createCableSearchBar> | null} */
+  let cableSearch = null;
+
+  function setStatus(msg) {
+    statusEl.textContent = msg;
+  }
+
+  /** GPS del navegador (Geolocation API). Esquina superior derecha; icono en CSS (`/icons/editor/geolocate.svg`). */
+  const geolocate = new mapboxgl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
+    trackUserLocation: true,
+    showUserHeading: true,
+    showAccuracyCircle: true
+  });
+  map.addControl(geolocate, 'top-right');
+  geolocate.on('error', () => {
+    setStatus(
+      'GPS: sin señal o permiso denegado. Revisa permisos del sitio y que la ubicación esté activa (móvil/PC).'
+    );
+  });
+  geolocate.on('geolocate', () => {
+    setStatus('GPS: posición actualizada en el mapa.');
+  });
+
+  initSidebarRail(map);
+
+  const reporteCtl = initReporteEventoSidebar({
+    api,
+    setStatus,
+    getMap: () => map,
+    getSelectedFeature: () => selectedFeature,
+    turf,
+    applyReportePickedRoute: (f, e) => {
+      const prevId = selectedFeature?.id;
+      selectedFeature = /** @type {any} */ (f);
+      if (prevId != null && prevId !== f.id) {
+        clearOtdrMarkAndRef();
+      }
+      routesLayer.setSelected(f.id);
+      const geom = /** @type {any} */ (f.geometry);
+      if (geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
+        updateCentralMetricForCableClick(geom, e.lngLat);
+      } else {
+        clearCentralMetric();
+      }
+      updateMetrics(geom, turf);
+      syncButtons();
+    },
+    setReportePin: (ll) => {
+      reporteEventoPinLngLat = ll;
+      syncMedidaEventoPin();
+    },
+    disarmOtdrPick: () => {
+      otdrAwaitingCableClick = false;
+      try {
+        btnOtdrArmClick.classList.remove('active');
+      } catch {
+        /* */
+      }
+    },
+    onArmingChanged: (armed) => {
+      try {
+        map.getCanvas().style.cursor = armed ? 'crosshair' : '';
+      } catch {
+        /* */
+      }
+    },
+    onEventoGuardado: () => void refreshEventosReporteDisplay()
+  });
+
+  function updateMetrics(geom, turfNs) {
+    if (!geom?.coordinates?.length) {
+      lenEl.textContent = '—';
+      resEl.textContent = '—';
+      return;
+    }
+    const L = lineLengthMeters(geom, turfNs);
+    const fib = lengthWithReserve20Pct(L);
+    lenEl.textContent = fmtM(L);
+    resEl.textContent = fmtM(fib);
+  }
+
+  function getOtdrRef() {
+    const el = document.querySelector('input[name="otdr-ref"]:checked');
+    return /** @type {'start'|'end'|'click'} */ (el?.value ?? 'start');
+  }
+
+  function getOtdrDir() {
+    const el = document.querySelector('input[name="otdr-dir"]:checked');
+    return el?.value === 'toward_start' ? 'toward_start' : 'toward_end';
+  }
+
+  /**
+   * Pin de **evento**: referencia de trazado por clic en tramo.
+   */
+  function syncMedidaEventoPin() {
+    const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
+    if (polyDrawing || editing) {
+      medidaEventoMarkerLayer.clear();
+      return;
+    }
+    if (reporteEventoPinLngLat) {
+      medidaEventoMarkerLayer.ensureLayer();
+      medidaEventoMarkerLayer.setPoint(reporteEventoPinLngLat);
+      medidaEventoMarkerLayer.bringToFront();
+      try {
+        otdrCutLayer.bringToFront();
+      } catch {
+        /* */
+      }
+      return;
+    }
+    if (!selectedFeature) {
+      medidaEventoMarkerLayer.clear();
+      return;
+    }
+    const g = /** @type {any} */ (selectedFeature.geometry);
+    if (g?.type !== 'LineString' || !Array.isArray(g.coordinates) || g.coordinates.length < 2) {
+      medidaEventoMarkerLayer.clear();
+      return;
+    }
+    if (getOtdrRef() === 'click' && otdrClickRefLngLat) {
+      medidaEventoMarkerLayer.ensureLayer();
+      medidaEventoMarkerLayer.setPoint(otdrClickRefLngLat);
+      medidaEventoMarkerLayer.bringToFront();
+      try {
+        otdrCutLayer.bringToFront();
+      } catch {
+        /* */
+      }
+      return;
+    }
+    medidaEventoMarkerLayer.clear();
+  }
+
+  function updateOtdrClickPanelVisibility() {
+    otdrClickPanel.hidden = getOtdrRef() !== 'click';
+  }
+
+  function syncOtdrUi() {
+    const ok =
+      !!selectedFeature && !editing && selectedFeature.geometry?.type === 'LineString';
+    otdrFiberInput.disabled = !ok;
+    btnOtdrMark.disabled = !ok;
+    btnOtdrClear.disabled = !ok;
+    btnOtdrArmClick.disabled = !ok || getOtdrRef() !== 'click';
+    otdrRefFieldset.querySelectorAll('input').forEach((/** @type {HTMLInputElement} */ el) => {
+      el.disabled = !ok;
+    });
+    otdrClickPanel.querySelectorAll('input').forEach((/** @type {HTMLInputElement} */ el) => {
+      el.disabled = !ok;
+    });
+    if (!ok) {
+      otdrAwaitingCableClick = false;
+      btnOtdrArmClick.classList.remove('active');
+    }
+    updateOtdrClickPanelVisibility();
+  }
+
+  function clearOtdrMapOverlay() {
+    otdrCutLayer.clear();
+  }
+
+  function clearOtdrMarkAndRef() {
+    clearOtdrMapOverlay();
+    otdrClickRefFromStartM = null;
+    otdrClickRefLngLat = null;
+    otdrAwaitingCableClick = false;
+    btnOtdrArmClick.classList.remove('active');
+    otdrClickStatus.textContent = 'Referencia: —';
+    syncMedidaEventoPin();
+  }
+
+  function markOtdrCut() {
+    if (!selectedFeature || editing) return;
+    const geom = /** @type {GeoJSON.LineString} */ (selectedFeature.geometry);
+    if (geom.type !== 'LineString' || !geom.coordinates?.length) return;
+
+    const fiber = Number(otdrFiberInput.value);
+    if (!Number.isFinite(fiber) || fiber < 0) {
+      setStatus('Indica metros de fibra (trazado) ≥ 0.');
+      return;
+    }
+
+    const ref = getOtdrRef();
+    let res;
+    if (ref === 'click') {
+      if (otdrClickRefFromStartM == null) {
+        setStatus(
+          'Pulsa Fijar referencia y haz clic en el mismo tendido seleccionado.'
+        );
+        return;
+      }
+      res = cutPointFromFiberFromClickRef(
+        geom,
+        otdrClickRefFromStartM,
+        fiber,
+        getOtdrDir(),
+        turf
+      );
+    } else {
+      res = cutPointFromOtdrFiberMeters(geom, fiber, ref === 'end' ? 'end' : 'start', turf);
+    }
+
+    if (!res.point?.geometry?.coordinates) {
+      setStatus('No se pudo calcular el punto de corte.');
+      return;
+    }
+
+    const [lng, lat] = res.point.geometry.coordinates;
+
+    otdrCutLayer.ensureLayer();
+    otdrCutLayer.setCutPoint([lng, lat], `Corte ${fmtM(fiber)} m fibra`);
+    centralesLayer.bringToFront();
+    moleculeOverlayLayer.bringToFront();
+    eventosReporteLayer.bringToFront();
+    medidaEventoMarkerLayer.bringToFront();
+    otdrCutLayer.bringToFront();
+
+    try {
+      map.easeTo({
+        center: [lng, lat],
+        zoom: Math.max(map.getZoom(), 14),
+        duration: 700
+      });
+    } catch {
+      /* */
+    }
+
+    let statusMsg = `Corte por trazado (${fmtM(fiber)} m fibra) en «${selectedFeature.properties?.nombre ?? selectedFeature.id}». ${lng.toFixed(5)}, ${lat.toFixed(5)}`;
+    if (res.clamped) {
+      statusMsg += ' · Lectura acotada al extremo del tendido en el mapa.';
+    }
+    setStatus(statusMsg);
+  }
+
+  function syncButtons() {
+    const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
+    btnNewRoute.disabled = editing || polyDrawing;
+    btnEdit.disabled = !selectedFeature || editing;
+    btnSave.disabled = !editing;
+    btnCancel.disabled = !editing;
+    measureFab.disabled = editing;
+    measureFab.classList.toggle('measure-fab--muted', editing);
+    cableSearch?.setDisabled(editing || polyDrawing);
+    syncOtdrUi();
+    syncMeasureFloatUi();
+    syncMeasurePolyDockVisibility();
+    syncMedidaEventoPin();
+  }
+
+  /** Longitud geodésica del trazo libre y +20 % fibra (dock inferior). */
+  function syncPolylineMeasureReadout() {
+    const dash = '—';
+    let lenTxt = dash;
+    let resTxt = dash;
+    if (measurePolylineActive) {
+      if (measurePolylineCoords.length >= 2) {
+        const line = /** @type {GeoJSON.LineString} */ ({
+          type: 'LineString',
+          coordinates: measurePolylineCoords
+        });
+        const L = lineLengthMetersSafe(line, turf);
+        lenTxt = formatPolylineDockMeters(L);
+        resTxt = formatPolylineDockMeters(lengthWithReserve20Pct(L));
+      } else if (measurePolylineCoords.length === 1) {
+        lenTxt = formatPolylineDockMeters(0);
+        resTxt = formatPolylineDockMeters(lengthWithReserve20Pct(0));
+      }
+    }
+    if (measurePolyLenDock) measurePolyLenDock.textContent = lenTxt;
+    if (measurePolyResDock) measurePolyResDock.textContent = resTxt;
+  }
+
+  /** Sincroniza estado visual del FAB y lecturas del dock de medición. */
+  function syncMeasureFloatUi() {
+    syncPolylineMeasureReadout();
+    measureFab.classList.toggle('measure-fab--active', measurePolylineActive);
+    measureFab.setAttribute('aria-pressed', measurePolylineActive ? 'true' : 'false');
+  }
+
+  function bringMeasurePolylineLayersToFront() {
+    try {
+      for (const id of ['measure-polyline-line', 'measure-polyline-vertices', 'measure-polyline-labels']) {
+        if (map.getLayer(id)) map.moveLayer(id);
+      }
+    } catch {
+      /* */
+    }
+  }
+
+  /** Tras subir la polilínea de medición, vuelve a poner pins de eventos (y OTDR/medida) por encima del trazo naranja. */
+  function bumpLayersAfterPolylineMeasure() {
+    bringMeasurePolylineLayersToFront();
+    eventosReporteLayer.bringToFront();
+    medidaEventoMarkerLayer.bringToFront();
+    otdrCutLayer.bringToFront();
+  }
+
+  function syncMeasurePolylinePanel() {
+    if (!measurePolylineActive) {
+      measurePolyUndo.disabled = true;
+      measurePolyConfirm.disabled = true;
+      measurePolyTrash.disabled = true;
+      return;
+    }
+    measurePolyUndo.disabled =
+      !measurePolylineActive || (measurePolylineCoords.length === 0 && !measurePolylineConfirmed);
+    measurePolyConfirm.disabled =
+      !measurePolylineActive ||
+      measurePolylineCoords.length < 2 ||
+      measurePolylineConfirmed;
+    measurePolyTrash.disabled = !measurePolylineActive || measurePolylineCoords.length === 0;
+  }
+
+  /** Dock inferior (acciones del trazo): solo con medición por trazo en mapa activa. */
+  function syncMeasurePolyDockVisibility() {
+    measurePolyDock.hidden = !measurePolylineActive;
+    syncMeasurePolylinePanel();
+  }
+
+  function setMeasurePolylineCursor() {
+    try {
+      map.getCanvas().style.cursor =
+        measurePolylineActive && !measurePolylineConfirmed ? 'crosshair' : '';
+    } catch {
+      /* */
+    }
+  }
+
+  function deactivateMeasurePolyline() {
+    measurePolylineActive = false;
+    measurePolylineConfirmed = false;
+    measurePolylineCoords = [];
+    try {
+      clearMeasurePolylineData(map);
+    } catch {
+      /* */
+    }
+    setMeasurePolylineCursor();
+    syncMeasurePolyDockVisibility();
+    syncMeasureFloatUi();
+  }
+
+  function toggleMeasurePolylineMode() {
+    if (editing) return;
+    if (measurePolylineActive) {
+      deactivateMeasurePolyline();
+      setStatus('Medición por trazo en mapa desactivada.');
+      syncButtons();
+      return;
+    }
+    measurePolylineActive = true;
+    measurePolylineConfirmed = false;
+    reporteCtl?.cancelMapPickMode?.();
+    measurePolylineCoords = [];
+    ensureMeasurePolylineLayers(map);
+    setMeasurePolylineData(map, measurePolylineCoords, turf);
+    bumpLayersAfterPolylineMeasure();
+    syncMeasurePolyDockVisibility();
+    setMeasurePolylineCursor();
+    syncMeasureFloatUi();
+    syncButtons();
+    setStatus('Trazar ruta: clics en el mapa para vértices. Panel inferior: distancia y +20 %.');
+  }
+
+  function clearCentralMetric() {
+    metricNearestCentralDist.textContent = '—';
+    metricNearestCentralName.textContent = '—';
+  }
+
+  /**
+   * Punto del cable bajo el clic → distancia geodésica a la central ETB más cercana.
+   * @param {GeoJSON.LineString} line
+   * @param {mapboxgl.LngLat} lngLatEvent
+   * @returns {{ meters: number, nombre: string } | null}
+   */
+  function updateCentralMetricForCableClick(line, lngLatEvent) {
+    const lngLat = [lngLatEvent.lng, lngLatEvent.lat];
+    try {
+      const onCable = snapLngLatToLine(line, lngLat, turf);
+      const nc = nearestCentralMeters(onCable, lastCentralesFc, turf);
+      if (!nc) {
+        metricNearestCentralDist.textContent = '—';
+        metricNearestCentralName.textContent = lastCentralesFc?.features?.length
+          ? '—'
+          : appNetwork === 'corporativa'
+            ? 'Sin nodos cargados'
+            : 'Sin centrales cargadas';
+        return null;
+      }
+      metricNearestCentralDist.textContent = fmtM(nc.meters);
+      metricNearestCentralName.textContent = nc.nombre;
+      return nc;
+    } catch (e) {
+      console.warn('Distancia a central ETB:', e);
+      clearCentralMetric();
+      return null;
+    }
+  }
+
+  function clearMeasureClickModes() {
+    deactivateMeasurePolyline();
+    syncMedidaEventoPin();
+  }
+
+  /** Carga o reset del mapa: sin medición polilínea ni dock inferior. */
+  function forceCloseMeasureOverlaysForMapReset() {
+    measureFab.setAttribute('aria-pressed', 'false');
+    clearMeasureClickModes();
+  }
+
+  async function loadCentralesFeatureCollection() {
+    let fcCent = { type: 'FeatureCollection', features: [] };
+    try {
+      fcCent = await api.listCentralesEtB();
+    } catch (e) {
+      console.warn('Puntos de red (API centrales):', e.message);
+    }
+    if (!fcCent?.features?.length && appNetwork === 'ftth') {
+      try {
+        const res = await fetch('/data/centrales-etb.geojson', { cache: 'no-store' });
+        if (res.ok) {
+          fcCent = await res.json();
+          if (fcCent?.features?.length) {
+            console.info(
+              `[centrales] ${fcCent.features.length} puntos desde /data (solo red FTTH; tabla vacía o sin datos).`
+            );
+          }
+        }
+      } catch (e) {
+        console.warn('Centrales ETB (archivo local):', e.message);
+      }
+    }
+    return fcCent;
+  }
+
+  /** Estilo de líneas: FTTH siempre mismo color/grosor; corporativa con resaltado. */
+  function syncRoutesLineStyleMode() {
+    routesLayer.setLineStyleMode(appNetwork === 'ftth' ? 'uniform' : 'normal');
+  }
+
+  /** Quita el cable del mapa (siguen las centrales); no recarga API. */
+  function clearCableFromMapOnly() {
+    editorMoleculeFilter = null;
+    closeEventoMapPopup();
+    closeCierreMapPopup();
+    reporteCtl?.resetForCableCleared?.();
+    clearOtdrMarkAndRef();
+    routesLayer.ensureLayer();
+    syncRoutesLineStyleMode();
+    moleculeOverlayLayer.ensureLayer();
+    moleculeOverlayLayer.clear();
+    routesLayer.setData({ type: 'FeatureCollection', features: [] });
+    routesLayer.setSelected(null);
+    selectedFeature = null;
+    clearMeasureClickModes();
+    clearCentralMetric();
+    updateMetrics(null, turf);
+    setStatus(
+      appNetwork === 'corporativa'
+        ? 'Solo nodos de red en el mapa. Busca un cable por nombre o ID para dibujarlo.'
+        : 'Solo centrales ETB en el mapa. Busca un tendido por nombre o ID para dibujarlo.'
+    );
+    syncButtons();
+    void refreshEventosReporteDisplay();
+  }
+
+  /** @param {GeoJSON.Feature} feat */
+  function fitMapToRouteFeature(feat) {
+    const g = feat.geometry;
+    if (!g || g.type !== 'LineString' || !g.coordinates?.length) return;
+    const b = bboxFromLineCoords(g.coordinates);
+    if (!b) return;
+    try {
+      map.fitBounds(b, {
+        padding: { top: 120, bottom: 72, left: 72, right: 72 },
+        maxZoom: 16,
+        duration: 820
+      });
+    } catch {
+      /* estilo o bounds inválidos */
+    }
+  }
+
+  /**
+   * Encuadre conjunto: tendidos (LineString) + puntos (cierres/NAPs).
+   * @param {GeoJSON.FeatureCollection} lineFc
+   * @param {GeoJSON.Feature[]} pointFeatures
+   */
+  function fitMapBoundsFromLinesAndPoints(lineFc, pointFeatures) {
+    const coords = [];
+    for (const f of lineFc?.features || []) {
+      if (f?.geometry?.type === 'LineString' && Array.isArray(f.geometry.coordinates)) {
+        coords.push(...f.geometry.coordinates);
+      }
+    }
+    for (const f of pointFeatures || []) {
+      if (f?.geometry?.type === 'Point' && Array.isArray(f.geometry.coordinates)) {
+        coords.push(f.geometry.coordinates);
+      }
+    }
+    const b = bboxFromLineCoords(coords);
+    if (!b) return;
+    try {
+      map.fitBounds(b, {
+        padding: { top: 120, bottom: 72, left: 72, right: 72 },
+        maxZoom: 16,
+        duration: 820
+      });
+    } catch {
+      /* */
+    }
+  }
+
+  /**
+   * Tendidos de BD + cierres/NAPs desde GeoJSON Flashfiber (`/geojson/ftth/`).
+   * @param {{ central: string, molecula: string, label: string, paths: string[] }} hit
+   */
+  async function showMoleculeFullView(hit) {
+    const { central, molecula, label, paths } = hit;
+    editorMoleculeFilter = {
+      central: String(central ?? '').trim(),
+      molecula: String(molecula ?? '').trim()
+    };
+    clearOtdrMarkAndRef();
+    moleculeOverlayLayer.ensureLayer();
+    routesLayer.ensureLayer();
+
+    const fcNet = filterRoutesByNetwork(allRoutesFc, 'ftth');
+    const linesFc = filterRouteLinesByMolecule(fcNet, molecula, central);
+    routesLayer.setData(linesFc);
+    syncRoutesLineStyleMode();
+
+    const pts = await loadMoleculeOverlayPointsCombined(
+      api,
+      ftthGeojsonBaseUrl(),
+      central,
+      molecula,
+      paths || [],
+      appNetwork
+    );
+    moleculeOverlayLayer.setData({
+      type: 'FeatureCollection',
+      features: snapMoleculeOverlayE1Features(pts, linesFc)
+    });
+
+    const firstLine = linesFc.features?.find(
+      (f) => f && f.geometry?.type === 'LineString' && f.geometry.coordinates?.length >= 2
+    );
+    selectedFeature = firstLine ? /** @type {any} */ (firstLine) : null;
+    routesLayer.setSelected(selectedFeature?.id ?? null);
+
+    forceCloseMeasureOverlaysForMapReset();
+    if (selectedFeature) {
+      const geom = /** @type {any} */ (selectedFeature.geometry);
+      if (geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
+        const mid = Math.floor(geom.coordinates.length / 2);
+        const c = geom.coordinates[mid];
+        updateCentralMetricForCableClick(geom, { lng: c[0], lat: c[1] });
+      } else {
+        clearCentralMetric();
+      }
+      updateMetrics(geom, turf);
+    } else {
+      clearCentralMetric();
+      updateMetrics(null, turf);
+    }
+
+    if (linesFc.features?.length || pts.length) {
+      fitMapBoundsFromLinesAndPoints(linesFc, pts);
+    }
+
+    setStatus(
+      `Molécula «${molecula}» (${label}): ${linesFc.features?.length ?? 0} tendido(s) en mapa · ${pts.length} punto(s) cierre/NAP (GeoJSON + BD). × limpia el mapa.`
+    );
+    const bump = () => {
+      centralesLayer.bringToFront();
+      moleculeOverlayLayer.bringToFront();
+      eventosReporteLayer.bringToFront();
+    };
+    map.once('idle', bump);
+    [0, 100, 300].forEach((ms) => setTimeout(bump, ms));
+    syncButtons();
+    void refreshEventosReporteDisplay();
+  }
+
+  /**
+   * Cierre elegido en el buscador (catálogo global): carga molécula y acerca al punto.
+   * @param {GeoJSON.Feature} f
+   */
+  async function showCierreFromSearch(f) {
+    clearOtdrMarkAndRef();
+    moleculeOverlayLayer.ensureLayer();
+    routesLayer.ensureLayer();
+
+    const props = /** @type {Record<string, unknown>} */ (f.properties || {});
+    const parsed = parseMoleculaCodigo(String(props.molecula_codigo ?? ''));
+    if (!parsed) {
+      setStatus('Este cierre no tiene molecula_codigo válido (CENTRAL|MOL).');
+      return;
+    }
+    const { central, molecula } = parsed;
+    editorMoleculeFilter = {
+      central: String(central ?? '').trim(),
+      molecula: String(molecula ?? '').trim()
+    };
+    const fcNet = filterRoutesByNetwork(allRoutesFc, 'ftth');
+    const linesFc = filterRouteLinesByMolecule(fcNet, molecula, central || undefined);
+    routesLayer.setData(linesFc);
+    syncRoutesLineStyleMode();
+
+    const manifestHit = findManifestEntryForMolecule(ftthManifestEntries, central, molecula);
+    const pathsFromManifest = manifestHit?.paths ?? [];
+
+    setStatus(`Cargando cierres/NAP para «${molecula}»…`);
+    fitMapBoundsFromLinesAndPoints(linesFc, []);
+
+    let pts = [];
+    try {
+      pts = await loadMoleculeOverlayPointsCombined(
+        api,
+        ftthGeojsonBaseUrl(),
+        central,
+        molecula,
+        pathsFromManifest,
+        appNetwork
+      );
+      moleculeOverlayLayer.setData({
+        type: 'FeatureCollection',
+        features: snapMoleculeOverlayE1Features(pts, linesFc)
+      });
+    } catch (e) {
+      console.error(e);
+      setStatus(`No se pudieron cargar cierres: ${e?.message ?? e}`);
+      return;
+    }
+
+    const firstLine = linesFc.features?.find(
+      (feat) =>
+        feat &&
+        feat.geometry?.type === 'LineString' &&
+        feat.geometry.coordinates?.length >= 2
+    );
+    selectedFeature = firstLine ? /** @type {any} */ (firstLine) : null;
+    routesLayer.setSelected(selectedFeature?.id ?? null);
+
+    forceCloseMeasureOverlaysForMapReset();
+    if (selectedFeature) {
+      const geom = /** @type {any} */ (selectedFeature.geometry);
+      if (geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
+        const mid = Math.floor(geom.coordinates.length / 2);
+        const c = geom.coordinates[mid];
+        updateCentralMetricForCableClick(geom, { lng: c[0], lat: c[1] });
+      } else {
+        clearCentralMetric();
+      }
+      updateMetrics(geom, turf);
+    } else {
+      clearCentralMetric();
+      updateMetrics(null, turf);
+    }
+
+    if (linesFc.features?.length || pts.length) {
+      fitMapBoundsFromLinesAndPoints(linesFc, pts);
+    }
+
+    const g = /** @type {any} */ (f.geometry);
+    if (g?.type === 'Point' && g.coordinates?.length >= 2) {
+      try {
+        map.easeTo({
+          center: g.coordinates,
+          zoom: Math.max(map.getZoom(), 15),
+          duration: 800,
+          essential: true
+        });
+      } catch {
+        /* */
+      }
+    }
+
+    const nom = String(props.nombre ?? props.name ?? f.id ?? '');
+    setStatus(
+      `Cierre «${nom}» (${String(props.tipo ?? '—')}) · ${String(props.molecula_codigo ?? '')}. ${linesFc.features?.length ?? 0} tendido(s), ${pts.length} punto(s). × limpia.`
+    );
+    const bump = () => {
+      centralesLayer.bringToFront();
+      moleculeOverlayLayer.bringToFront();
+      eventosReporteLayer.bringToFront();
+    };
+    map.once('idle', bump);
+    [0, 100, 300].forEach((ms) => setTimeout(bump, ms));
+    syncButtons();
+    void refreshEventosReporteDisplay();
+  }
+
+  /** Actualiza el texto de `#editor-chrome-meta` con los conteos ya cargados en memoria (red activa). */
+  function syncEditorChromeBarMeta() {
+    const nR = allRoutesFc.features?.length ?? 0;
+    const nC = lastCentralesFc.features?.length ?? 0;
+    const evL = lastChromeEventCounts.list;
+    const evM = lastChromeEventCounts.map;
+    updateEditorChromeMeta(
+      nR,
+      nC,
+      appNetwork,
+      typeof evL === 'number' ? evL : null,
+      typeof evM === 'number' ? evM : null
+    );
+  }
+
+  /**
+   * Recarga desde el API totales de rutas, centrales y eventos, y el buscador, sin vaciar el tendido dibujado.
+   */
+  async function refreshEditorChromeFromApi() {
+    const btn = document.getElementById('btn-refresh-editor-catalog');
+    try {
+      if (btn instanceof HTMLButtonElement) btn.disabled = true;
+      const fcRaw = await api.listRutas();
+      const fcParsed =
+        fcRaw && fcRaw.type === 'FeatureCollection'
+          ? fcRaw
+          : { type: 'FeatureCollection', features: [] };
+      const fcBase = normalizeRouteFeatureProperties(fcParsed);
+      allRoutesFc = filterRoutesByNetwork(fcBase, appNetwork);
+      const fcCent = await loadCentralesFeatureCollection();
+      lastCentralesFc = fcCent;
+      centralesLayer.ensureLayer();
+      centralesLayer.setData(fcCent);
+      syncEditorChromeBarMeta();
+      await refreshEventosReporteDisplay();
+      cableSearch?.refresh();
+      setStatus('Datos actualizados desde el servidor (catálogo, centrales, incidencias, buscador).');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setStatus(`Error al actualizar catálogo (${msg}). Se mantienen datos en memoria.`);
+      syncEditorChromeBarMeta();
+      cableSearch?.refresh();
+      void refreshEventosReporteDisplay();
+    } finally {
+      if (btn instanceof HTMLButtonElement) btn.disabled = false;
+    }
+  }
+
+  async function reloadRoutes() {
+    try {
+      editorMoleculeFilter = null;
+      closeEventoMapPopup();
+      closeCierreMapPopup();
+      const fcRaw = await api.listRutas();
+      const fcParsed =
+        fcRaw && fcRaw.type === 'FeatureCollection'
+          ? fcRaw
+          : { type: 'FeatureCollection', features: [] };
+      const fcBase = normalizeRouteFeatureProperties(fcParsed);
+      /** Solo cables de la red activa (por si la API o datos mezclaran filas). */
+      allRoutesFc = filterRoutesByNetwork(fcBase, appNetwork);
+
+      routesLayer.ensureLayer();
+      syncRoutesLineStyleMode();
+      moleculeOverlayLayer.ensureLayer();
+      moleculeOverlayLayer.clear();
+      routesLayer.setData({ type: 'FeatureCollection', features: [] });
+      routesLayer.setSelected(null);
+
+      const fcCent = await loadCentralesFeatureCollection();
+      lastCentralesFc = fcCent;
+      centralesLayer.ensureLayer();
+      centralesLayer.setData(fcCent);
+
+      if (appNetwork === 'ftth' && firstReloadRoutes) {
+        firstReloadRoutes = false;
+        const hit = findCentralLngLatByAliases(fcCent, MAP_FTTH_CUNI_VIEW.centralAliases);
+        const lng = hit ? hit.lng : MAP_FTTH_CUNI_VIEW.center[0];
+        const lat = hit ? hit.lat : MAP_FTTH_CUNI_VIEW.center[1];
+        try {
+          map.easeTo({
+            center: [lng, lat],
+            zoom: Math.max(map.getZoom(), MAP_FTTH_CUNI_VIEW.zoom),
+            duration: 720,
+            essential: true
+          });
+        } catch {
+          /* */
+        }
+      } else {
+        firstReloadRoutes = false;
+        const boxC = bboxFromCentralPoints(lastCentralesFc);
+        if (boxC) {
+          try {
+            map.fitBounds(boxC, { padding: 52, maxZoom: 14, duration: 720 });
+          } catch {
+            /* */
+          }
+        }
+      }
+
+      cableSearch?.reset();
+      cableSearch?.refresh();
+      clearOtdrMarkAndRef();
+
+      routesLayer.setSelected(null);
+      selectedFeature = null;
+      editing = false;
+      isNewRoute = false;
+      newRouteNombre = '';
+      forceCloseMeasureOverlaysForMapReset();
+      clearCentralMetric();
+      routesLayer.setHiddenRouteId(null);
+      editor.cancel();
+      const nR = allRoutesFc.features?.length ?? 0;
+      const nC = lastCentralesFc.features?.length ?? 0;
+      const pointsLabel =
+        appNetwork === 'corporativa' ? 'nodo(s) de red' : 'central(es) ETB';
+      const redNom = appNetwork === 'corporativa' ? 'corporativa' : 'FTTH';
+      setStatus(
+        nC
+          ? `Mapa ${redNom}: ${nC} ${pointsLabel} · ${nR} tendido(s) en catálogo. Solo se dibuja en el mapa el que elijas en el buscador.`
+          : appNetwork === 'ftth'
+            ? `Mapa FTTH: ${nR} tendido(s) en catálogo (sin centrales en API o /data). Solo se dibuja el buscado.`
+            : `Sin nodos en mapa · ${nR} cable(s) en catálogo corporativa. Busca por nombre o ID para dibujar uno.`
+      );
+      syncEditorChromeBarMeta();
+      updateMetrics(null, turf);
+      syncButtons();
+    } finally {
+      /** Aunque falle `/api/rutas`, se intentan cargar eventos (otro fallo no debe bloquear la lista). */
+      void refreshEventosReporteDisplay();
+    }
+  }
+
+  map.on('load', async () => {
+    map.resize();
+    map.once('idle', () => {
+      map.resize();
+    });
+    forceCloseMeasureOverlaysForMapReset();
+
+    /** GPS + medición: se agrupan en `.map-widget-stack--arcgis` (barra flotante estilo ArcGIS; ver CSS). */
+    const mapTopRight = map.getContainer().querySelector('.mapboxgl-ctrl-top-right');
+    const geoBtn = mapTopRight?.querySelector('button.mapboxgl-ctrl-geolocate');
+    const geoGroup = geoBtn?.closest('.mapboxgl-ctrl-group');
+    if (geoGroup && mapTopRight && !geoGroup.closest('.map-fab-row')) {
+      const navRow = document.createElement('div');
+      navRow.className = 'map-fab-row map-fab-row--navigate';
+      const navLabel = document.createElement('span');
+      navLabel.className = 'map-fab-label';
+      navLabel.textContent = 'NAVEGAR';
+      navRow.appendChild(navLabel);
+      geoGroup.replaceWith(navRow);
+      navRow.appendChild(geoGroup);
+    }
+    const measureRow = document.getElementById('map-fab-row-measure');
+    const measureDock = document.getElementById('measure-fab-dock');
+    const navRowEl = mapTopRight?.querySelector('.map-fab-row--navigate');
+    if (measureRow && mapTopRight) {
+      if (navRowEl && !measureRow.closest('.map-widget-stack--arcgis')) {
+        const stack = document.createElement('div');
+        stack.className = 'map-widget-stack map-widget-stack--arcgis';
+        stack.setAttribute('role', 'toolbar');
+        stack.setAttribute('aria-label', 'Ubicación y medición en mapa');
+        mapTopRight.insertBefore(stack, navRowEl);
+        stack.appendChild(navRowEl);
+        stack.appendChild(measureRow);
+      } else {
+        mapTopRight.appendChild(measureRow);
+      }
+      measureDock?.classList.add('measure-fab-dock--in-map');
+    }
+
+    await loadFtthManifestIfNeeded();
+
+    const mapWrap = $('map-wrap');
+    cableSearch = createCableSearchBar(mapWrap, {
+      /** Siempre re-filtra por red activa (nunca mezcla catálogos en el buscador). */
+      getRouteCollection: () => filterRoutesByNetwork(allRoutesFc, appNetwork),
+      networkRed: appNetwork,
+      getMoleculeBrowseHits:
+        appNetwork === 'ftth'
+          ? (q) => matchMoleculeEntries(ftthManifestEntries, q, 40)
+          : undefined,
+      onSelectMoleculeBrowse: (hit) => {
+        if (appNetwork !== 'ftth') return;
+        showMoleculeFullView(hit).catch((e) => {
+          setStatus(`No se pudo cargar la molécula: ${e.message}`);
+          console.error(e);
+        });
+      },
+      getCierreBrowseHits:
+        appNetwork === 'ftth'
+          ? async (q) => {
+              const fc = await api.searchCierres(q);
+              return Array.isArray(fc?.features) ? fc.features : [];
+            }
+          : undefined,
+      onSelectCierre: (f) => {
+        if (appNetwork !== 'ftth') return;
+        showCierreFromSearch(f).catch((e) => {
+          setStatus(`No se pudo abrir el cierre: ${e.message}`);
+          console.error(e);
+        });
+      },
+      onSelectRoute: (f, meta) => {
+        if (redTipoOfFeature(f) !== appNetwork) {
+          setStatus('Cable no pertenece a la red de esta sesión. Usa «Cambiar de red» o recarga.');
+          return;
+        }
+        clearOtdrMarkAndRef();
+        moleculeOverlayLayer.ensureLayer();
+        moleculeOverlayLayer.clear();
+
+        const sq = String(meta?.searchQuery ?? '').trim();
+        const sqMol = moleculeTokenFromSearchInput(sq);
+        const parsedMol =
+          appNetwork === 'ftth' && sq ? parseMoleculeCentralFromRouteFeature(f) : null;
+        const sameMoleculeAsQuery =
+          parsedMol &&
+          sqMol.toLowerCase() === String(parsedMol.molecula).trim().toLowerCase();
+
+        if (sameMoleculeAsQuery && parsedMol) {
+          editorMoleculeFilter = {
+            central: String(parsedMol.central ?? '').trim(),
+            molecula: String(parsedMol.molecula ?? '').trim()
+          };
+        }
+
+        if (sameMoleculeAsQuery) {
+          const fcNet = filterRoutesByNetwork(allRoutesFc, 'ftth');
+          const linesFc = filterRouteLinesByMolecule(
+            fcNet,
+            parsedMol.molecula,
+            parsedMol.central || undefined
+          );
+          if (linesFc.features?.length) {
+            selectedFeature = /** @type {any} */ (f);
+            routesLayer.ensureLayer();
+            routesLayer.setData(linesFc);
+            syncRoutesLineStyleMode();
+            routesLayer.setSelected(f.id);
+            clearMeasureClickModes();
+            const geom = /** @type {any} */ (f.geometry);
+            if (geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
+              const mid = Math.floor(geom.coordinates.length / 2);
+              const c = geom.coordinates[mid];
+              updateCentralMetricForCableClick(geom, { lng: c[0], lat: c[1] });
+            } else {
+              clearCentralMetric();
+            }
+            updateMetrics(geom, turf);
+            const cen = parsedMol.central || '';
+            const mol = parsedMol.molecula;
+            const manifestHit = findManifestEntryForMolecule(
+              ftthManifestEntries,
+              cen,
+              mol
+            );
+            const pathsFromManifest = manifestHit?.paths ?? [];
+            setStatus(`Cargando cierres/NAP para «${mol}»…`);
+            fitMapBoundsFromLinesAndPoints(linesFc, []);
+            void loadMoleculeOverlayPointsCombined(
+              api,
+              ftthGeojsonBaseUrl(),
+              cen,
+              mol,
+              pathsFromManifest,
+              appNetwork
+            )
+              .then((pts) => {
+                moleculeOverlayLayer.setData({
+                  type: 'FeatureCollection',
+                  features: snapMoleculeOverlayE1Features(pts, linesFc)
+                });
+                fitMapBoundsFromLinesAndPoints(linesFc, pts);
+                const nL = linesFc.features.length;
+                setStatus(
+                  `Búsqueda «${mol}»: ${nL} tendido(s) en mapa · ${pts.length} punto(s) cierre/NAP (GeoJSON + BD). Cable activo «${f.properties?.nombre ?? f.id}». × limpia.`
+                );
+              })
+              .catch((e) => {
+                console.error(e);
+                setStatus(`No se pudieron cargar cierres: ${e?.message ?? e}`);
+              });
+            const bump = () => {
+              centralesLayer.bringToFront();
+              moleculeOverlayLayer.bringToFront();
+              eventosReporteLayer.bringToFront();
+            };
+            map.once('idle', bump);
+            [0, 100, 300].forEach((ms) => setTimeout(bump, ms));
+            syncButtons();
+            void refreshEventosReporteDisplay();
+            return;
+          }
+        }
+
+        selectedFeature = /** @type {any} */ (f);
+        routesLayer.ensureLayer();
+        syncRoutesLineStyleMode();
+        routesLayer.setData({ type: 'FeatureCollection', features: [f] });
+        routesLayer.setSelected(f.id);
+        clearMeasureClickModes();
+        const geom = /** @type {any} */ (f.geometry);
+        if (geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
+          const mid = Math.floor(geom.coordinates.length / 2);
+          const c = geom.coordinates[mid];
+          const fakeLL = { lng: c[0], lat: c[1] };
+          updateCentralMetricForCableClick(geom, fakeLL);
+        } else {
+          clearCentralMetric();
+        }
+        updateMetrics(geom, turf);
+        if (appNetwork === 'ftth') {
+          if (!sameMoleculeAsQuery) {
+            const pm = parseMoleculeCentralFromRouteFeature(f);
+            editorMoleculeFilter =
+              pm && pm.molecula
+                ? {
+                    central: String(pm.central ?? '').trim(),
+                    molecula: String(pm.molecula ?? '').trim()
+                  }
+                : null;
+          }
+        } else {
+          editorMoleculeFilter = null;
+        }
+        void refreshEventosReporteDisplay();
+        fitMapToRouteFeature(f);
+        setStatus(`Cable «${f.properties?.nombre ?? f.id}» · usa el buscador (×) para volver a solo centrales.`);
+        const bump = () => {
+          centralesLayer.bringToFront();
+          moleculeOverlayLayer.bringToFront();
+          eventosReporteLayer.bringToFront();
+        };
+        map.once('idle', bump);
+        [0, 100, 300].forEach((ms) => setTimeout(bump, ms));
+        syncButtons();
+      },
+      onSelectCoordinates: ({ lng, lat }) => {
+        try {
+          map.easeTo({
+            center: [lng, lat],
+            zoom: Math.max(map.getZoom(), 15),
+            duration: 750
+          });
+        } catch (e) {
+          console.warn('onSelectCoordinates', e);
+        }
+        setStatus(`WGS84 · ${lat.toFixed(6)}, ${lng.toFixed(6)} · mapa centrado.`);
+      },
+      onClearCable: () => {
+        clearCableFromMapOnly();
+      },
+      isInteractionLocked: () => editing || (measurePolylineActive && !measurePolylineConfirmed)
+    });
+
+    document.getElementById('btn-refresh-editor-catalog')?.addEventListener('click', () => {
+      void refreshEditorChromeFromApi();
+    });
+
+    const reporteEvVis = document.getElementById('reporte-ev-layer-visible');
+    if (reporteEvVis instanceof HTMLInputElement) {
+      eventosReporteLayer.setVisible(reporteEvVis.checked);
+      reporteEvVis.addEventListener('change', () => {
+        eventosReporteLayer.setVisible(reporteEvVis.checked);
+      });
+    }
+    document.getElementById('reporte-evento-details')?.addEventListener('toggle', (ev) => {
+      const d = /** @type {HTMLDetailsElement} */ (ev.target);
+      if (d.open) void refreshEventosReporteDisplay();
+    });
+
+    async function refreshFtthMoleculeOverlayIfFiltered() {
+      if (appNetwork !== 'ftth' || !editorMoleculeFilter) return;
+      const { central, molecula } = editorMoleculeFilter;
+      const fcNet = filterRoutesByNetwork(allRoutesFc, 'ftth');
+      const linesFc = filterRouteLinesByMolecule(fcNet, molecula, central || undefined);
+      const manifestHit = findManifestEntryForMolecule(ftthManifestEntries, central, molecula);
+      const pathsFromManifest = manifestHit?.paths ?? [];
+      try {
+        const pts = await loadMoleculeOverlayPointsCombined(
+          api,
+          ftthGeojsonBaseUrl(),
+          central,
+          molecula,
+          pathsFromManifest,
+          appNetwork
+        );
+        moleculeOverlayLayer.setData({
+          type: 'FeatureCollection',
+          features: snapMoleculeOverlayE1Features(pts, linesFc)
+        });
+        moleculeOverlayLayer.bringToFront();
+      } catch (e) {
+        console.warn('refreshFtthMoleculeOverlayIfFiltered', e);
+      }
+    }
+
+    attachEventoPopupAdmin = (popup, p) => {
+      window.setTimeout(() => {
+        const root = popup.getElement();
+        const wrap = /** @type {HTMLElement | null} */ (root?.querySelector('.evento-popup:not(.evento-popup--edit)'));
+        if (!wrap) return;
+        if (!isEventoReporteIdAdmin(p.id)) return;
+        const evId = Number(p.id);
+
+        wrap.querySelector('[data-admin="ev-del"]')?.addEventListener('click', async () => {
+          if (!confirm(`¿Borrar el evento #${evId}? Esta acción no se puede deshacer.`)) return;
+          try {
+            await api.deleteEventoReporte(evId);
+            closeEventoMapPopup();
+            await refreshEventosReporteDisplay();
+            setStatus(`Evento #${evId} eliminado.`);
+          } catch (err) {
+            setStatus(err?.message ? String(err.message) : String(err));
+          }
+        });
+
+        wrap.querySelector('[data-admin="ev-edit"]')?.addEventListener(
+          'click',
+          () => {
+            popup.setHTML(htmlEventoMapPopupEditForm(p));
+            bindEventoPopupEdit(popup, p);
+          },
+          { once: true }
+        );
+      }, 0);
+    };
+
+    /**
+     * @param {import('mapbox-gl').Popup} popup
+     * @param {Record<string, unknown>} p
+     */
+    function bindEventoPopupEdit(popup, p) {
+      window.setTimeout(() => {
+        const root = popup.getElement();
+        const wrap = /** @type {HTMLElement | null} */ (root?.querySelector('.evento-popup--edit'));
+        if (!wrap) return;
+        if (!isEventoReporteIdAdmin(p.id)) return;
+        const evId = Number(p.id);
+
+        wrap.querySelector('[data-admin="ev-cancel"]')?.addEventListener(
+          'click',
+          () => {
+            popup.setHTML(htmlEventoMapPopup(p));
+            attachEventoPopupAdmin?.(popup, p);
+          },
+          { once: true }
+        );
+
+        wrap.querySelector('[data-admin="ev-save"]')?.addEventListener('click', async () => {
+          const tipo = /** @type {HTMLSelectElement | null} */ (wrap.querySelector('[data-f="tipo"]'));
+          const estado = /** @type {HTMLSelectElement | null} */ (wrap.querySelector('[data-f="estado"]'));
+          const accion = /** @type {HTMLSelectElement | null} */ (wrap.querySelector('[data-f="accion"]'));
+          const distEl = /** @type {HTMLInputElement | null} */ (wrap.querySelector('[data-f="dist_odf"]'));
+          const descEl = /** @type {HTMLTextAreaElement | null} */ (wrap.querySelector('[data-f="desc"]'));
+          const body = {
+            tipo_evento: tipo?.value,
+            estado: estado?.value,
+            accion: accion?.value,
+            descripcion: descEl?.value?.trim() ?? '',
+            dist_odf: distEl?.value ? Number(distEl.value) : null
+          };
+          try {
+            await api.patchEventoReporte(evId, body);
+            closeEventoMapPopup();
+            await refreshEventosReporteDisplay();
+            setStatus(`Evento #${evId} actualizado.`);
+          } catch (err) {
+            setStatus(err?.message ? String(err.message) : String(err));
+          }
+        });
+      }, 0);
+    }
+
+    attachCierrePopupAdmin = (popup, p, coordsWgs84) => {
+      window.setTimeout(() => {
+        const root = popup.getElement();
+        const wrap = /** @type {HTMLElement | null} */ (root?.querySelector('.evento-popup:not(.evento-popup--edit)'));
+        if (!wrap) return;
+        const cid = String(p.id ?? '').trim();
+        if (String(p.source ?? '').trim() !== 'db_cierres' || !isCierreDbUuidLike(cid)) return;
+
+        wrap.querySelector('[data-admin="ci-del"]')?.addEventListener('click', async () => {
+          if (!confirm(`¿Borrar el cierre «${String(p.nombre ?? p.name ?? cid)}»?`)) return;
+          try {
+            await api.deleteCierre(cid);
+            closeCierreMapPopup();
+            await refreshFtthMoleculeOverlayIfFiltered();
+            setStatus('Cierre eliminado.');
+          } catch (err) {
+            setStatus(err?.message ? String(err.message) : String(err));
+          }
+        });
+
+        wrap.querySelector('[data-admin="ci-edit"]')?.addEventListener(
+          'click',
+          () => {
+            popup.setHTML(htmlCierreMapPopupEditForm(p, coordsWgs84));
+            bindCierrePopupEdit(popup, p, coordsWgs84);
+          },
+          { once: true }
+        );
+      }, 0);
+    };
+
+    /**
+     * @param {import('mapbox-gl').Popup} popup
+     * @param {Record<string, unknown>} p
+     * @param {string} coordsWgs84
+     */
+    function bindCierrePopupEdit(popup, p, coordsWgs84) {
+      window.setTimeout(() => {
+        const root = popup.getElement();
+        const wrap = /** @type {HTMLElement | null} */ (root?.querySelector('.evento-popup--edit'));
+        if (!wrap) return;
+        const cid = String(p.id ?? '').trim();
+
+        wrap.querySelector('[data-admin="ci-cancel"]')?.addEventListener(
+          'click',
+          () => {
+            popup.setHTML(htmlCierreMapPopup(p, coordsWgs84));
+            attachCierrePopupAdmin?.(popup, p, coordsWgs84);
+          },
+          { once: true }
+        );
+
+        wrap.querySelector('[data-admin="ci-save"]')?.addEventListener('click', async () => {
+          const val = (k) =>
+            /** @type {HTMLInputElement | HTMLTextAreaElement | null} */ (wrap.querySelector(`[data-f="${k}"]`));
+          const latEl = val('lat');
+          const lngEl = val('lng');
+          const lat = latEl?.value ? Number(latEl.value) : NaN;
+          const lng = lngEl?.value ? Number(lngEl.value) : NaN;
+          const distEl = val('dist_odf');
+          /** @type {Record<string, unknown>} */
+          const body = {
+            nombre: val('nombre')?.value?.trim(),
+            tipo: val('tipo')?.value?.trim(),
+            estado: val('estado')?.value?.trim(),
+            descripcion: val('desc')?.value?.trim(),
+            molecula_codigo: val('molecula_codigo')?.value?.trim(),
+            dist_odf: distEl?.value ? Number(distEl.value) : null
+          };
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            body.lat = lat;
+            body.lng = lng;
+          }
+          try {
+            await api.patchCierre(cid, body);
+            closeCierreMapPopup();
+            await refreshFtthMoleculeOverlayIfFiltered();
+            setStatus('Cierre actualizado.');
+          } catch (err) {
+            setStatus(err?.message ? String(err.message) : String(err));
+          }
+        });
+      }, 0);
+    }
+
+    const onEventoPinClick = (e) => {
+      const polyBusy = measurePolylineActive && !measurePolylineConfirmed;
+      if (editing || polyBusy) return;
+      const f = e.features?.[0];
+      if (!f?.properties) return;
+      const p = /** @type {Record<string, unknown>} */ (f.properties);
+      const descShort = String(p.descripcion ?? '').slice(0, 420);
+      setStatus(
+        `Evento #${p.id}: ${p.tipo_evento} · ${p.estado} · ${p.accion}. ${descShort}${descShort.length >= 420 ? '…' : ''}`
+      );
+      closeCierreMapPopup();
+      closeEventoMapPopup();
+      try {
+        const popup = new mapboxgl.Popup({
+          className: 'evento-popup-wrap',
+          offset: 14,
+          maxWidth: 'min(92vw, 340px)',
+          closeButton: true,
+          closeOnClick: true
+        })
+          .setLngLat(e.lngLat)
+          .setHTML(htmlEventoMapPopup(p))
+          .addTo(map);
+        eventoMapPopup = popup;
+        popup.on('close', () => {
+          if (eventoMapPopup === popup) eventoMapPopup = null;
+        });
+        attachEventoPopupAdmin?.(popup, p);
+      } catch (err) {
+        console.warn('Popup evento:', err);
+      }
+    };
+    const onEventoPinEnter = () => {
+      try {
+        map.getCanvas().style.cursor = 'pointer';
+      } catch {
+        /* */
+      }
+    };
+    const onEventoPinLeave = () => {
+      try {
+        map.getCanvas().style.cursor = '';
+      } catch {
+        /* */
+      }
+    };
+    for (const layerId of EVENTOS_REPORTE_INTERACTIVE_LAYER_IDS) {
+      map.on('click', layerId, onEventoPinClick);
+      map.on('mouseenter', layerId, onEventoPinEnter);
+      map.on('mouseleave', layerId, onEventoPinLeave);
+    }
+
+    routesLayer.ensureLayer();
+    moleculeOverlayLayer.ensureLayer();
+    otdrCutLayer.ensureLayer();
+    medidaEventoMarkerLayer.ensureLayer();
+    routesLayer.setCursorPointerOnHover();
+
+    const onOverlayCierreEnter = () => {
+      try {
+        map.getCanvas().style.cursor = 'pointer';
+      } catch {
+        /* */
+      }
+    };
+    const onOverlayCierreLeave = () => {
+      try {
+        map.getCanvas().style.cursor = '';
+      } catch {
+        /* */
+      }
+    };
+    const wireOverlayCierreHover = () => {
+      for (const layerId of MOLECULE_OVERLAY_INTERACTIVE_LAYER_IDS) {
+        if (!map.getLayer(layerId)) continue;
+        try {
+          map.off('mouseenter', layerId, onOverlayCierreEnter);
+          map.off('mouseleave', layerId, onOverlayCierreLeave);
+        } catch {
+          /* */
+        }
+        map.on('mouseenter', layerId, onOverlayCierreEnter);
+        map.on('mouseleave', layerId, onOverlayCierreLeave);
+      }
+    };
+    wireOverlayCierreHover();
+    map.once('idle', wireOverlayCierreHover);
+
+    try {
+      await reloadRoutes();
+    } catch (e) {
+      setStatus(`Error cargando rutas: ${e.message}`);
+      console.error(e);
+    }
+
+    centralesLayer.setCursorPointerOnHover();
+    centralesLayer.onCentralClick((e) => {
+      const polyBusy = measurePolylineActive && !measurePolylineConfirmed;
+      if (editing || polyBusy) return;
+      const ovCentral = queryMoleculeOverlayFeatureAtPoint(e.point);
+      if (
+        ovCentral?.properties &&
+        String(ovCentral.properties.ftth_overlay_kind ?? '').trim()
+      ) {
+        openCierreMapPopupFromFeature(ovCentral, e.lngLat);
+        return;
+      }
+      const f = e.features?.[0];
+      if (!f) return;
+      const nom = f.properties?.nombre ?? f.properties?.name ?? f.id;
+      setStatus(
+        appNetwork === 'corporativa' ? `Nodo de red: ${nom}` : `Central ETB: ${nom}`
+      );
+    });
+
+    /** Centrales encima de rutas; cierres/NAP encima; polilínea de medición; eventos y marcas OTDR por encima del trazo. */
+    const bumpCentrales = () => {
+      centralesLayer.bringToFront();
+      moleculeOverlayLayer.bringToFront();
+      bumpLayersAfterPolylineMeasure();
+    };
+    map.once('idle', bumpCentrales);
+    [0, 80, 250, 600].forEach((ms) => setTimeout(bumpCentrales, ms));
+
+    routesLayer.onLineClick((e) => {
+      const polyBusy = measurePolylineActive && !measurePolylineConfirmed;
+      if (editing || polyBusy) return;
+      const ovRoute = queryMoleculeOverlayFeatureAtPoint(e.point);
+      if (ovRoute?.properties && String(ovRoute.properties.ftth_overlay_kind ?? '').trim()) {
+        openCierreMapPopupFromFeature(ovRoute, e.lngLat);
+        return;
+      }
+      const f = e.features?.[0];
+      if (!f) return;
+      const geomEarly = /** @type {any} */ (f.geometry);
+
+      if (reporteCtl.handleRouteLinePick(e, f)) return;
+
+      if (otdrAwaitingCableClick) {
+        if (!selectedFeature || f.id !== selectedFeature.id) {
+          setStatus(
+            'Usa <strong>Fijar referencia</strong> sobre el mismo tendido ya seleccionado.'
+          );
+          return;
+        }
+        if (geomEarly?.type === 'LineString' && geomEarly.coordinates?.length >= 2) {
+          const clickLL = [e.lngLat.lng, e.lngLat.lat];
+          /** Misma geometría que en «Marcar corte» (evita desfase ref vs tendido si el clic devuelve coords distintas). */
+          const geomSel = /** @type {any} */ (selectedFeature.geometry);
+          const lineForOtdrRef =
+            geomSel?.type === 'LineString' && geomSel.coordinates?.length >= 2
+              ? /** @type {GeoJSON.LineString} */ (geomSel)
+              : /** @type {GeoJSON.LineString} */ (geomEarly);
+          otdrClickRefFromStartM = distanceFromStartAlongLineMeters(lineForOtdrRef, clickLL, turf);
+          const snapped = snapLngLatToLine(lineForOtdrRef, clickLL, turf);
+          otdrClickRefLngLat = /** @type {[number, number]} */ ([snapped[0], snapped[1]]);
+          medidaEventoMarkerLayer.ensureLayer();
+          medidaEventoMarkerLayer.setPoint(otdrClickRefLngLat);
+          medidaEventoMarkerLayer.bringToFront();
+          otdrCutLayer.bringToFront();
+          otdrAwaitingCableClick = false;
+          btnOtdrArmClick.classList.remove('active');
+          otdrClickStatus.textContent = `Referencia en tramo: ${fmtM(otdrClickRefFromStartM)} desde inicio (por tendido).`;
+          setStatus(
+            'Referencia fijada. Metros de fibra y sentido; luego <strong>Marcar corte</strong>.'
+          );
+          syncButtons();
+        }
+        return;
+      }
+
+      const prevId = selectedFeature?.id;
+      selectedFeature = /** @type {any} */ (f);
+      if (prevId != null && prevId !== f.id) {
+        clearOtdrMarkAndRef();
+      }
+      routesLayer.setSelected(f.id);
+      const geom = /** @type {any} */ (f.geometry);
+      let statusExtra = '';
+      if (geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
+        const nc = updateCentralMetricForCableClick(geom, e.lngLat);
+        if (nc) {
+          statusExtra =
+            appNetwork === 'corporativa'
+              ? ` · Nodo más cercano (aire): ${fmtM(nc.meters)} (${nc.nombre})`
+              : ` · Central más cercana (aire): ${fmtM(nc.meters)} (${nc.nombre})`;
+        } else if (!lastCentralesFc?.features?.length) {
+          statusExtra =
+            appNetwork === 'corporativa'
+              ? ' · Sin nodos en mapa para medir distancia.'
+              : ' · Sin centrales en mapa para medir distancia.';
+        }
+      } else {
+        clearCentralMetric();
+      }
+      setStatus(`Seleccionada: ${f.properties?.nombre ?? f.id}${statusExtra}`);
+      updateMetrics(geom, turf);
+      syncButtons();
+    });
+
+    map.on('click', (e) => {
+      if (editing) return;
+      const polyBusy = measurePolylineActive && !measurePolylineConfirmed;
+      if (!polyBusy) {
+        const ov = queryMoleculeOverlayFeatureAtPoint(e.point);
+        if (ov?.properties && String(ov.properties.ftth_overlay_kind ?? '').trim()) {
+          const routeUnder =
+            map.getLayer(ROUTES_LAYER_ID) != null
+              ? map.queryRenderedFeatures(e.point, { layers: [ROUTES_LAYER_ID] })
+              : [];
+          if (!routeUnder.length) {
+            openCierreMapPopupFromFeature(ov, e.lngLat);
+            return;
+          }
+        }
+      }
+      if (polyBusy) {
+        measurePolylineCoords.push([e.lngLat.lng, e.lngLat.lat]);
+        setMeasurePolylineData(map, measurePolylineCoords, turf);
+        bumpLayersAfterPolylineMeasure();
+        syncMeasurePolylinePanel();
+        syncMeasureFloatUi();
+        syncButtons();
+        return;
+      }
+    });
+  });
+
+  btnReload.addEventListener('click', async () => {
+    try {
+      await reloadRoutes();
+    } catch (e) {
+      setStatus(e.message);
+    }
+  });
+
+  document.querySelectorAll('input[name="otdr-ref"]').forEach((el) => {
+    el.addEventListener('change', () => {
+      updateOtdrClickPanelVisibility();
+      if (getOtdrRef() !== 'click') {
+        otdrAwaitingCableClick = false;
+        btnOtdrArmClick.classList.remove('active');
+        otdrClickRefFromStartM = null;
+        otdrClickRefLngLat = null;
+        otdrClickStatus.textContent = 'Referencia: —';
+      }
+      syncButtons();
+    });
+  });
+
+  btnOtdrArmClick.addEventListener('click', () => {
+    if (!selectedFeature || editing) return;
+    if (getOtdrRef() !== 'click') return;
+    if (otdrAwaitingCableClick) {
+      otdrAwaitingCableClick = false;
+      btnOtdrArmClick.classList.remove('active');
+      setStatus('Referencia por clic cancelada.');
+      syncButtons();
+      return;
+    }
+    reporteCtl?.cancelMapPickMode?.();
+    otdrAwaitingCableClick = true;
+    btnOtdrArmClick.classList.add('active');
+    setStatus('Clic en el tendido seleccionado para fijar referencia de trazado.');
+  });
+
+  btnOtdrMark.addEventListener('click', () => markOtdrCut());
+  btnOtdrClear.addEventListener('click', () => clearOtdrMapOverlay());
+
+  btnNewRoute.addEventListener('click', () => {
+    const raw = window.prompt(
+      'Nombre de la nueva ruta (troncal, tendido, etc.):',
+      `Ruta ${new Date().toISOString().slice(0, 10)}`
+    );
+    if (raw == null) {
+      setStatus('Creación cancelada.');
+      return;
+    }
+    const nombre = raw.trim().slice(0, 200);
+    if (!nombre) {
+      setStatus('Indica un nombre para la ruta.');
+      return;
+    }
+    isNewRoute = true;
+    newRouteNombre = nombre;
+    selectedFeature = null;
+    editing = true;
+    reporteCtl?.cancelMapPickMode?.();
+    clearOtdrMarkAndRef();
+    clearMeasureClickModes();
+    clearCentralMetric();
+    routesLayer.ensureLayer();
+    syncRoutesLineStyleMode();
+    moleculeOverlayLayer.ensureLayer();
+    moleculeOverlayLayer.clear();
+    routesLayer.setData({ type: 'FeatureCollection', features: [] });
+    routesLayer.setSelected(null);
+    routesLayer.setHiddenRouteId(null);
+    cableSearch?.reset();
+    editor.attach();
+    editor.startNewLineDrawing();
+    setStatus(
+      `Nueva ruta «${nombre}»: traza la línea en el mapa (doble clic para cerrar el trazo). Luego Guardar.`
+    );
+    syncButtons();
+  });
+
+  btnEdit.addEventListener('click', () => {
+    if (!selectedFeature) return;
+    isNewRoute = false;
+    newRouteNombre = '';
+    editing = true;
+    reporteCtl?.cancelMapPickMode?.();
+    clearOtdrMarkAndRef();
+    clearMeasureClickModes();
+    clearCentralMetric();
+    routesLayer.setHiddenRouteId(selectedFeature.id);
+    editor.attach();
+    editor.startEdit(selectedFeature);
+    setStatus('Modo edición: arrastra vértices, añade puntos (+ línea) o borra (papelera).');
+    syncButtons();
+  });
+
+  btnCancel.addEventListener('click', async () => {
+    editor.cancel();
+    routesLayer.setHiddenRouteId(null);
+    editing = false;
+    isNewRoute = false;
+    newRouteNombre = '';
+    try {
+      await reloadRoutes();
+    } catch (e) {
+      setStatus(e.message);
+    }
+    syncButtons();
+  });
+
+  btnSave.addEventListener('click', async () => {
+    if (!isNewRoute && !selectedFeature) return;
+    const geom = editor.getActiveLineGeometry();
+    if (!geom?.coordinates || geom.coordinates.length < 2) {
+      setStatus('Geometría inválida (mínimo 2 vértices).');
+      return;
+    }
+    try {
+      setStatus('Guardando…');
+      if (isNewRoute) {
+        await api.createRuta(newRouteNombre, geom);
+      } else {
+        const routeId = Number(selectedFeature.id);
+        if (!Number.isInteger(routeId) || routeId < 1) {
+          setStatus('La ruta no tiene un id numérico válido; recarga y selecciónala de nuevo.');
+          syncButtons();
+          return;
+        }
+        await api.updateRutaGeometry(routeId, geom);
+      }
+      editor.cancel();
+      routesLayer.setHiddenRouteId(null);
+      editing = false;
+      isNewRoute = false;
+      newRouteNombre = '';
+      await reloadRoutes();
+      setStatus('Guardado correctamente.');
+    } catch (e) {
+      setStatus(`Error al guardar: ${e.message}`);
+      console.error(e);
+    }
+    syncButtons();
+  });
+
+  measureFab.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (measureFab.disabled) return;
+    toggleMeasurePolylineMode();
+  });
+
+  measurePolyUndo.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (!measurePolylineActive) return;
+    if (measurePolylineConfirmed) {
+      measurePolylineConfirmed = false;
+      setMeasurePolylineCursor();
+      syncMeasurePolylinePanel();
+      syncMeasureFloatUi();
+      syncButtons();
+      return;
+    }
+    if (measurePolylineCoords.length === 0) return;
+    measurePolylineCoords.pop();
+    setMeasurePolylineData(map, measurePolylineCoords, turf);
+    bumpLayersAfterPolylineMeasure();
+    syncMeasurePolylinePanel();
+    syncButtons();
+  });
+
+  measurePolyConfirm.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (!measurePolylineActive || measurePolylineCoords.length < 2) return;
+    measurePolylineConfirmed = true;
+    const line = /** @type {GeoJSON.LineString} */ ({
+      type: 'LineString',
+      coordinates: measurePolylineCoords
+    });
+    const Lm = lineLengthMetersSafe(line, turf);
+    setStatus(
+      `Medición cerrada: ${fmtTotalHuman(Lm)} m (${fmtTotalHuman(lengthWithReserve20Pct(Lm))} m con +20 %). Papelera para borrar el trazo.`
+    );
+    setMeasurePolylineCursor();
+    syncMeasurePolylinePanel();
+    syncMeasureFloatUi();
+    syncButtons();
+  });
+
+  measurePolyTrash.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (!measurePolylineActive) return;
+    measurePolylineCoords = [];
+    measurePolylineConfirmed = false;
+    setMeasurePolylineData(map, measurePolylineCoords, turf);
+    bumpLayersAfterPolylineMeasure();
+    syncMeasurePolylinePanel();
+    setMeasurePolylineCursor();
+    syncMeasureFloatUi();
+    syncButtons();
+    setStatus('Trazo de medición borrado. Sigue en modo trazo: nuevos clics añaden vértices.');
+  });
+
+  measurePolyDock.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+  });
+
+  syncButtons();
+}
+
+boot().catch((e) => {
+  console.error(e);
+  const s = document.getElementById('status');
+  if (s) s.textContent = String(e.message || e);
+});

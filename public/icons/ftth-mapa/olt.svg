@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 32 40" width="32" height="40" xmlns="http://www.w3.org/2000/svg">
+  <!-- OLT — Equipo activo central -->
+  <path d="M16,2C10.48,2,6,6.48,6,12c0,7.5,10,18,10,18s10-10.5,10-18C26,6.48,21.52,2,16,2Z" fill="#F5C4B3" stroke="#993C1D" stroke-width="0.8"/>
+  <circle cx="16" cy="11" r="7" fill="white" opacity="0.93"/>
+  <rect x="11" y="6" width="10" height="2.3" rx="0.7" fill="#712B13" opacity="0.9"/>
+<rect x="11" y="9.2" width="10" height="2.3" rx="0.7" fill="#712B13" opacity="0.9"/>
+<rect x="11" y="12.4" width="10" height="2.3" rx="0.7" fill="#712B13" opacity="0.9"/>
+<circle cx="19.2" cy="7.15" r="0.85" fill="#F5C4B3"/>
+<circle cx="19.2" cy="10.35" r="0.85" fill="#F5C4B3"/>
+<circle cx="19.2" cy="13.5" r="0.85" fill="#F5C4B3"/>
+</svg>

@@ -1,0 +1,42 @@
+FTTH GIS — Editor de rutas (PostGIS + Express + Mapbox + mapbox-gl-draw + Turf)
+================================================================================
+
+1) Base de datos
+   - En PostgreSQL con PostGIS, ejecuta: sql/01_rutas.sql (base ej. ftth_local).
+
+2) Variables de entorno
+   - Copia .env.example a .env
+   - Ajusta DATABASE_URL o PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD
+
+3) Token Mapbox (frontend)
+   - Edita public/js/config.local.js (ya existe en el proyecto como plantilla local)
+   - Pon MAPBOX_ACCESS_TOKEN con tu token público de Mapbox (pk.eyJ...)
+   - Si ves 404 a /js/config.local.js, guarda el archivo en esa ruta exacta.
+
+3b) Si /api/rutas devuelve 500
+   - Abre en el navegador: http://127.0.0.1:3000/api/db-check
+   - rutas_table false → ejecuta sql/01_rutas.sql en tu base.
+   - error de conexión → revisa .env (DATABASE_URL o PGHOST/PGUSER/PGPASSWORD).
+   - Mira la consola donde corre "npm start": ahí sale el error completo de PostgreSQL.
+
+4) Instalar y arrancar
+   cd C:\Users\ASUS\Desktop\SQL\ftth-gis-app
+   npm install
+   npm start
+   Abre http://127.0.0.1:3000/
+
+5) API
+   GET  /api/rutas          → FeatureCollection GeoJSON
+   GET  /api/rutas/:id      → Feature
+   PUT  /api/rutas/:id      → body: { "geometry": { "type":"LineString", "coordinates":[...] } }
+
+6) Flujo en el mapa
+   - Clic en una ruta (capa línea) → selección y métricas
+   - Editar ruta → mapbox-gl-draw en modo direct_select (vértices, puntos medios, papelera)
+   - Guardar → PUT con la geometría actual de Draw
+   - Cancelar → recarga desde el servidor
+   - Medir desde inicio → clic en mapa (Turf): distancia a lo largo de la troncal hasta el punto
+
+Archivos principales:
+  server/index.js, server/rutasRouter.js, server/rutasRepo.js
+  public/index.html, public/js/app.js, public/js/routesLayer.js, public/js/routeDrawEditor.js

@@ -1,0 +1,153 @@
+const SOURCE_ID = 'rutas-source';
+const LAYER_ID = 'rutas-layer';
+
+/** Tendidos FTTH (no seleccionados): azul oscuro. */
+const FTTH_LINE_COLOR = '#1e40af';
+
+/** Color/grosor con resaltado del tendido seleccionado (clic o buscador). */
+const PAINT_COLOR_WITH_SELECTION = [
+  'case',
+  ['boolean', ['feature-state', 'selected'], false],
+  [
+    'match',
+    ['get', 'red_tipo'],
+    'corporativa',
+    '#f0abfc',
+    '#22d3ee'
+  ],
+  ['match', ['get', 'red_tipo'], 'corporativa', '#a78bfa', FTTH_LINE_COLOR]
+];
+
+const PAINT_WIDTH_WITH_SELECTION = [
+  'case',
+  ['boolean', ['feature-state', 'selected'], false],
+  8,
+  5
+];
+
+/** Misma apariencia para todos los tendidos (p. ej. varios cables de una molécula). */
+const PAINT_COLOR_UNIFORM = ['match', ['get', 'red_tipo'], 'corporativa', '#a78bfa', FTTH_LINE_COLOR];
+
+const PAINT_WIDTH_UNIFORM = 5;
+
+export class RoutesLayer {
+  /**
+   * @param {import('mapbox-gl').Map} map
+   */
+  constructor(map) {
+    this.map = map;
+    this.sourceId = SOURCE_ID;
+    this.layerId = LAYER_ID;
+    /** @type {string|number|null} */
+    this.selectedId = null;
+    /** @type {'normal' | 'uniform'} */
+    this._lineStyleMode = 'normal';
+  }
+
+  /**
+   * `normal`: el seleccionado más grueso y con color de resaltado.
+   * `uniform`: todos igual (mismo color y grosor por red_tipo).
+   * @param {'normal' | 'uniform'} mode
+   */
+  setLineStyleMode(mode) {
+    this._lineStyleMode = mode === 'uniform' ? 'uniform' : 'normal';
+    this._syncLinePaint();
+  }
+
+  _syncLinePaint() {
+    if (!this.map.getLayer(this.layerId)) return;
+    if (this._lineStyleMode === 'uniform') {
+      this.map.setPaintProperty(this.layerId, 'line-color', PAINT_COLOR_UNIFORM);
+      this.map.setPaintProperty(this.layerId, 'line-width', PAINT_WIDTH_UNIFORM);
+    } else {
+      this.map.setPaintProperty(this.layerId, 'line-color', PAINT_COLOR_WITH_SELECTION);
+      this.map.setPaintProperty(this.layerId, 'line-width', PAINT_WIDTH_WITH_SELECTION);
+    }
+  }
+
+  ensureLayer() {
+    if (this.map.getSource(this.sourceId)) return;
+
+    this.map.addSource(this.sourceId, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+
+    this.map.addLayer({
+      id: this.layerId,
+      type: 'line',
+      source: this.sourceId,
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': PAINT_COLOR_WITH_SELECTION,
+        'line-width': PAINT_WIDTH_WITH_SELECTION,
+        'line-opacity': 0.95
+      }
+    });
+    this._syncLinePaint();
+  }
+
+  /** @param {GeoJSON.FeatureCollection} fc */
+  setData(fc) {
+    this.ensureLayer();
+    this.map.getSource(this.sourceId).setData(fc);
+  }
+
+  /**
+   * Resalta una ruta por id (numérico o string).
+   * @param {string|number|null} id
+   */
+  setSelected(id) {
+    this.ensureLayer();
+    if (this.selectedId != null) {
+      this.map.setFeatureState(
+        { source: this.sourceId, id: this.selectedId },
+        { selected: false }
+      );
+    }
+    this.selectedId = id;
+    if (id != null) {
+      this.map.setFeatureState({ source: this.sourceId, id }, { selected: true });
+    }
+  }
+
+  /**
+   * Oculta una ruta en la capa base mientras se edita en Draw (evita duplicado visual).
+   * @param {string|number|null} id
+   */
+  setHiddenRouteId(id) {
+    this.ensureLayer();
+    if (id == null) {
+      this.map.setFilter(this.layerId, null);
+      return;
+    }
+    this.map.setFilter(this.layerId, [
+      '!=',
+      ['to-string', ['id']],
+      String(id)
+    ]);
+  }
+
+  /** @param {(e: mapboxgl.MapLayerMouseEvent) => void} handler */
+  onLineClick(handler) {
+    this.map.on('click', this.layerId, handler);
+  }
+
+  offLineClick(handler) {
+    this.map.off('click', this.layerId, handler);
+  }
+
+  setCursorPointerOnHover() {
+    this.map.on('mouseenter', this.layerId, () => {
+      this.map.getCanvas().style.cursor = 'pointer';
+    });
+    this.map.on('mouseleave', this.layerId, () => {
+      this.map.getCanvas().style.cursor = '';
+    });
+  }
+}
+
+export { LAYER_ID as ROUTES_LAYER_ID };
