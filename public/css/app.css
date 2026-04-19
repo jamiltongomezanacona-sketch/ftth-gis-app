@@ -3244,6 +3244,22 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
 }
 
 /*
+ * Móvil: este bloque va *después* del @media ≤900px en el archivo; sin anularlo, grid-row:3
+ * gana en cascada y el mapa queda en una fila implícita inferior con la fila 1fr vacía (franja oscura).
+ */
+@media (max-width: 900px) {
+  body.editor-body #layout > #map-wrap {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 100svh;
+    min-height: 100dvh;
+    max-height: 100svh;
+    max-height: 100dvh;
+    height: 100%;
+  }
+}
+
+/*
  * Buscador absolute + mapa: el mapa debe crecer en flex (min-height:0 evita mínimo de contenido enorme).
  */
 #map {
