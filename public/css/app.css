@@ -3082,8 +3082,9 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
     filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.48));
   }
 
-  .editor-chrome {
-    flex-wrap: wrap;
+  body.editor-body .editor-chrome {
+    flex-wrap: nowrap;
+    align-items: center;
     height: auto;
     min-height: calc(var(--editor-chrome-h) + env(safe-area-inset-top, 0px));
     padding-top: env(safe-area-inset-top, 0px);
@@ -3093,14 +3094,23 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
     gap: 8px;
   }
 
-  .editor-chrome-search-slot {
-    order: 3;
-    flex: 1 1 100%;
+  /* Una sola fila: menú | buscador (ancho acotado) | casita */
+  body.editor-body .editor-chrome-search-slot {
+    order: 0;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: min(300px, calc(100vw - 108px));
+    justify-content: center;
+  }
+
+  body.editor-body .cable-search-mount--chrome {
+    width: 100%;
     max-width: 100%;
   }
 
-  .cable-search-mount--chrome {
-    max-width: 100%;
+  /* Altura útil del chrome (input 16px + píldora) para no solapar FAB del mapa */
+  body.editor-body #layout {
+    --editor-chrome-stack: calc(env(safe-area-inset-top, 0px) + 10px + 48px + 8px);
   }
 
   .cable-search-mount.cable-search-mount--chrome .cable-search-col .cable-search-listbox {
@@ -3119,10 +3129,10 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
     font-size: 16px;
   }
 
-  /* Segunda fila (buscador ancho): más margen para no quedar bajo la casita */
+  /* Chrome en una fila: los FAB del mapa van justo bajo la barra */
   body.editor-body #map .mapboxgl-ctrl-top-right {
     --map-fab-size: 38px;
-    margin: calc(var(--editor-chrome-stack) + 46px) max(12px, env(safe-area-inset-right, 0px)) 0 0;
+    margin: calc(var(--editor-chrome-stack) + 10px) max(12px, env(safe-area-inset-right, 0px)) 0 0;
   }
 }
 
@@ -5485,10 +5495,17 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
 /* Editor móvil: UI más sobria (menos «neon» / menos sombra dura), alineada con mapas actuales. */
 @media (max-width: 900px) {
   body.editor-body .editor-chrome {
+    flex-wrap: nowrap;
+    align-items: center;
     gap: 6px;
     padding-bottom: 6px;
     padding-left: max(8px, env(safe-area-inset-left, 0px));
     padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+
+  body.editor-body .editor-chrome-search-slot {
+    flex: 0 1 auto;
+    max-width: min(300px, calc(100vw - 108px));
   }
 
   body.editor-body .editor-chrome-toggle,
@@ -5644,7 +5661,7 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
   body.editor-body #map .mapboxgl-ctrl-top-right {
     --map-fab-size: 34px;
     --map-fab-gap: 6px;
-    margin: calc(var(--editor-chrome-stack) + 42px) max(10px, env(safe-area-inset-right, 0px)) 0 0;
+    margin: calc(var(--editor-chrome-stack) + 10px) max(10px, env(safe-area-inset-right, 0px)) 0 0;
   }
 
   body.editor-body #map .map-widget-stack--arcgis {
