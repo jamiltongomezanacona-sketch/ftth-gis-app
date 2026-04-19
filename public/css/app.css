@@ -565,7 +565,7 @@ body.auth-pending.analitica-body .analitica-app {
 
 /* Editor: altura lógica bajo hamburguesa + buscador + casita (sin franja de barra) */
 body.editor-body #layout {
-  --editor-chrome-stack: calc(env(safe-area-inset-top, 0px) + 12px + 44px + 10px);
+  --editor-chrome-stack: calc(env(safe-area-inset-top, 0px) + 12px + 40px + 10px);
 }
 
 /* Barra superior (referencia FlashFiber: hamburguesa + título) */
@@ -596,10 +596,10 @@ body.editor-body #layout {
 }
 
 .editor-chrome-toggle {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  border-radius: 11px;
+  border-radius: 10px;
   border: 1px solid rgba(56, 189, 248, 0.35);
   background: rgba(15, 23, 42, 0.85);
   box-shadow:
@@ -3121,8 +3121,8 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
 
   /* Segunda fila (buscador ancho): más margen para no quedar bajo la casita */
   body.editor-body #map .mapboxgl-ctrl-top-right {
-    --map-fab-size: 48px;
-    margin: calc(var(--editor-chrome-stack) + 52px) max(12px, env(safe-area-inset-right, 0px)) 0 0;
+    --map-fab-size: 38px;
+    margin: calc(var(--editor-chrome-stack) + 46px) max(12px, env(safe-area-inset-right, 0px)) 0 0;
   }
 }
 
@@ -3219,14 +3219,14 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
 /* Entrada táctil gruesa: botones de cabecera más fáciles de pulsar */
 @media (pointer: coarse) {
   .editor-chrome-toggle {
-    width: var(--touch-target-min);
-    height: var(--touch-target-min);
+    width: 40px;
+    height: 40px;
     touch-action: manipulation;
   }
 
   .editor-chrome-home {
-    width: var(--touch-target-min);
-    height: var(--touch-target-min);
+    width: 42px;
+    height: 42px;
     touch-action: manipulation;
   }
 }
@@ -3310,25 +3310,26 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
  * La pila ArcGIS por defecto es blanca; aquí se alinea a .editor-chrome-home.
  */
 body.editor-body #map .mapboxgl-ctrl-top-right {
-  --map-fab-size: 48px;
-  margin: calc(var(--editor-chrome-stack) + 8px) 14px 0 0;
+  --map-fab-size: 38px;
+  --map-fab-gap: 8px;
+  margin: calc(var(--editor-chrome-stack) + 8px) 12px 0 0;
 }
 
 /* Icono GPS y regla: un poco más grandes que el FAB base (32px / 42px). */
 body.editor-body #map .mapboxgl-ctrl-top-right button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-  background-size: 26px 26px !important;
+  background-size: 22px 22px !important;
 }
 
 body.editor-body #map .measure-fab-ico {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
 }
 
 body.editor-body #map .map-widget-stack--arcgis {
-  width: var(--map-fab-size, 48px);
+  width: var(--map-fab-size, 38px);
   background: rgba(15, 23, 42, 0.82);
   border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.4),
     0 6px 22px rgba(0, 0, 0, 0.45),
@@ -3364,7 +3365,7 @@ body.editor-body #map .map-widget-stack--arcgis .map-fab-row--navigate .mapboxgl
 }
 
 body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-  background-size: 28px 28px !important;
+  background-size: 24px 24px !important;
   filter: none !important;
   opacity: 0.95 !important;
 }
@@ -5319,8 +5320,8 @@ body.editor-body .editor-chrome-toggle:focus-visible {
 }
 
 body.editor-body .editor-chrome-home {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-color: rgba(148, 163, 184, 0.35);
   background: rgba(15, 23, 42, 0.82);
   box-shadow:
@@ -5341,8 +5342,8 @@ body.editor-body .editor-chrome-home:hover {
 }
 
 body.editor-body .editor-chrome-home-img {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
 }
 
 /* Buscador flotante en chrome: sombra fuerte; la píldora clara va más abajo */
