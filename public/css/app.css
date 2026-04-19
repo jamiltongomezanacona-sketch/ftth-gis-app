@@ -6509,6 +6509,121 @@ body.editor-body .evento-popup-wrap .mapboxgl-popup-close-button:hover {
   color: #1d4ed8;
 }
 
+/* Ficha cierre/evento: más compacta en móvil (menos ancho de etiquetas, tipos y paddings). */
+@media (max-width: 900px) {
+  .evento-popup-wrap.mapboxgl-popup {
+    max-width: min(calc(100vw - 20px), 288px) !important;
+  }
+
+  .evento-popup-wrap .mapboxgl-popup-content {
+    max-height: min(52vh, 320px);
+    border-radius: 12px;
+  }
+
+  .evento-popup-wrap .mapboxgl-popup-close-button {
+    width: 28px;
+    height: 28px;
+    font-size: 15px;
+    line-height: 28px;
+  }
+
+  .evento-popup {
+    padding: 10px 11px 12px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .evento-popup__title {
+    font-size: 0.88rem;
+    margin: 0 26px 8px 0;
+    padding-bottom: 8px;
+  }
+
+  .evento-popup__grid {
+    grid-template-columns: minmax(68px, 30%) 1fr;
+    column-gap: 6px;
+    border-radius: 8px;
+  }
+
+  .evento-popup__grid dt {
+    padding: 5px 7px 5px 8px;
+    font-size: 0.55rem;
+    letter-spacing: 0.06em;
+  }
+
+  .evento-popup__grid dd {
+    padding: 5px 8px 5px 6px;
+    font-size: 0.7rem;
+    gap: 4px;
+  }
+
+  .evento-popup__value--mono {
+    font-size: 0.65rem;
+  }
+
+  .evento-popup__value--tendido {
+    font-size: 0.72rem;
+  }
+
+  .evento-popup__pill {
+    padding: 2px 7px;
+    font-size: 0.62rem;
+  }
+
+  .evento-popup__desc {
+    margin-top: 10px;
+    padding: 8px 9px 7px;
+    border-radius: 8px;
+  }
+
+  .evento-popup__desc-label {
+    font-size: 0.55rem;
+    margin-bottom: 4px;
+  }
+
+  .evento-popup__desc-text {
+    font-size: 0.72rem;
+    line-height: 1.42;
+  }
+
+  .evento-popup__actions {
+    margin-top: 8px;
+    padding-top: 8px;
+    gap: 6px;
+  }
+
+  .evento-popup__btn {
+    padding: 5px 9px;
+    font-size: 0.72rem;
+    border-radius: 7px;
+  }
+
+  .evento-popup__hint {
+    margin: 6px 0 0;
+    font-size: 0.68rem;
+  }
+
+  .evento-popup--edit .evento-popup__edit-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .evento-popup--edit .evento-popup__edit-lab {
+    font-size: 0.65rem;
+    margin-bottom: 3px;
+  }
+
+  .evento-popup--edit .evento-popup__edit-ctl {
+    padding: 6px 8px;
+    font-size: 0.78rem;
+  }
+
+  .evento-popup--edit textarea.evento-popup__edit-ctl {
+    min-height: 72px;
+  }
+}
+
 @media (min-width: 901px) {
   body.editor-body #sidebar {
     border: none;

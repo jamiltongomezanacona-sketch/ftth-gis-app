@@ -874,8 +874,8 @@ export async function boot() {
     try {
       const popup = new mapboxgl.Popup({
         className: 'evento-popup-wrap',
-        offset: 14,
-        maxWidth: 'min(92vw, 360px)',
+        offset: 12,
+        maxWidth: window.matchMedia('(max-width: 900px)').matches ? 'min(calc(100vw - 20px), 288px)' : 'min(92vw, 360px)',
         closeButton: true,
         closeOnClick: true
       })
@@ -2463,8 +2463,8 @@ export async function boot() {
       try {
         const popup = new mapboxgl.Popup({
           className: 'evento-popup-wrap',
-          offset: 14,
-          maxWidth: 'min(92vw, 340px)',
+          offset: 12,
+          maxWidth: window.matchMedia('(max-width: 900px)').matches ? 'min(calc(100vw - 20px), 288px)' : 'min(92vw, 340px)',
           closeButton: true,
           closeOnClick: true
         })
