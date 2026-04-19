@@ -4411,6 +4411,11 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   #layout.sidebar-collapsed {
     --sidebar-w: 0px;
   }
+
+  /* Editor móvil: enlaces duplicados del pie (inicio ya está en el chrome). */
+  body.editor-body .foot-hint {
+    display: none;
+  }
 }
 
 @media (max-width: 520px) {
