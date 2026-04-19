@@ -117,6 +117,34 @@ const CIERRE_POPUP_LAYOUT_KEYS = new Set([
 /** Ficha cierre (solo lectura): no mostrar estas claves (siguen en `p` para admin/API). */
 const CIERRE_POPUP_OMIT_KEYS = new Set(['tipo', 'molecula_codigo', 'molecula_id', 'id', 'source']);
 
+/** Claves alternativas a `dist_odf` en GeoJSON / export (una sola fila «Dist. ODF» en la ficha). */
+const CIERRE_DIST_ODF_ALIAS_KEYS = [
+  'dist_odf',
+  'dist_odf_m',
+  'distancia_odf',
+  'distancia_odf_m',
+  'DIST_ODF',
+  'metros_odf',
+  'metros_odf_m',
+  'metraje_odf',
+  'metraje_odf_m',
+  'odf_m',
+  'distOdf'
+];
+
+/**
+ * @param {Record<string, unknown>} p
+ * @returns {number | null}
+ */
+function pickDistOdfMetersFromProps(p) {
+  for (const k of CIERRE_DIST_ODF_ALIAS_KEYS) {
+    if (!(k in p) || p[k] == null || String(p[k]).trim() === '') continue;
+    const d = Number(String(p[k]).replace(',', '.'));
+    if (Number.isFinite(d) && d >= 0) return d;
+  }
+  return null;
+}
+
 /** Misma regla que `server/cierresRepo.js` (`isUuidString`). */
 const CIERRE_DB_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -183,6 +211,8 @@ function htmlCierreMapPopup(p, coordsWgs84) {
               : kind || 'Punto';
 
   const preferred = ['estado', 'dist_odf', 'usuario_id', 'created_at', 'lat', 'lng'];
+  const distM = pickDistOdfMetersFromProps(p);
+  const isE1E2 = kind === 'cierre_e1' || kind === 'cierre_e2';
 
   /** @type {string[]} */
   const chunks = [];
@@ -195,14 +225,29 @@ function htmlCierreMapPopup(p, coordsWgs84) {
     pushRow('Nombre', `<span class="evento-popup__value evento-popup__value--tendido">${escapeHtml(nombre)}</span>`);
   }
 
-  for (const key of preferred) {
-    if (!(key in p) || p[key] == null || String(p[key]).trim() === '') continue;
-    let raw = p[key];
-    if (key === 'created_at') raw = formatEventoFechaEs(raw);
-    const val = escapeHtml(String(raw));
-    const mono =
-      key === 'usuario_id' || key === 'dist_odf' ? ' evento-popup__value--mono' : '';
-    pushRow(labelCierreProp(key), `<span class="evento-popup__value${mono}">${val}</span>`);
+  if (isE1E2) {
+    const distHtml =
+      distM != null
+        ? `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(String(distM))}</span>`
+        : `<span class="evento-popup__value evento-popup__value--mono">—</span>`;
+    pushRow('Dist. ODF (m)', distHtml);
+  } else {
+    for (const key of preferred) {
+      if (key === 'dist_odf') {
+        if (distM == null) continue;
+        pushRow(
+          labelCierreProp('dist_odf'),
+          `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(String(distM))}</span>`
+        );
+        continue;
+      }
+      if (!(key in p) || p[key] == null || String(p[key]).trim() === '') continue;
+      let raw = p[key];
+      if (key === 'created_at') raw = formatEventoFechaEs(raw);
+      const val = escapeHtml(String(raw));
+      const mono = key === 'usuario_id' ? ' evento-popup__value--mono' : '';
+      pushRow(labelCierreProp(key), `<span class="evento-popup__value${mono}">${val}</span>`);
+    }
   }
 
   pushRow(
@@ -215,26 +260,29 @@ function htmlCierreMapPopup(p, coordsWgs84) {
     'name',
     ...preferred,
     ...CIERRE_POPUP_LAYOUT_KEYS,
-    ...CIERRE_POPUP_OMIT_KEYS
+    ...CIERRE_POPUP_OMIT_KEYS,
+    ...CIERRE_DIST_ODF_ALIAS_KEYS
   ]);
-  const restKeys = Object.keys(p)
-    .filter((k) => !used.has(k) && k !== 'descripcion' && !CIERRE_POPUP_OMIT_KEYS.has(k))
-    .sort((a, b) => a.localeCompare(b, 'es'));
-  for (const key of restKeys) {
-    const v = p[key];
-    if (v == null || v === '') continue;
-    let s = typeof v === 'object' ? JSON.stringify(v) : String(v);
-    if (s.length > 280) s = `${s.slice(0, 280)}…`;
-    pushRow(labelCierreProp(key), `<span class="evento-popup__value">${escapeHtml(s)}</span>`);
-  }
+  if (!isE1E2) {
+    const restKeys = Object.keys(p)
+      .filter((k) => !used.has(k) && k !== 'descripcion' && !CIERRE_POPUP_OMIT_KEYS.has(k))
+      .sort((a, b) => a.localeCompare(b, 'es'));
+    for (const key of restKeys) {
+      const v = p[key];
+      if (v == null || v === '') continue;
+      let s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      if (s.length > 280) s = `${s.slice(0, 280)}…`;
+      pushRow(labelCierreProp(key), `<span class="evento-popup__value">${escapeHtml(s)}</span>`);
+    }
 
-  const lo = p.ftth_orig_lon != null ? Number(p.ftth_orig_lon) : NaN;
-  const la = p.ftth_orig_lat != null ? Number(p.ftth_orig_lat) : NaN;
-  if (Number.isFinite(lo) && Number.isFinite(la)) {
-    pushRow(
-      'Coord. inventario',
-      `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(`${lo.toFixed(6)}, ${la.toFixed(6)}`)}</span>`
-    );
+    const lo = p.ftth_orig_lon != null ? Number(p.ftth_orig_lon) : NaN;
+    const la = p.ftth_orig_lat != null ? Number(p.ftth_orig_lat) : NaN;
+    if (Number.isFinite(lo) && Number.isFinite(la)) {
+      pushRow(
+        'Coord. inventario',
+        `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(`${lo.toFixed(6)}, ${la.toFixed(6)}`)}</span>`
+      );
+    }
   }
 
   const desc = escapeHtml(String(p.descripcion ?? '').trim());
