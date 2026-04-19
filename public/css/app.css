@@ -3174,23 +3174,23 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
     grid-row: 1;
     align-self: start;
     justify-self: start;
-    width: min(276px, calc(100vw - 16px));
-    max-width: min(276px, calc(100vw - 16px));
+    width: min(248px, calc(100vw - 14px));
+    max-width: min(248px, calc(100vw - 14px));
     margin-top: calc(var(--editor-chrome-stack, 80px) + 6px);
     margin-left: max(8px, env(safe-area-inset-left, 0px));
     margin-right: 0;
     margin-bottom: max(8px, env(safe-area-inset-bottom, 0px));
     z-index: 560;
-    max-height: min(52dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 16px), 440px);
+    max-height: min(46dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 14px), 380px);
     height: auto;
     min-height: 0;
-    border-radius: 0 16px 16px 0;
+    border-radius: 0 14px 14px 0;
     border: 1px solid rgba(148, 163, 184, 0.14);
     border-left: 1px solid rgba(15, 23, 42, 0.35);
-    padding-top: 8px;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    padding-top: 7px;
+    padding-left: 9px;
+    padding-right: 9px;
+    padding-bottom: max(9px, env(safe-area-inset-bottom, 0px));
     box-shadow:
       4px 0 24px rgba(0, 0, 0, 0.24),
       0 0 0 1px rgba(0, 0, 0, 0.1);
@@ -3223,7 +3223,7 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
   }
 
   #layout:not(.sidebar-collapsed) #sidebar {
-    max-height: min(56dvh, calc(100dvh - var(--editor-chrome-stack) - 16px), 520px);
+    max-height: min(50dvh, calc(100dvh - var(--editor-chrome-stack) - 14px), 440px);
   }
 }
 
@@ -5720,12 +5720,12 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
   }
 
   body.editor-body #sidebar .sidebar-group {
-    gap: 10px;
+    gap: 8px;
   }
 
   body.editor-body #sidebar .panel-block {
-    padding: 11px 12px;
-    border-radius: 14px;
+    padding: 9px 10px;
+    border-radius: 12px;
     border: 1px solid rgba(148, 163, 184, 0.14);
     background: linear-gradient(180deg, rgba(248, 250, 252, 0.99) 0%, rgba(241, 245, 249, 0.96) 100%);
     box-shadow:
