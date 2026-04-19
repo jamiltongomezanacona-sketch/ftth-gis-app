@@ -846,6 +846,7 @@ body.editor-body #sidebar {
   padding-right: 2px;
   scrollbar-gutter: stable;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 #sidebar::before {
@@ -3072,10 +3073,6 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
     min-height: 0;
   }
 
-  body.editor-body #sidebar {
-    padding-top: max(16px, calc(var(--editor-chrome-stack) - 8px));
-  }
-
   .cable-search-mount:not(.cable-search-mount--chrome) {
     left: max(12px, env(safe-area-inset-left, 0px));
     right: max(12px, env(safe-area-inset-right, 0px));
@@ -3106,6 +3103,10 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
     max-width: 100%;
   }
 
+  .cable-search-mount.cable-search-mount--chrome .cable-search-col .cable-search-listbox {
+    max-height: min(280px, 45dvh);
+  }
+
   .cable-search {
     border-radius: 999px;
     padding: 4px 10px 4px 8px;
@@ -3118,10 +3119,6 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
     font-size: 16px;
   }
 
-  #map-wrap {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
   /* Segunda fila (buscador ancho): más margen para no quedar bajo la casita */
   body.editor-body #map .mapboxgl-ctrl-top-right {
     --map-fab-size: 48px;
@@ -3130,61 +3127,66 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
 }
 
 /*
- * Móvil / tablet (≤900px): una sola zona bajo la barra = mapa a pantalla completa;
- * el panel de herramientas se superpone abajo (hoja inferior con scroll), no tres franjas que compiten.
+ * Móvil (≤900px): chrome flota (absolute global); #layout = 1 fila × 1 columna.
+ * Mapa + panel comparten la misma celda a altura 100%: mapa detrás (DOM), hoja inferior con scroll.
  */
 @media (max-width: 900px) {
   #layout {
+    display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: 1fr;
+    height: 100%;
     min-height: 0;
+    position: relative;
   }
 
   .editor-chrome {
     grid-column: 1;
     grid-row: 1;
+    align-self: start;
+    justify-self: stretch;
+    z-index: 580;
   }
 
   #map-wrap {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 1;
     min-height: 0;
     height: 100%;
     max-height: none;
-    /* Mapa usable aunque el panel esté abierto (el panel es capa encima del borde inferior) */
-    min-height: calc(100dvh - var(--editor-chrome-stack, 72px) - env(safe-area-inset-bottom, 0px));
+    min-height: 100dvh;
+    max-height: 100dvh;
     z-index: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   #layout:not(.sidebar-collapsed) #sidebar {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 1;
     align-self: end;
     justify-self: stretch;
     width: 100%;
     max-width: none;
     margin: 0;
     z-index: 560;
-    max-height: min(58dvh, 500px);
+    max-height: min(62dvh, 540px);
     height: auto;
     border-radius: 20px 20px 0 0;
     border-bottom: none;
     border-right: none;
-    padding-top: 10px;
-    padding-left: max(14px, env(safe-area-inset-left, 0px));
-    padding-right: max(14px, env(safe-area-inset-right, 0px));
+    padding-top: 12px;
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
     box-shadow:
       0 -18px 56px rgba(0, 0, 0, 0.55),
       0 -1px 0 rgba(56, 189, 248, 0.15);
   }
 
-  /* Quitar compensación pensada para el panel «encima» del mapa en flujo vertical */
   body.editor-body #sidebar {
-    padding-top: 10px;
+    padding-top: 0;
   }
 
-  /* Indicador visual de que el panel es deslizable */
   #layout:not(.sidebar-collapsed) #sidebar::before {
     height: 4px;
     width: 40px;
@@ -3219,11 +3221,13 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
   .editor-chrome-toggle {
     width: var(--touch-target-min);
     height: var(--touch-target-min);
+    touch-action: manipulation;
   }
 
   .editor-chrome-home {
     width: var(--touch-target-min);
     height: var(--touch-target-min);
+    touch-action: manipulation;
   }
 }
 
@@ -4381,6 +4385,29 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   }
 }
 
+@media (max-width: 520px) {
+  body.editor-body .foot-hint {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  body.editor-body .foot-hint .foot-sep {
+    display: none;
+  }
+
+  .panel-otdr .otdr-actions {
+    flex-direction: column;
+  }
+
+  .panel-otdr .otdr-btn {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 /* ——— Panel principal (/) ——— */
 body.home-body {
   min-height: 100%;
@@ -4593,6 +4620,36 @@ body.home-body {
   box-shadow: var(--hover-glow-mix);
 }
 
+@media (max-width: 640px) {
+  .home-shell {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .home-brand {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .home-title {
+    font-size: 1.35rem;
+  }
+
+  .home-sub {
+    max-width: none;
+    font-size: 0.88rem;
+  }
+
+  .home-grid {
+    gap: 14px;
+  }
+
+  .home-card {
+    padding: 18px 16px;
+  }
+}
+
 /* ——— Analítica ——— */
 .analitica-shell {
   max-width: 900px;
@@ -4611,6 +4668,37 @@ body.home-body {
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+}
+
+@media (max-width: 720px) {
+  .analitica-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .analitica-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .analitica-topbar-brand {
+    width: 100%;
+  }
+
+  .analitica-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .analitica-actions .primary,
+  .analitica-actions .home-link-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    min-height: 44px;
+  }
 }
 
 .analitica-status {
@@ -5129,6 +5217,7 @@ body.analitica-body--dashboard {
    Las variables --hub-* del body siguen claras para el buscador; #sidebar las redefine.
    ============================================================================= */
 body.editor-body {
+  -webkit-tap-highlight-color: transparent;
   --hub-surface: #ffffff;
   --hub-surface-2: #f8fafc;
   --hub-surface-3: #f1f5f9;

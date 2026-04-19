@@ -78,6 +78,46 @@
         <img class="editor-chrome-home-img" src="/icons/ui/home.svg" width="26" height="26" alt="" decoding="async" />
       </a>
     </header>
+    <div id="map-wrap">
+      <!-- Mapa antes del sidebar en el DOM: capa base en móvil; medición encima del lienzo WebGL. -->
+      <div id="map"></div>
+      <div class="map-fab-row map-fab-row--measure" id="map-fab-row-measure">
+        <span class="map-fab-label">MEDIR</span>
+        <div class="measure-fab-dock" id="measure-fab-dock">
+        <div class="mapboxgl-ctrl-group measure-fab-mapbox-group" role="group" aria-label="Medición en mapa">
+          <button
+            type="button"
+            id="measure-fab"
+            class="measure-fab"
+            aria-pressed="false"
+            aria-label="Iniciar o detener medición por trazo libre en el mapa"
+            title="Medición por trazo libre · distancia y +20 % reserva fibra (clic para activar o desactivar)"
+          >
+            <svg class="measure-fab-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M5 19L19 5"
+                fill="none"
+                stroke="#38bdf8"
+                stroke-width="1.85"
+                stroke-linecap="round"
+              />
+              <path
+                d="M6.5 17.5l.9-.9M8.8 15.2l.85-.85M11 13l.85-.85M13.2 10.8l.85-.85M15.5 8.5l.9-.9"
+                stroke="#64748b"
+                stroke-width="0.9"
+                stroke-linecap="round"
+                opacity="0.85"
+              />
+              <circle cx="5" cy="19" r="1.85" fill="#38bdf8" />
+              <circle cx="5" cy="19" r="0.65" fill="#0f172a" />
+              <circle cx="19" cy="5" r="1.85" fill="#22d3ee" />
+              <circle cx="19" cy="5" r="0.65" fill="#0f172a" />
+            </svg>
+          </button>
+        </div>
+        </div>
+      </div>
+    </div>
     <aside id="sidebar" aria-label="Panel de control">
       <div class="sidebar-inner">
         <div id="sidebar-body" class="sidebar-body">
@@ -319,47 +359,6 @@
         </div>
       </div>
     </aside>
-    <div id="map-wrap">
-      <!-- El mapa va primero: el dock de medida debe ir después en el DOM para quedar por encima del lienzo WebGL. -->
-      <div id="map"></div>
-      <div class="map-fab-row map-fab-row--measure" id="map-fab-row-measure">
-        <span class="map-fab-label">MEDIR</span>
-        <div class="measure-fab-dock" id="measure-fab-dock">
-        <div class="mapboxgl-ctrl-group measure-fab-mapbox-group" role="group" aria-label="Medición en mapa">
-          <button
-            type="button"
-            id="measure-fab"
-            class="measure-fab"
-            aria-pressed="false"
-            aria-label="Iniciar o detener medición por trazo libre en el mapa"
-            title="Medición por trazo libre · distancia y +20 % reserva fibra (clic para activar o desactivar)"
-          >
-            <svg class="measure-fab-ico" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
-              <!-- Regla en diagonal, marcas y puntos neón -->
-              <path
-                d="M5 19L19 5"
-                fill="none"
-                stroke="#38bdf8"
-                stroke-width="1.85"
-                stroke-linecap="round"
-              />
-              <path
-                d="M6.5 17.5l.9-.9M8.8 15.2l.85-.85M11 13l.85-.85M13.2 10.8l.85-.85M15.5 8.5l.9-.9"
-                stroke="#64748b"
-                stroke-width="0.9"
-                stroke-linecap="round"
-                opacity="0.85"
-              />
-              <circle cx="5" cy="19" r="1.85" fill="#38bdf8" />
-              <circle cx="5" cy="19" r="0.65" fill="#0f172a" />
-              <circle cx="19" cy="5" r="1.85" fill="#22d3ee" />
-              <circle cx="19" cy="5" r="0.65" fill="#0f172a" />
-            </svg>
-          </button>
-        </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Medición polilínea: trazo en mapa + barra de acciones (sin panel numérico duplicado) -->

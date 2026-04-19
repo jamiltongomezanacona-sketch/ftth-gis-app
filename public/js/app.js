@@ -1163,6 +1163,25 @@ export async function boot() {
 
   initSidebarRail(map);
 
+  {
+    const vv = window.visualViewport;
+    if (vv) {
+      let vvTimer = 0;
+      const bump = () => {
+        window.clearTimeout(vvTimer);
+        vvTimer = window.setTimeout(() => {
+          try {
+            map.resize();
+          } catch {
+            /* */
+          }
+        }, 60);
+      };
+      vv.addEventListener('resize', bump);
+      vv.addEventListener('scroll', bump);
+    }
+  }
+
   const reporteCtl = initReporteEventoSidebar({
     api,
     setStatus,
