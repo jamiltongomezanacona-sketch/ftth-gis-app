@@ -86,6 +86,11 @@
     import { clearAuthSession } from '/js/authSession.js';
 
     async function loadCfg() {
+      const deploy = await import('/js/config.deploy.js');
+      const tok = String(deploy.MAPBOX_ACCESS_TOKEN ?? '').trim();
+      if (tok && !tok.includes('YOUR_')) {
+        return deploy;
+      }
       try {
         return await import('/js/config.local.js');
       } catch {

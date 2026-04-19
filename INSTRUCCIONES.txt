@@ -9,9 +9,9 @@ FTTH GIS — Editor de rutas (PostGIS + Express + Mapbox + mapbox-gl-draw + Turf
    - Ajusta DATABASE_URL o PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD
 
 3) Token Mapbox (frontend)
-   - Edita public/js/config.local.js (ya existe en el proyecto como plantilla local)
-   - Pon MAPBOX_ACCESS_TOKEN con tu token público de Mapbox (pk.eyJ...)
-   - Si ves 404 a /js/config.local.js, guarda el archivo en esa ruta exacta.
+   - Local: crea/edita public/js/config.local.js (no se versiona; copia desde config.example.js)
+   - Vercel: variable MAPBOX_ACCESS_TOKEN en el panel; el build escribe public/js/config.deploy.js
+   - En producción no deberías depender de config.local.js (evita 404 en CDN).
 
 3b) Si /api/rutas devuelve 500
    - Abre en el navegador: http://127.0.0.1:3000/api/db-check

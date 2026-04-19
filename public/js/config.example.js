@@ -1,6 +1,6 @@
 /**
- * Copia este archivo como `config.local.js` y rellena el token.
- * El servidor sirve `config.local.js` si existe (no versionar en git).
+ * Local: copia como `config.local.js` y rellena el token (no versionar en git).
+ * Vercel: define MAPBOX_ACCESS_TOKEN; el build rellena `config.deploy.js`.
  */
 export const MAPBOX_ACCESS_TOKEN = 'YOUR_MAPBOX_ACCESS_TOKEN';
 

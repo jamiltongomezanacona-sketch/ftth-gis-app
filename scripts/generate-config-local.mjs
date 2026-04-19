@@ -1,10 +1,8 @@
 /**
- * En Vercel (VERCEL=1) escribe `public/js/config.local.js` desde variables de entorno,
- * para que el import dinámico no devuelva 404 y el mapa tenga token sin subir el archivo a git.
+ * En Vercel (VERCEL=1) sobrescribe `public/js/config.deploy.js` (archivo versionado).
+ * No usar `config.local.js` aquí: está en .gitignore y Vercel puede excluirlo del CDN.
  *
- * Vercel → Project → Settings → Environment Variables:
- *   MAPBOX_ACCESS_TOKEN
- *   PUBLIC_API_BASE (opcional, ej. "" si mismo origen)
+ * Vercel → Environment Variables: MAPBOX_ACCESS_TOKEN, PUBLIC_API_BASE (opcional)
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,11 +10,11 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
-const dest = path.join(root, 'public', 'js', 'config.local.js');
+const dest = path.join(root, 'public', 'js', 'config.deploy.js');
 
 if (!process.env.VERCEL) {
   console.log(
-    '[generate-config-local] Omitido (solo corre en build de Vercel; en local usa public/js/config.local.js a mano).'
+    '[generate-config-deploy] Omitido (no es build Vercel; en local usa config.local.js o edita token en config.deploy.js sin subir secretos a git).'
   );
   process.exit(0);
 }
@@ -34,7 +32,7 @@ export const FLASHFIBER_GEOJSON_BASE = ${JSON.stringify(flash)};
 fs.mkdirSync(path.dirname(dest), { recursive: true });
 fs.writeFileSync(dest, body, 'utf8');
 console.log(
-  '[generate-config-local] OK →',
+  '[generate-config-deploy] OK →',
   path.relative(root, dest),
   token ? '(MAPBOX_ACCESS_TOKEN presente)' : '(MAPBOX_ACCESS_TOKEN vacío — configura en Vercel)'
 );

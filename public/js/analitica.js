@@ -6,6 +6,11 @@
 const turf = globalThis.turf;
 
 async function loadConfig() {
+  const deploy = await import('./config.deploy.js');
+  const tok = String(deploy.MAPBOX_ACCESS_TOKEN ?? '').trim();
+  if (tok && !tok.includes('YOUR_')) {
+    return deploy;
+  }
   try {
     return await import('./config.local.js');
   } catch {

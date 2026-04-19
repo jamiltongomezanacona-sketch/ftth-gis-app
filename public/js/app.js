@@ -51,6 +51,11 @@ import {
   fmtTotalHuman
 } from './measurePolylineLayer.js';
 async function loadConfig() {
+  const deploy = await import('./config.deploy.js');
+  const tok = String(deploy.MAPBOX_ACCESS_TOKEN ?? '').trim();
+  if (tok && !tok.includes('YOUR_')) {
+    return deploy;
+  }
   try {
     return await import('./config.local.js');
   } catch {
@@ -705,7 +710,7 @@ export async function boot() {
   await ensureAuthenticated(API_BASE ?? '');
   if (!MAPBOX_ACCESS_TOKEN || MAPBOX_ACCESS_TOKEN.includes('YOUR_')) {
     $('status').textContent =
-      'Configura MAPBOX_ACCESS_TOKEN en public/js/config.local.js (copia desde config.example.js).';
+      'Configura MAPBOX_ACCESS_TOKEN (local: public/js/config.local.js; Vercel: variable de entorno + build).';
     return;
   }
 
