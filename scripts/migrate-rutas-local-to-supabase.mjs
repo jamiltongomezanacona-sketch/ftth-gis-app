@@ -17,6 +17,7 @@
  * (eventos_reporte.ruta_id queda NULL por ON DELETE SET NULL). Úsalo solo si es lo que quieres.
  */
 import 'dotenv/config';
+import { URL } from 'node:url';
 import pg from 'pg';
 
 const { Pool } = pg;
@@ -56,16 +57,33 @@ function mask(u) {
   }
 }
 
-/** Supabase desde Node en Windows a veces falla con SELF_SIGNED_CERT_IN_CHAIN; relajar TLS solo hacia Supabase. */
+/**
+ * Supabase + `sslmode=require` en la URL hace que `pg` verifique el certificado estricto y en Windows
+ * suele fallar con SELF_SIGNED_CERT_IN_CHAIN. Para destino Supabase no usamos connectionString:
+ * pasamos host/user/… y `ssl.rejectUnauthorized: false` (solo este script de migración).
+ */
 function poolConfig(connectionString) {
-  const u = String(connectionString);
-  const remote =
-    u.includes('supabase.com') || u.includes('supabase.co');
+  const raw = String(connectionString);
+  const remote = raw.includes('supabase.co');
   if (!remote) {
-    return { connectionString: u, max: 3 };
+    return { connectionString: raw, max: 3 };
   }
+  let u;
+  try {
+    u = new URL(raw);
+  } catch {
+    return { connectionString: raw, max: 3, ssl: { rejectUnauthorized: false } };
+  }
+  const port = u.port ? Number(u.port) : 5432;
+  const database = (u.pathname || '/postgres').replace(/^\//, '') || 'postgres';
+  let user = u.username ? decodeURIComponent(u.username) : 'postgres';
+  let password = u.password != null ? decodeURIComponent(u.password) : '';
   return {
-    connectionString: u,
+    host: u.hostname,
+    port,
+    user,
+    password,
+    database,
     max: 3,
     ssl: { rejectUnauthorized: false }
   };
