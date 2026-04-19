@@ -77,11 +77,7 @@ export function createCableSearchBar(mapWrap, opts) {
                 aria-label="Buscar tendido en ${redEtiqueta}. ${searchHint}"
                 autocomplete="off"
                 spellcheck="false"
-                placeholder="${
-                  opts.networkRed === 'ftth'
-                    ? 'Tendido, molécula, cierre o coord. WGS84 (ej. 4.57, -74.23 o 4°34′29.5″N…)…'
-                    : `Cable ${redCorta}: nombre, ID o coord. (lat, lng / DMS)…`
-                }"
+                placeholder=""
                 aria-autocomplete="list"
                 aria-controls="cable-search-listbox"
                 aria-expanded="false"
@@ -107,6 +103,28 @@ export function createCableSearchBar(mapWrap, opts) {
   const input = /** @type {HTMLInputElement} */ (mount.querySelector('#cable-search-input'));
   const clearBtn = /** @type {HTMLButtonElement} */ (mount.querySelector('#cable-search-clear'));
   const listbox = /** @type {HTMLDivElement} */ (mount.querySelector('#cable-search-listbox'));
+
+  const mqCompact =
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 900px)') : { matches: false };
+
+  function syncSearchPlaceholder() {
+    const compact = mqCompact.matches;
+    input.placeholder =
+      opts.networkRed === 'ftth'
+        ? compact
+          ? 'Buscar tendido, molécula o coordenadas…'
+          : 'Tendido, molécula, cierre o coord. WGS84 (ej. 4.57, -74.23 o 4°34′29.5″N…)…'
+        : compact
+          ? 'Cable o coordenadas (lat, lng)…'
+          : `Cable ${redCorta}: nombre, ID o coord. (lat, lng / DMS)…`;
+  }
+
+  syncSearchPlaceholder();
+  if (typeof mqCompact.addEventListener === 'function') {
+    mqCompact.addEventListener('change', syncSearchPlaceholder);
+  } else if (typeof mqCompact.addListener === 'function') {
+    mqCompact.addListener(syncSearchPlaceholder);
+  }
 
   let debounceTimer = 0;
   /**
