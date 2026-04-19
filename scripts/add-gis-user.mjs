@@ -4,9 +4,11 @@
  *
  *   DATABASE_URL=... node scripts/add-gis-user.mjs correo@dominio.com "ContraseñaSegura"
  *
- * PowerShell:
- *   $env:DATABASE_URL = "postgresql://..."
- *   node scripts/add-gis-user.mjs usuario@mail.com "TuClave"
+ * PowerShell (Supabase sin tocar .env local):
+ *   $env:TARGET_DATABASE_URL = "postgresql://postgres.REF:CLAVE@....pooler.supabase.com:5432/postgres?sslmode=require"
+ *   npm run user:add -- usuario@mail.com "TuClave"
+ *
+ * También válido: solo DATABASE_URL (ej. desde .env).
  */
 import 'dotenv/config';
 import pg from 'pg';
@@ -15,12 +17,13 @@ import { poolConfig } from './pg-pool-config.mjs';
 
 const { Pool } = pg;
 
-const url = process.env.DATABASE_URL?.trim();
+const url =
+  process.env.TARGET_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim();
 const emailArg = process.argv[2]?.trim();
 const passArg = process.argv[3];
 
 if (!url) {
-  console.error('Falta DATABASE_URL en el entorno (.env o variable).');
+  console.error('Falta TARGET_DATABASE_URL o DATABASE_URL en el entorno (.env o PowerShell).');
   process.exit(1);
 }
 if (!emailArg || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailArg)) {

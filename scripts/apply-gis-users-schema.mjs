@@ -13,9 +13,10 @@ const { Pool } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const sqlPath = path.join(__dirname, '..', 'sql', '09_gis_users.sql');
 
-const url = process.env.DATABASE_URL?.trim();
+const url =
+  process.env.TARGET_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim();
 if (!url) {
-  console.error('Falta DATABASE_URL.');
+  console.error('Falta TARGET_DATABASE_URL o DATABASE_URL.');
   process.exit(1);
 }
 
