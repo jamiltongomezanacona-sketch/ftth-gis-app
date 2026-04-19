@@ -56,8 +56,23 @@ function mask(u) {
   }
 }
 
-const sourcePool = new Pool({ connectionString: sourceUrl, max: 3 });
-const targetPool = new Pool({ connectionString: targetUrl, max: 3 });
+/** Supabase desde Node en Windows a veces falla con SELF_SIGNED_CERT_IN_CHAIN; relajar TLS solo hacia Supabase. */
+function poolConfig(connectionString) {
+  const u = String(connectionString);
+  const remote =
+    u.includes('supabase.com') || u.includes('supabase.co');
+  if (!remote) {
+    return { connectionString: u, max: 3 };
+  }
+  return {
+    connectionString: u,
+    max: 3,
+    ssl: { rejectUnauthorized: false }
+  };
+}
+
+const sourcePool = new Pool(poolConfig(sourceUrl));
+const targetPool = new Pool(poolConfig(targetUrl));
 
 async function main() {
   console.log('[migrar] Origen:', mask(sourceUrl));
