@@ -926,6 +926,15 @@ export async function boot() {
       if (evCb instanceof HTMLInputElement) {
         eventosReporteLayer.setVisible(evCb.checked);
       }
+      const introEv = document.getElementById('reporte-ev-list-intro');
+      if (introEv) {
+        const baseIntro =
+          'Incidencias en catálogo (máx. 40). Clic en una fila: resumen en la barra de estado.';
+        introEv.textContent =
+          items.length > 0 && nMapPoints === 0
+            ? `${baseIntro} Si no ves pins: pueden faltar coordenadas en BD o el cable activo filtra por molécula.`
+            : baseIntro;
+      }
       const ul = document.getElementById('reporte-ev-ul');
       if (ul) {
         ul.replaceChildren();
@@ -933,9 +942,39 @@ export async function boot() {
         if (!items.length) {
           const li = document.createElement('li');
           li.className = 'reporte-ev-li reporte-ev-li--empty';
-          li.textContent = molFilt
-            ? `Sin eventos para la molécula «${molFilt.central} · ${molFilt.molecula}». Limpia el tendido del mapa (× en buscador) o elige otro cable para ver todas las incidencias de la red.`
-            : 'No hay eventos en el API para esta red. Si la tabla no existe: npm run db:apply-eventos (sql/06_eventos_reporte.sql).';
+          if (molFilt) {
+            const wrap = document.createElement('div');
+            wrap.style.display = 'flex';
+            wrap.style.flexDirection = 'column';
+            wrap.style.gap = '10px';
+            const t = document.createElement('p');
+            t.style.margin = '0';
+            t.textContent = `Sin eventos que coincidan con la molécula «${molFilt.central} · ${molFilt.molecula}» (filtro activo al tener un tendido en mapa).`;
+            wrap.appendChild(t);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'reporte-ev-btn reporte-ev-btn--ghost-sm';
+            btn.textContent = 'Mostrar todas las incidencias de la red';
+            btn.addEventListener('click', () => {
+              editorMoleculeFilter = null;
+              void refreshEventosReporteDisplay();
+              setStatus(
+                'Filtro por molécula desactivado: lista y mapa usan todos los eventos de esta red (FTTH).'
+              );
+            });
+            wrap.appendChild(btn);
+            const hint = document.createElement('p');
+            hint.style.margin = '0';
+            hint.style.opacity = '0.85';
+            hint.style.fontSize = '12px';
+            hint.textContent =
+              'Alternativa: pulsa × en el buscador para quitar el cable del mapa y volver a solo centrales.';
+            wrap.appendChild(hint);
+            li.appendChild(wrap);
+          } else {
+            li.textContent =
+              'No hay eventos en el API para esta red. ¿Migraste eventos y la red correcta (ftth/corporativa)? Tabla: sql/06_eventos_reporte.sql.';
+          }
           ul.appendChild(li);
         } else {
           for (const it of items.slice(0, 40)) {
