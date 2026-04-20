@@ -3937,8 +3937,11 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   border-top: 1px solid var(--border) !important;
 }
 
-/* Icono personalizado (alto contraste sobre botón oscuro). */
-#map button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
+/* Icono personalizado (alto contraste sobre botón oscuro). Misma imagen en todos los estados Mapbox. */
+#map button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon,
+#map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active .mapboxgl-ctrl-icon,
+#map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-background .mapboxgl-ctrl-icon,
+#map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active-error .mapboxgl-ctrl-icon {
   background-image: url("/icons/editor/gps-compass-premium.svg") !important;
   background-size: 22px 22px !important;
   background-position: center !important;
@@ -3947,9 +3950,17 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   filter: none !important;
 }
 
+body.editor-body #map button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon,
+body.editor-body #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active .mapboxgl-ctrl-icon,
+body.editor-body #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-background .mapboxgl-ctrl-icon,
+body.editor-body #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active-error .mapboxgl-ctrl-icon {
+  background-image: url("/icons/editor/gps-compass-premium.svg") !important;
+}
+
 #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-  filter: brightness(0) saturate(100%) invert(0.28) !important;
-  opacity: 0.92 !important;
+  /* Antes: brightness(0)+invert rompía iconos a color sobre fondo oscuro; sombra suave sobre blanco ArcGIS */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18)) !important;
+  opacity: 1 !important;
 }
 
 #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active:not(.mapboxgl-ctrl-geolocate-waiting) .mapboxgl-ctrl-icon,

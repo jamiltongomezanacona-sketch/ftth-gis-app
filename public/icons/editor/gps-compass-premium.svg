@@ -1,34 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-  <defs>
-    <linearGradient id="gpsRing" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#94a3b8"/>
-      <stop offset="45%" stop-color="#64748b"/>
-      <stop offset="100%" stop-color="#cbd5e1"/>
-    </linearGradient>
-    <linearGradient id="gpsDial" x1="50%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-    <linearGradient id="gpsNeedleN" x1="50%" y1="100%" x2="50%" y2="0%">
-      <stop offset="0%" stop-color="#e11d48"/>
-      <stop offset="100%" stop-color="#fb7185"/>
-    </linearGradient>
-    <linearGradient id="gpsNeedleS" x1="50%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%" stop-color="#e2e8f0"/>
-      <stop offset="100%" stop-color="#94a3b8"/>
-    </linearGradient>
-  </defs>
-  <!-- Aro exterior metálico -->
-  <circle cx="12" cy="12" r="10.25" stroke="url(#gpsRing)" stroke-width="1.35"/>
-  <!-- Carátula -->
-  <circle cx="12" cy="12" r="8.35" fill="url(#gpsDial)" stroke="#334155" stroke-width="0.4" opacity="0.9"/>
-  <!-- Marcas cardinales discretas -->
-  <path d="M12 4.2v1.15M12 18.65v1.15M4.2 12h1.15M18.65 12h1.15" stroke="#475569" stroke-width="1" stroke-linecap="round" opacity="0.45"/>
-  <!-- Aguja norte (rojo coral premium) -->
-  <path d="M12 6.8l2.35 5.85h-4.7L12 6.8z" fill="url(#gpsNeedleN)"/>
-  <!-- Aguja sur (plata) -->
-  <path d="M12 17.2l-2.35-5.85h4.7L12 17.2z" fill="url(#gpsNeedleS)"/>
-  <!-- Eje -->
-  <circle cx="12" cy="12" r="1.85" fill="#1e293b" stroke="#64748b" stroke-width="0.45"/>
+  <!-- Sin defs/url(#): compatible como background-image en todos los navegadores -->
+  <circle cx="12" cy="12" r="10.25" stroke="#94a3b8" stroke-width="1.35" fill="none"/>
+  <circle cx="12" cy="12" r="8.35" fill="#1e293b" stroke="#475569" stroke-width="0.45"/>
+  <path d="M12 4.2v1.15M12 18.65v1.15M4.2 12h1.15M18.65 12h1.15" stroke="#64748b" stroke-width="1" stroke-linecap="round" opacity="0.55"/>
+  <path d="M12 6.8l2.35 5.85h-4.7L12 6.8z" fill="#e11d48"/>
+  <path d="M12 17.2l-2.35-5.85h4.7L12 17.2z" fill="#cbd5e1"/>
+  <circle cx="12" cy="12" r="1.85" fill="#0f172a" stroke="#64748b" stroke-width="0.45"/>
   <circle cx="12" cy="12" r="0.65" fill="#f8fafc"/>
 </svg>
