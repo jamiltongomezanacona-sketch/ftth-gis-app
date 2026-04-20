@@ -109,12 +109,11 @@ export function ensureMeasurePolylineLayers(map) {
     filter: ['==', ['get', 'kind'], 'line'],
     layout: { 'line-join': 'round', 'line-cap': 'round' },
     paint: {
-      /* Alineado con iconos Medir/GPS (cian elegante, legible en mapas claros y oscuros) */
+      /* Alineado con iconos Medir/GPS (cian elegante, trazo continuo) */
       'line-color': '#38bdf8',
       'line-width': 3,
       'line-opacity': 0.96,
-      'line-dasharray': [1.25, 1.75],
-      'line-blur': 0.15
+      'line-blur': 0.08
     }
   });
 
