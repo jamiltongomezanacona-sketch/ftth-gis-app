@@ -3633,7 +3633,7 @@ body.editor-body #map .mapboxgl-ctrl-top-right {
 
 /* Icono GPS y regla: un poco más grandes que el FAB base (32px / 42px). */
 body.editor-body #map .mapboxgl-ctrl-top-right button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-  background-size: 22px 22px !important;
+  background-size: 28px 28px !important;
 }
 
 body.editor-body #map .measure-fab-ico {
@@ -3681,7 +3681,7 @@ body.editor-body #map .map-widget-stack--arcgis .map-fab-row--navigate .mapboxgl
 }
 
 body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-  background-size: 24px 24px !important;
+  background-size: 30px 30px !important;
   filter: none !important;
   opacity: 0.95 !important;
 }
@@ -3943,7 +3943,7 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-background .mapboxgl-ctrl-icon,
 #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active-error .mapboxgl-ctrl-icon {
   background-image: url("/icons/editor/gps-compass-premium.svg") !important;
-  background-size: 22px 22px !important;
+  background-size: 28px 28px !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
   opacity: 1 !important;
@@ -6052,7 +6052,7 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
   }
 
   body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-    background-size: 20px 20px !important;
+    background-size: 24px 24px !important;
   }
 
   body.editor-body #sidebar h1,
