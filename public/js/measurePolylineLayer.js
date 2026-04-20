@@ -109,9 +109,12 @@ export function ensureMeasurePolylineLayers(map) {
     filter: ['==', ['get', 'kind'], 'line'],
     layout: { 'line-join': 'round', 'line-cap': 'round' },
     paint: {
-      'line-color': '#f97316',
-      'line-width': 2.25,
-      'line-opacity': 0.95
+      /* Alineado con iconos Medir/GPS (cian elegante, legible en mapas claros y oscuros) */
+      'line-color': '#38bdf8',
+      'line-width': 3,
+      'line-opacity': 0.96,
+      'line-dasharray': [1.25, 1.75],
+      'line-blur': 0.15
     }
   });
 
@@ -121,10 +124,10 @@ export function ensureMeasurePolylineLayers(map) {
     source: MEASURE_POLY_SOURCE,
     filter: ['==', ['get', 'kind'], 'vertex'],
     paint: {
-      'circle-radius': 4.5,
-      'circle-color': '#ffffff',
-      'circle-stroke-width': 2,
-      'circle-stroke-color': '#f97316'
+      'circle-radius': 5,
+      'circle-color': '#0f172a',
+      'circle-stroke-width': 2.25,
+      'circle-stroke-color': '#38bdf8'
     }
   });
 
@@ -143,9 +146,9 @@ export function ensureMeasurePolylineLayers(map) {
     },
     paint: {
       ...deviceLabelTextOpacityPaint(),
-      'text-color': '#1e3a5f',
-      'text-halo-color': 'rgba(255,255,255,0.92)',
-      'text-halo-width': 1.8
+      'text-color': '#0c4a6e',
+      'text-halo-color': 'rgba(255,255,255,0.94)',
+      'text-halo-width': 2
     }
   });
 }
