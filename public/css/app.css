@@ -7299,8 +7299,15 @@ body.editor-body .editor-float-panel.editor-float-panel--pick-mode {
   animation: editorFloatPickPulse 2.6s ease-in-out infinite;
 }
 
-body.editor-body .editor-float-panel.editor-float-panel--pick-mode .editor-float-panel__body {
-  display: none;
+/* En modo pick chip ocultamos TODO el contenido del panel salvo el
+   titlebar (donde vive el indicador animado y el botón Cancelar). Usamos
+   un selector universal para no depender de cómo se llame el contenedor
+   de cuerpo (`.editor-float-panel__body`, `.sidebar-details-body`, etc.):
+   así el chip se ve siempre como una píldora limpia. */
+body.editor-body
+  .editor-float-panel.editor-float-panel--pick-mode
+  > *:not(.editor-float-panel__titlebar) {
+  display: none !important;
 }
 
 body.editor-body .editor-float-panel.editor-float-panel--pick-mode .editor-float-panel__titlebar {
