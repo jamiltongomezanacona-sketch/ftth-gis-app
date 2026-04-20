@@ -1,8 +1,19 @@
-import { snapLngLatToLine } from './measurements.js';
+import { distanceFromStartAlongLineMeters, snapLngLatToLine } from './measurements.js';
 
 const OFFLINE_QUEUE_KEY = 'reporteEventoQueueV1';
+const DRAFT_DESC_KEY = 'reporteEventoDescDraftV1';
 /** Distancia máxima (metros) entre GPS del técnico y una ruta para asociarla automáticamente. */
 const GPS_ROUTE_SNAP_RADIUS_M = 150;
+/** Umbral (m) a partir del cual ofrecemos «Mejorar GPS» (precisión pobre). */
+const GPS_POOR_ACCURACY_M = 50;
+
+/** Presets rápidos: un tap llena tipo/estado/acción para los casos más comunes. */
+const QUICK_PRESETS = {
+  'corte-obras': { tipo_evento: 'OBRAS CIVILES', estado: 'CRITICO', accion: 'INTERVENCIÓN TECNICA' },
+  vandalismo: { tipo_evento: 'VANDALISMO', estado: 'CRITICO', accion: 'REEMPLAZO DE FIBRA' },
+  terceros: { tipo_evento: 'DAÑO POR TERCEROS', estado: 'CRITICO', accion: 'REEMPLAZO DE FIBRA' },
+  mantenimiento: { tipo_evento: 'MANTENIMIENTO', estado: 'EN PROCESO', accion: 'INTERVENCIÓN TECNICA' }
+};
 
 /**
  * Sidebar «REPORTE EVENTO»: flujo para técnico en campo (GPS + tap cable + cola offline).
@@ -49,16 +60,27 @@ export function initReporteEventoSidebar(opts) {
   const phaseForm = document.getElementById('reporte-ev-phase-form');
   const fechaEl = document.getElementById('reporte-evento-fecha');
   const distEl = /** @type {HTMLInputElement | null} */ (document.getElementById('reporte-ev-dist-odf'));
+  const distAutoTag = document.getElementById('reporte-ev-dist-auto');
   const tipoEl = /** @type {HTMLSelectElement | null} */ (document.getElementById('reporte-ev-tipo'));
   const estadoEl = /** @type {HTMLSelectElement | null} */ (document.getElementById('reporte-ev-estado'));
   const accionEl = /** @type {HTMLSelectElement | null} */ (document.getElementById('reporte-ev-accion'));
   const descEl = /** @type {HTMLTextAreaElement | null} */ (document.getElementById('reporte-ev-descripcion'));
-  const btnGuardar = document.getElementById('btn-reporte-evento-guardar');
+  const descDraftTag = document.getElementById('reporte-ev-desc-draft');
+  const btnGuardar = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-evento-guardar'));
   const btnCancelWait = document.getElementById('btn-reporte-cancel-wait');
   const btnRepick = document.getElementById('btn-reporte-repick');
   const btnUseGps = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-use-gps'));
+  const btnImproveGps = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-improve-gps'));
   const gpsStatusEl = document.getElementById('reporte-ev-gps-status');
   const offlineNoteEl = document.getElementById('reporte-ev-offline-note');
+  const pinCardEl = document.getElementById('reporte-ev-pin-card');
+  const pinCoordsEl = document.getElementById('reporte-ev-pin-coords');
+  const pinRouteEl = document.getElementById('reporte-ev-pin-route');
+  const pinAccEl = document.getElementById('reporte-ev-pin-acc');
+  const toastEl = document.getElementById('reporte-ev-toast');
+  const presetBtns = /** @type {NodeListOf<HTMLButtonElement>} */ (
+    document.querySelectorAll('.reporte-ev-preset[data-preset]')
+  );
 
   if (!tipoEl || !estadoEl || !accionEl || !descEl || !btnGuardar || !details) {
     return {
@@ -79,6 +101,13 @@ export function initReporteEventoSidebar(opts) {
 
   let awaitingMapPick = false;
   let pinnedLngLat = /** @type {{ lng: number, lat: number } | null} */ (null);
+  /** Última precisión GPS reportada por el navegador (metros). */
+  let lastGpsAccuracy = /** @type {number | null} */ (null);
+  /** Ruta asociada al punto fijado (nombre para mostrar en la tarjeta). */
+  let pinnedRouteLabel = /** @type {string | null} */ (null);
+  /** Último «dist ODF» calculado automáticamente; si el usuario edita, se respeta. */
+  let autoComputedDistOdf = /** @type {number | null} */ (null);
+  let distOdfIsManual = false;
 
   function refreshFechaText() {
     if (!fechaEl) return;
@@ -98,12 +127,53 @@ export function initReporteEventoSidebar(opts) {
     const has = pinnedLngLat != null;
     phaseWait.hidden = has;
     phaseForm.hidden = !has;
+    updatePinCard();
   }
 
   function setGpsStatus(msg, level) {
     if (!gpsStatusEl) return;
     gpsStatusEl.textContent = msg || '';
     gpsStatusEl.dataset.level = level || '';
+  }
+
+  function fmtCoord(v) {
+    return Number.isFinite(v) ? v.toFixed(6) : '—';
+  }
+
+  function updatePinCard() {
+    if (!pinCardEl) return;
+    if (!pinnedLngLat) {
+      pinCardEl.hidden = true;
+      return;
+    }
+    pinCardEl.hidden = false;
+    if (pinCoordsEl) {
+      pinCoordsEl.textContent = `${fmtCoord(pinnedLngLat.lat)}, ${fmtCoord(pinnedLngLat.lng)}`;
+    }
+    if (pinRouteEl) {
+      pinRouteEl.textContent = pinnedRouteLabel
+        ? `Tendido: ${pinnedRouteLabel}`
+        : 'Sin tendido asociado (coordenada cruda)';
+    }
+    if (pinAccEl) {
+      if (Number.isFinite(lastGpsAccuracy) && /** @type {number} */ (lastGpsAccuracy) > 0) {
+        const acc = /** @type {number} */ (lastGpsAccuracy);
+        const level = acc <= 15 ? 'ok' : acc <= GPS_POOR_ACCURACY_M ? 'warn' : 'bad';
+        pinAccEl.textContent = `±${Math.round(acc)} m`;
+        pinAccEl.dataset.level = level;
+        pinAccEl.hidden = false;
+      } else {
+        pinAccEl.hidden = true;
+        pinAccEl.textContent = '';
+      }
+    }
+    if (btnImproveGps) {
+      /* Solo mostrar «Mejorar GPS» si el punto venía de GPS con precisión pobre. */
+      btnImproveGps.hidden = !(
+        Number.isFinite(lastGpsAccuracy) &&
+        /** @type {number} */ (lastGpsAccuracy) > GPS_POOR_ACCURACY_M
+      );
+    }
   }
 
   function startAwaitingMapPick() {
@@ -126,6 +196,29 @@ export function initReporteEventoSidebar(opts) {
     cancelAwaitingMapPickOnly();
   }
 
+  function setDistOdfFromRoute(line) {
+    if (!distEl) return;
+    if (distOdfIsManual) return;
+    try {
+      if (!line || line.type !== 'LineString' || !pinnedLngLat) {
+        autoComputedDistOdf = null;
+        return;
+      }
+      const d = distanceFromStartAlongLineMeters(
+        line,
+        [pinnedLngLat.lng, pinnedLngLat.lat],
+        turf
+      );
+      if (Number.isFinite(d) && d >= 0) {
+        autoComputedDistOdf = Math.round(d);
+        distEl.value = String(autoComputedDistOdf);
+        if (distAutoTag) distAutoTag.hidden = false;
+      }
+    } catch {
+      /* cálculo tolerante. */
+    }
+  }
+
   /**
    * @param {import('mapbox-gl').MapLayerMouseEvent} e
    * @param {import('geojson').Feature<import('geojson').LineString>} f
@@ -146,7 +239,10 @@ export function initReporteEventoSidebar(opts) {
 
     applyReportePickedRoute(f, e);
     pinnedLngLat = { lng, lat };
+    pinnedRouteLabel = String(f.properties?.nombre ?? f.id ?? '').trim() || null;
+    lastGpsAccuracy = null; /* tap en mapa: no hay precisión GPS que mostrar. */
     setReportePin([lng, lat]);
+    setDistOdfFromRoute(line);
 
     awaitingMapPick = false;
     details.classList.remove('reporte-ev--armed');
@@ -155,11 +251,10 @@ export function initReporteEventoSidebar(opts) {
     updatePhaseDom();
     refreshFechaText();
     setStatus(
-      `Reporte evento: punto fijado en «${String(f.properties?.nombre ?? f.id)}». Completa el formulario y guarda.`
+      `Reporte evento: punto fijado en «${pinnedRouteLabel || f.id}». Completa el formulario y guarda.`
     );
     try {
-      if (distEl) distEl.focus();
-      else tipoEl.focus();
+      tipoEl.focus();
     } catch {
       /* */
     }
@@ -167,24 +262,27 @@ export function initReporteEventoSidebar(opts) {
   }
 
   /**
-   * Flujo GPS: el técnico está físicamente sobre el corte.
-   * Toma la ubicación del móvil y la asocia automáticamente a la ruta más cercana
-   * (≤ GPS_ROUTE_SNAP_RADIUS_M metros). Si no hay ruta cerca, igualmente guarda el punto crudo.
+   * Pide ubicación GPS, la asocia a la ruta más cercana (≤ radius) y abre el formulario.
+   * @param {{ silent?: boolean }} [opts]
    */
-  function handleGpsPick() {
+  function handleGpsPick(opts = {}) {
     if (!('geolocation' in navigator)) {
       setGpsStatus('Tu dispositivo no permite ubicación GPS.', 'error');
       return;
     }
-    if (!btnUseGps) return;
-    btnUseGps.disabled = true;
-    btnUseGps.classList.add('is-loading');
-    setGpsStatus('Obteniendo ubicación…', 'info');
+    const btn = btnUseGps;
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('is-loading');
+    }
+    if (!opts.silent) setGpsStatus('Obteniendo ubicación…', 'info');
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        btnUseGps.disabled = false;
-        btnUseGps.classList.remove('is-loading');
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('is-loading');
+        }
         const lng = Number(pos.coords.longitude);
         const lat = Number(pos.coords.latitude);
         const acc = Number(pos.coords.accuracy);
@@ -192,34 +290,54 @@ export function initReporteEventoSidebar(opts) {
           setGpsStatus('Ubicación inválida. Intenta de nuevo.', 'error');
           return;
         }
+        lastGpsAccuracy = Number.isFinite(acc) ? acc : null;
 
         let finalLng = lng;
         let finalLat = lat;
         let attachedRouteMsg = '';
+        pinnedRouteLabel = null;
 
         const nearest = findNearestRouteForLngLat?.(lng, lat, GPS_ROUTE_SNAP_RADIUS_M) || null;
         if (nearest?.feature && Array.isArray(nearest.snapped) && nearest.snapped.length === 2) {
           finalLng = nearest.snapped[0];
           finalLat = nearest.snapped[1];
+          pinnedRouteLabel =
+            String(nearest.feature.properties?.nombre ?? nearest.feature.id ?? '').trim() || null;
           try {
-            applyReportePickedRoute(nearest.feature, /** @type {any} */ ({ lngLat: { lng: finalLng, lat: finalLat } }));
+            applyReportePickedRoute(
+              nearest.feature,
+              /** @type {any} */ ({ lngLat: { lng: finalLng, lat: finalLat } })
+            );
           } catch {
-            /* no-op: aplicar ruta seleccionada no debe bloquear el guardado. */
+            /* no-op. */
           }
-          attachedRouteMsg = ` · Asociado al tendido «${String(nearest.feature.properties?.nombre ?? nearest.feature.id)}» (${Math.round(nearest.meters)} m).`;
+          attachedRouteMsg = ` · Tendido «${pinnedRouteLabel ?? ''}» a ${Math.round(nearest.meters)} m.`;
         } else {
-          attachedRouteMsg = ' · No hay tendido cercano: se guardará solo la coordenada GPS.';
+          attachedRouteMsg = ' · Sin tendido a menos de 150 m: se guardará solo la coordenada GPS.';
         }
 
         pinnedLngLat = { lng: finalLng, lat: finalLat };
         setReportePin([finalLng, finalLat]);
+
+        const geomSel = /** @type {any} */ (nearest?.feature?.geometry);
+        if (geomSel?.type === 'LineString' && geomSel.coordinates?.length >= 2) {
+          setDistOdfFromRoute(geomSel);
+        } else {
+          autoComputedDistOdf = null;
+          if (distAutoTag) distAutoTag.hidden = true;
+        }
+
         awaitingMapPick = false;
         details.classList.remove('reporte-ev--armed');
         onArmingChanged?.(false);
 
         try {
           const map = getMap();
-          map.easeTo({ center: [finalLng, finalLat], zoom: Math.max(map.getZoom(), 17), duration: 600 });
+          map.easeTo({
+            center: [finalLng, finalLat],
+            zoom: Math.max(map.getZoom(), 17),
+            duration: 600
+          });
         } catch {
           /* */
         }
@@ -227,26 +345,28 @@ export function initReporteEventoSidebar(opts) {
         updatePhaseDom();
         refreshFechaText();
         const accTxt = Number.isFinite(acc) ? ` ±${Math.round(acc)} m` : '';
-        setGpsStatus(`GPS obtenido${accTxt}.${attachedRouteMsg}`, 'ok');
+        const accLevel = !Number.isFinite(acc)
+          ? 'info'
+          : acc <= 15
+          ? 'ok'
+          : acc <= GPS_POOR_ACCURACY_M
+          ? 'warn'
+          : 'bad';
+        setGpsStatus(`GPS obtenido${accTxt}.${attachedRouteMsg}`, accLevel);
         setStatus(`Reporte evento: ubicación fijada por GPS${accTxt}.${attachedRouteMsg}`);
-
-        try {
-          if (distEl) distEl.focus();
-          else tipoEl.focus();
-        } catch {
-          /* */
-        }
       },
       (err) => {
-        btnUseGps.disabled = false;
-        btnUseGps.classList.remove('is-loading');
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('is-loading');
+        }
         const codeMsg =
           err?.code === 1
-            ? 'Permiso denegado. Habilita la ubicación para este sitio en el navegador.'
+            ? 'Permiso denegado. Habilita la ubicación en el navegador y vuelve a intentarlo.'
             : err?.code === 2
-            ? 'Ubicación no disponible. Revisa GPS/datos móviles e inténtalo de nuevo.'
+            ? 'Ubicación no disponible. Revisa GPS/datos móviles e inténtalo al aire libre.'
             : err?.code === 3
-            ? 'Tiempo de espera agotado. Intenta otra vez al aire libre.'
+            ? 'Tiempo de espera agotado. Intenta otra vez sin obstáculos.'
             : 'No se pudo obtener la ubicación.';
         setGpsStatus(codeMsg, 'error');
       },
@@ -257,17 +377,30 @@ export function initReporteEventoSidebar(opts) {
   function resetForCableCleared() {
     cancelAwaitingMapPickOnly();
     pinnedLngLat = null;
+    pinnedRouteLabel = null;
+    lastGpsAccuracy = null;
+    autoComputedDistOdf = null;
+    distOdfIsManual = false;
+    if (distAutoTag) distAutoTag.hidden = true;
     setReportePin(null);
     details.classList.remove('reporte-ev--armed');
     if (phaseForm) phaseForm.hidden = true;
     if (phaseWait) phaseWait.hidden = false;
     onArmingChanged?.(false);
+    updatePinCard();
   }
 
   function clearPinnedAndRearm() {
     pinnedLngLat = null;
+    pinnedRouteLabel = null;
+    lastGpsAccuracy = null;
+    autoComputedDistOdf = null;
+    distOdfIsManual = false;
+    if (distAutoTag) distAutoTag.hidden = true;
+    if (distEl) distEl.value = '';
     setReportePin(null);
     setGpsStatus('', '');
+    updatePinCard();
     if (isReportePanelOpen()) {
       startAwaitingMapPick();
     }
@@ -318,7 +451,7 @@ export function initReporteEventoSidebar(opts) {
     try {
       localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(arr));
     } catch {
-      /* cuota excedida o modo privado: ignoramos, el fallo se notifica arriba. */
+      /* cuota excedida o modo privado. */
     }
   }
 
@@ -337,7 +470,6 @@ export function initReporteEventoSidebar(opts) {
   function isTransientError(err) {
     if (!navigator.onLine) return true;
     const msg = err instanceof Error ? err.message : String(err || '');
-    /* 0/Failed fetch = red caída; 5xx = servidor temporal. */
     if (/^0:|Failed to fetch|NetworkError|TypeError/.test(msg)) return true;
     if (/^(502|503|504):/.test(msg)) return true;
     return false;
@@ -356,7 +488,6 @@ export function initReporteEventoSidebar(opts) {
         if (isTransientError(err)) {
           left.push(body);
         } else {
-          /* Errores definitivos (400 validación, etc.) se descartan para no bloquear la cola; se avisa. */
           console.warn('Reporte offline descartado por error definitivo:', err);
         }
       }
@@ -368,6 +499,89 @@ export function initReporteEventoSidebar(opts) {
       onEventoGuardado?.();
     }
     return { sent, left: left.length };
+  }
+
+  /* ——— Borrador de descripción ——— */
+  function persistDraft() {
+    try {
+      const v = String(descEl.value ?? '').trim();
+      if (v) {
+        localStorage.setItem(DRAFT_DESC_KEY, v);
+        if (descDraftTag) descDraftTag.hidden = false;
+      } else {
+        localStorage.removeItem(DRAFT_DESC_KEY);
+        if (descDraftTag) descDraftTag.hidden = true;
+      }
+    } catch {
+      /* */
+    }
+  }
+
+  function restoreDraft() {
+    try {
+      const v = localStorage.getItem(DRAFT_DESC_KEY);
+      if (v && !descEl.value) {
+        descEl.value = v;
+        if (descDraftTag) descDraftTag.hidden = false;
+      }
+    } catch {
+      /* */
+    }
+  }
+
+  function clearDraft() {
+    try {
+      localStorage.removeItem(DRAFT_DESC_KEY);
+    } catch {
+      /* */
+    }
+    if (descDraftTag) descDraftTag.hidden = true;
+  }
+
+  /* ——— Toast y vibración ——— */
+  function showToast(msg, level) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.dataset.level = level || 'ok';
+    toastEl.hidden = false;
+    toastEl.classList.remove('is-leave');
+    /* Reinicia animación de entrada si se dispara varias veces. */
+    toastEl.classList.remove('is-enter');
+    /* reflow para reiniciar animación */
+    void toastEl.offsetWidth;
+    toastEl.classList.add('is-enter');
+    clearTimeout(/** @type {any} */ (toastEl).__hideTimer);
+    /** @type {any} */ (toastEl).__hideTimer = setTimeout(() => {
+      toastEl.classList.add('is-leave');
+      setTimeout(() => {
+        toastEl.hidden = true;
+        toastEl.classList.remove('is-enter', 'is-leave');
+      }, 260);
+    }, 2600);
+  }
+
+  function vibrateOk() {
+    try {
+      if ('vibrate' in navigator) navigator.vibrate([40, 30, 40]);
+    } catch {
+      /* */
+    }
+  }
+
+  function applyPreset(key) {
+    const p = QUICK_PRESETS[key];
+    if (!p) return;
+    tipoEl.value = p.tipo_evento;
+    estadoEl.value = p.estado;
+    accionEl.value = p.accion;
+    /* Feedback visual: resalta el preset activo brevemente. */
+    presetBtns.forEach((b) => b.classList.toggle('is-active', b.dataset.preset === key));
+    setStatus(`Plantilla aplicada: ${p.tipo_evento} · ${p.estado} · ${p.accion}.`);
+    try {
+      descEl.focus({ preventScroll: true });
+    } catch {
+      /* */
+    }
   }
 
   async function submit() {
@@ -414,16 +628,27 @@ export function initReporteEventoSidebar(opts) {
     btnGuardar.disabled = true;
     try {
       const res = await api.postEventoReporte(body);
-      setStatus(`Evento guardado (id ${res?.id ?? '—'}).`);
+      const id = res?.id;
+      setStatus(`Evento guardado${id != null ? ` (id ${id})` : ''}.`);
+      showToast(`✓ Evento guardado${id != null ? ` (id ${id})` : ''}`, 'ok');
+      vibrateOk();
       onEventoGuardado?.();
       descEl.value = '';
+      clearDraft();
       if (distEl) distEl.value = '';
+      if (distAutoTag) distAutoTag.hidden = true;
       tipoEl.value = '';
       estadoEl.value = '';
       accionEl.value = '';
       pinnedLngLat = null;
+      pinnedRouteLabel = null;
+      lastGpsAccuracy = null;
+      autoComputedDistOdf = null;
+      distOdfIsManual = false;
+      presetBtns.forEach((b) => b.classList.remove('is-active'));
       setReportePin(null);
       setGpsStatus('', '');
+      updatePinCard();
       if (isReportePanelOpen()) {
         startAwaitingMapPick();
       }
@@ -434,15 +659,25 @@ export function initReporteEventoSidebar(opts) {
         q.push(body);
         saveQueue(q);
         updateOfflineBadge();
+        showToast('Guardado en el dispositivo. Se enviará al volver la red.', 'warn');
+        vibrateOk();
         setStatus('Sin conexión: evento guardado en el dispositivo. Se enviará cuando vuelva la red.');
         descEl.value = '';
+        clearDraft();
         if (distEl) distEl.value = '';
+        if (distAutoTag) distAutoTag.hidden = true;
         tipoEl.value = '';
         estadoEl.value = '';
         accionEl.value = '';
         pinnedLngLat = null;
+        pinnedRouteLabel = null;
+        lastGpsAccuracy = null;
+        autoComputedDistOdf = null;
+        distOdfIsManual = false;
+        presetBtns.forEach((b) => b.classList.remove('is-active'));
         setReportePin(null);
         setGpsStatus('', '');
+        updatePinCard();
         if (isReportePanelOpen()) startAwaitingMapPick();
         refreshFechaText();
       } else {
@@ -450,6 +685,7 @@ export function initReporteEventoSidebar(opts) {
         if (/^503:/.test(msg) || msg.includes('eventos_reporte')) {
           msg += ' · En la carpeta del proyecto: npm run db:apply-eventos (o ejecuta sql/06_eventos_reporte.sql en PostgreSQL).';
         }
+        showToast(`Error al guardar: ${msg}`, 'err');
         setStatus(`Reporte evento: ${msg}`);
       }
     } finally {
@@ -460,10 +696,12 @@ export function initReporteEventoSidebar(opts) {
 
   refreshFechaText();
   updateOfflineBadge();
+  restoreDraft();
 
   function notifyReportePanelOpened() {
     refreshFechaText();
     updateOfflineBadge();
+    restoreDraft();
     void flushQueue();
     if (!pinnedLngLat) {
       startAwaitingMapPick();
@@ -489,6 +727,20 @@ export function initReporteEventoSidebar(opts) {
   });
 
   btnUseGps?.addEventListener('click', () => handleGpsPick());
+  btnImproveGps?.addEventListener('click', () => handleGpsPick({ silent: false }));
+
+  presetBtns.forEach((b) => {
+    b.addEventListener('click', () => applyPreset(b.dataset.preset || ''));
+  });
+
+  /* Detectar edición manual del campo Dist ODF para no sobreescribirlo luego. */
+  distEl?.addEventListener('input', () => {
+    distOdfIsManual = true;
+    if (distAutoTag) distAutoTag.hidden = true;
+  });
+
+  /* Borrador automático de la descripción. */
+  descEl.addEventListener('input', () => persistDraft());
 
   /* Flush al recuperar red y cuando vuelve el foco de la pestaña. */
   window.addEventListener('online', () => void flushQueue());

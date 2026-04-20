@@ -1715,6 +1715,196 @@ body.editor-body #sidebar {
   line-height: 1.35;
 }
 
+/* ——— Tarjeta de ubicación fijada (arriba del formulario) ——— */
+.reporte-ev-pin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 2px 0 14px;
+  padding: 12px 12px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: linear-gradient(155deg, rgba(127, 29, 29, 0.22), rgba(15, 23, 42, 0.55));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.reporte-ev-pin-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reporte-ev-pin-card__ico {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(127, 29, 29, 0.45);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+}
+
+.reporte-ev-pin-card__txt {
+  flex: 1;
+  min-width: 0;
+}
+
+.reporte-ev-pin-card__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.reporte-ev-pin-card__sub {
+  margin-top: 2px;
+  font-size: 0.74rem;
+  color: #cbd5e1;
+}
+
+.reporte-ev-acc-pill {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid currentColor;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.reporte-ev-acc-pill[data-level="ok"] { color: #6ee7b7; }
+.reporte-ev-acc-pill[data-level="warn"] { color: #fbbf24; }
+.reporte-ev-acc-pill[data-level="bad"] { color: #fca5a5; }
+
+.reporte-ev-pin-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reporte-ev-pin-card__actions .reporte-ev-btn {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* ——— Plantillas rápidas (chips) ——— */
+.reporte-ev-presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 2px 0 14px;
+}
+
+.reporte-ev-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: linear-gradient(155deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.75));
+  color: #e2e8f0;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reporte-ev-preset:hover {
+  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.45);
+  background: linear-gradient(155deg, rgba(56, 189, 248, 0.12), rgba(15, 23, 42, 0.85));
+}
+
+.reporte-ev-preset.is-active {
+  border-color: rgba(52, 211, 153, 0.6);
+  background: linear-gradient(155deg, rgba(52, 211, 153, 0.18), rgba(15, 23, 42, 0.85));
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.35), 0 8px 22px rgba(52, 211, 153, 0.18);
+}
+
+.reporte-ev-preset__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.reporte-ev-preset__sub {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+/* ——— Etiqueta «auto / borrador guardado» ——— */
+.reporte-ev-auto-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a5f3fc;
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  vertical-align: middle;
+}
+
+.reporte-ev-req {
+  color: #f87171;
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+/* ——— Toast de confirmación ——— */
+.reporte-ev-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%) translateY(0);
+  z-index: 9999;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #16a34a 0%, #0e7490 100%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  max-width: calc(100vw - 24px);
+  text-align: center;
+  pointer-events: none;
+}
+
+.reporte-ev-toast[data-level="warn"] {
+  background: linear-gradient(135deg, #d97706 0%, #92400e 100%);
+}
+.reporte-ev-toast[data-level="err"] {
+  background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%);
+}
+
+.reporte-ev-toast.is-enter { animation: reporteEvToastIn 260ms cubic-bezier(0.22, 1, 0.36, 1); }
+.reporte-ev-toast.is-leave { animation: reporteEvToastOut 260ms ease forwards; }
+
+@keyframes reporteEvToastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(18px) scale(0.95); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes reporteEvToastOut {
+  to { opacity: 0; transform: translateX(-50%) translateY(14px) scale(0.98); }
+}
+
+/* ——— Barra Guardar «sticky» en móvil ——— */
+.reporte-ev-actions--sticky {
+  margin-top: 16px;
+}
+
+.reporte-ev-btn--guardar .reporte-ev-save-ico {
+  margin-right: 2px;
+}
+
 .reporte-ev-repick {
   margin-bottom: 14px;
   width: 100%;
@@ -8020,6 +8210,26 @@ body.editor-body
   body.editor-body .panel-reporte-evento .reporte-ev-btn--guardar {
     min-height: 52px;
     font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* Barra de guardar sticky al fondo del panel en móvil. */
+  body.editor-body .panel-reporte-evento .reporte-ev-actions--sticky {
+    position: sticky;
+    bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+    z-index: 3;
+    margin: 14px -10px -12px;
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0%, rgba(8, 12, 22, 0.95) 45%);
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+  }
+
+  /* Plantillas rápidas: grid de 2 columnas en móvil (ya lo está), pero permite wrap. */
+  body.editor-body .panel-reporte-evento .reporte-ev-presets {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   #layout:not(.sidebar-collapsed) #sidebar {
