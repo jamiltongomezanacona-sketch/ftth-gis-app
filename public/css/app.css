@@ -623,8 +623,7 @@ body.editor-body #layout {
   display: flex;
   align-items: center;
   justify-content: stretch;
-  /* Reservar aire visual para el stack flotante de la izquierda. */
-  margin-left: 64px;
+  margin-left: 0;
 }
 
 .editor-chrome-toggle {
@@ -2883,14 +2882,13 @@ body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
     var(--app-shadow-elevated, 0 14px 30px rgba(0, 0, 0, 0.4));
 }
 
-/* Casita «panel principal»: barra superior derecha (.editor-chrome-home); legacy .cable-search-home por si el buscador flota sin chrome */
+/* Casita «panel principal»: ahora vive en la esquina superior izquierda del
+   chrome bar. El selector legacy `.cable-search-home` se conserva por si el
+   buscador flota fuera del chrome. */
 .cable-search-home,
 .editor-chrome-home {
   flex-shrink: 0;
-  /* Empuja la casita siempre al extremo derecho del chrome bar, incluso
-     cuando el slot del buscador no ocupa todo el espacio (mobile usa
-     `flex: 0 1 auto` y por defecto la casita quedaría pegada al buscador). */
-  margin-left: auto;
+  margin-left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3416,7 +3414,7 @@ body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
     min-width: 0;
     max-width: none;
     justify-content: stretch;
-    margin-left: 62px;
+    margin-left: 0;
   }
 
   body.editor-body .cable-search-mount--chrome {
@@ -5817,7 +5815,7 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
     min-width: 0;
     max-width: none;
     justify-content: stretch;
-    margin-left: 58px;
+    margin-left: 0;
   }
 
   body.editor-body .editor-chrome-toggle,
