@@ -1436,12 +1436,32 @@ export async function boot() {
     showAccuracyCircle: true
   });
   map.addControl(geolocate, 'bottom-right');
+  /**
+   * Blindaje de layout: si por cualquier motivo Mapbox o una reestructuración
+   * posterior deja el control GPS en otro corner, se fuerza su grupo al
+   * contenedor `.mapboxgl-ctrl-bottom-right`.
+   */
+  function ensureGeolocateBottomRight() {
+    try {
+      const mapContainer = map.getContainer();
+      const geoBtn = mapContainer.querySelector('button.mapboxgl-ctrl-geolocate');
+      const geoGroup = geoBtn?.closest('.mapboxgl-ctrl-group');
+      const bottomRight = mapContainer.querySelector('.mapboxgl-ctrl-bottom-right');
+      if (geoGroup && bottomRight && geoGroup.parentElement !== bottomRight) {
+        bottomRight.appendChild(geoGroup);
+      }
+    } catch {
+      /* */
+    }
+  }
+  ensureGeolocateBottomRight();
   geolocate.on('error', () => {
     setStatus(
       'GPS: sin señal o permiso denegado. Revisa permisos del sitio y que la ubicación esté activa (móvil/PC).'
     );
   });
   geolocate.on('geolocate', () => {
+    ensureGeolocateBottomRight();
     setStatus('GPS: posición actualizada en el mapa.');
   });
 
@@ -2396,6 +2416,7 @@ export async function boot() {
       }
       measureDock?.classList.add('measure-fab-dock--in-map');
     }
+    ensureGeolocateBottomRight();
 
     await loadFtthManifestIfNeeded();
 
