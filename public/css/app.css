@@ -2722,15 +2722,16 @@ body.editor-body #sidebar-toggle[hidden] {
 }
 
 /* ===========================================================================
-   DOCK SUPERIOR IZQUIERDA: el rail con los botones Trazar / Reporte evento
-   se posiciona como una barra flotante anclada debajo del chrome bar, en
-   lugar del sidebar lateral. Se aplica tanto en escritorio como en móvil
-   con la clase `.sidebar--dock-top-left` en `#sidebar`.
+   FAB STACK SUPERIOR IZQUIERDA: dos botones flotantes individuales (Trazar y
+   Reporte evento) apilados verticalmente bajo el chrome bar. El #sidebar es
+   solo un contenedor transparente — cada botón es su propio FAB con
+   glassmorphism, sin la "pastilla" envolvente.
+   Clase: `.sidebar--fab-stack` en `#sidebar`.
    =========================================================================== */
-#sidebar.sidebar--dock-top-left,
-body.editor-body #sidebar.sidebar--dock-top-left,
-#layout:not(.sidebar-collapsed) #sidebar.sidebar--dock-top-left,
-#layout.sidebar-collapsed #sidebar.sidebar--dock-top-left {
+#sidebar.sidebar--fab-stack,
+body.editor-body #sidebar.sidebar--fab-stack,
+#layout:not(.sidebar-collapsed) #sidebar.sidebar--fab-stack,
+#layout.sidebar-collapsed #sidebar.sidebar--fab-stack {
   position: fixed !important;
   display: flex !important;
   left: max(10px, env(safe-area-inset-left, 0px)) !important;
@@ -2740,18 +2741,18 @@ body.editor-body #sidebar.sidebar--dock-top-left,
   transform: none !important;
   width: auto !important;
   min-width: 0 !important;
-  max-width: calc(100vw - 20px) !important;
+  max-width: none !important;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
   margin: 0 !important;
-  padding: 6px 8px !important;
-  border-radius: var(--app-radius-lg, 16px) !important;
-  border: 1px solid var(--app-stroke, rgba(148, 163, 184, 0.16)) !important;
-  background: var(--app-surface-2, rgba(15, 23, 42, 0.92)) !important;
-  backdrop-filter: var(--app-blur-strong, blur(18px) saturate(1.15)) !important;
-  -webkit-backdrop-filter: var(--app-blur-strong, blur(18px) saturate(1.15)) !important;
-  box-shadow: var(--app-shadow-elevated, 0 18px 38px rgba(0, 0, 0, 0.36)) !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
   z-index: 540 !important;
   opacity: 1 !important;
   visibility: visible !important;
@@ -2759,13 +2760,10 @@ body.editor-body #sidebar.sidebar--dock-top-left,
   overflow: visible !important;
 }
 
-/* Override explicito de la regla mobile que oculta el sidebar al colapsar
-   (línea ~4644 del legacy): el dock-top-left debe verse SIEMPRE porque solo
-   contiene botones que abren los paneles flotantes; el comportamiento de
-   auto-colapso al hacer clic en el mapa ya no aplica. */
+/* Override mobile: igual que antes, el FAB stack debe verse siempre. */
 @media (max-width: 900px) {
-  #layout.sidebar-collapsed #sidebar.sidebar--dock-top-left,
-  body.editor-body #layout.sidebar-collapsed #sidebar.sidebar--dock-top-left {
+  #layout.sidebar-collapsed #sidebar.sidebar--fab-stack,
+  body.editor-body #layout.sidebar-collapsed #sidebar.sidebar--fab-stack {
     display: flex !important;
     opacity: 1 !important;
     visibility: visible !important;
@@ -2774,66 +2772,108 @@ body.editor-body #sidebar.sidebar--dock-top-left,
   }
 }
 
-#sidebar.sidebar--dock-top-left::before {
+#sidebar.sidebar--fab-stack::before {
   display: none !important;
 }
 
-#sidebar.sidebar--dock-top-left .sidebar-inner {
+#sidebar.sidebar--fab-stack .sidebar-inner,
+#sidebar.sidebar--fab-stack .sidebar-body {
   padding: 0;
   margin: 0;
-  display: flex;
-  align-items: stretch;
-  width: auto;
-  max-width: 100%;
-}
-
-#sidebar.sidebar--dock-top-left .sidebar-body {
-  padding: 0;
   background: transparent;
   border: none;
   box-shadow: none;
   display: flex;
-  align-items: stretch;
   overflow: visible;
 }
 
-/* Rail horizontal: los botones se ponen lado a lado. */
-.sidebar-tool-rail.sidebar-tool-rail--horizontal,
-body.editor-body .sidebar-tool-rail.sidebar-tool-rail--horizontal {
-  flex-direction: row;
-  gap: 8px;
+/* Rail vertical para los FABs. */
+.sidebar-tool-rail.sidebar-tool-rail--fab,
+body.editor-body .sidebar-tool-rail.sidebar-tool-rail--fab {
+  flex-direction: column;
+  gap: 10px;
   width: auto;
   padding: 0;
+  align-items: flex-start;
 }
 
-/* Botón compacto en formato horizontal: 150px de ancho fijo, alto bajo, ícono+texto. */
-#sidebar.sidebar--dock-top-left .sidebar-tool-btn,
-body.editor-body #sidebar.sidebar--dock-top-left .sidebar-tool-btn {
-  width: 158px;
+/* Botón flotante individual: cuadrado redondeado, solo icono visible. */
+.sidebar-tool-btn.sidebar-tool-btn--fab,
+body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
+  width: 46px;
+  height: 46px;
   min-width: 0;
+  padding: 0;
   flex: 0 0 auto;
-  padding: 9px 12px 9px 11px;
-  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  border-radius: 14px;
+  border: 1px solid var(--app-stroke, rgba(148, 163, 184, 0.18));
+  background: var(--app-surface-2, rgba(15, 23, 42, 0.92));
+  backdrop-filter: var(--app-blur-strong, blur(18px) saturate(1.15));
+  -webkit-backdrop-filter: var(--app-blur-strong, blur(18px) saturate(1.15));
+  box-shadow: var(--app-shadow-soft, 0 8px 22px rgba(0, 0, 0, 0.32));
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
 }
 
-/* En pantallas muy estrechas, los botones se reducen para caber. */
-@media (max-width: 420px) {
-  #sidebar.sidebar--dock-top-left .sidebar-tool-btn,
-  body.editor-body #sidebar.sidebar--dock-top-left .sidebar-tool-btn {
-    width: calc((100vw - 56px) / 2);
-    max-width: 158px;
-    padding: 8px 10px;
-  }
-
-  body.editor-body #sidebar.sidebar--dock-top-left .sidebar-tool-btn__lbl {
-    font-size: 0.74rem;
-  }
+.sidebar-tool-btn.sidebar-tool-btn--fab::before {
+  display: none !important;
 }
 
-/* Cuando el dock está en pantalla, asegurar que NO se aplica el efecto de
-   colapso lateral heredado (translate negativo). */
-#layout.sidebar-collapsed #sidebar.sidebar--dock-top-left {
-  transform: none !important;
+.sidebar-tool-btn.sidebar-tool-btn--fab .sidebar-tool-btn__ico {
+  margin: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-tool-btn.sidebar-tool-btn--fab .sidebar-tool-btn__ico img {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+/* Etiqueta accesible pero invisible (sr-only): seguimos exponiéndola al lector
+   de pantalla pero no ocupa espacio. */
+.sidebar-tool-btn.sidebar-tool-btn--fab .sidebar-tool-btn__lbl {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.sidebar-tool-btn.sidebar-tool-btn--fab:hover {
+  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(15, 23, 42, 0.97);
+  box-shadow: var(--app-shadow-elevated, 0 14px 30px rgba(0, 0, 0, 0.4));
+}
+
+.sidebar-tool-btn.sidebar-tool-btn--fab[aria-expanded='true'] {
+  border-color: rgba(56, 189, 248, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.4),
+    var(--app-shadow-elevated, 0 14px 30px rgba(0, 0, 0, 0.4));
+}
+
+.sidebar-tool-btn--reporte.sidebar-tool-btn--fab[aria-expanded='true'] {
+  border-color: rgba(251, 146, 60, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(251, 146, 60, 0.4),
+    var(--app-shadow-elevated, 0 14px 30px rgba(0, 0, 0, 0.4));
 }
 
 /* Casita «panel principal»: barra superior derecha (.editor-chrome-home); legacy .cable-search-home por si el buscador flota sin chrome */

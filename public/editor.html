@@ -12,7 +12,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260420f" />
+  <link rel="stylesheet" href="/css/app.css?v=20260420g" />
 </head>
 <body class="editor-body">
   <div id="auth-gate-root" class="auth-gate-root"></div>
@@ -120,14 +120,16 @@
         </div>
       </div>
     </div>
-    <aside id="sidebar" class="sidebar--dock-top-left" aria-label="Panel de control">
+    <aside id="sidebar" class="sidebar--fab-stack" aria-label="Panel de control">
       <div class="sidebar-inner">
         <div id="sidebar-body" class="sidebar-body sidebar-body--tool-rail">
-          <div class="sidebar-tool-rail sidebar-tool-rail--horizontal" role="toolbar" aria-label="Herramientas de operación">
+          <div class="sidebar-tool-rail sidebar-tool-rail--fab" role="toolbar" aria-label="Herramientas de operación">
             <button
               type="button"
               id="btn-open-panel-trazar"
-              class="sidebar-tool-btn"
+              class="sidebar-tool-btn sidebar-tool-btn--fab"
+              title="Trazar"
+              aria-label="Abrir panel Trazar"
               aria-expanded="false"
               aria-controls="editor-float-trazar"
             >
@@ -139,7 +141,9 @@
             <button
               type="button"
               id="btn-open-panel-reporte"
-              class="sidebar-tool-btn sidebar-tool-btn--reporte"
+              class="sidebar-tool-btn sidebar-tool-btn--fab sidebar-tool-btn--reporte"
+              title="Reporte evento"
+              aria-label="Abrir panel Reporte evento"
               aria-expanded="false"
               aria-controls="reporte-evento-details"
             >
@@ -463,6 +467,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260420f"></script>
+  <script type="module" src="/js/app.js?v=20260420g"></script>
 </body>
 </html>
