@@ -1,13 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-  <!-- Regla horizontal + marcas: silueta distinta al icono antiguo (diagonal) -->
-  <rect x="2" y="9.5" width="20" height="6.2" rx="1.35" fill="#1e293b" stroke="#38bdf8" stroke-width="1.35"/>
+  <rect x="2" y="9.5" width="20" height="6.2" rx="1.35" fill="#14532d" stroke="#4ade80" stroke-width="1.35"/>
   <path
     d="M4.8 9.5V6.2M8 9.5V7.4M11.2 9.5V5.8M14.4 9.5V7.4M17.6 9.5V6.2M20.2 9.5V7.8"
-    stroke="#38bdf8"
+    stroke="#86efac"
     stroke-width="1.35"
     stroke-linecap="round"
   />
-  <path d="M4 14.2h16" stroke="#64748b" stroke-width="0.9" stroke-dasharray="1.4 1.2" opacity="0.85"/>
-  <circle cx="20.5" cy="6.3" r="2.1" fill="#22d3ee" stroke="#0f172a" stroke-width="0.55"/>
-  <circle cx="20.5" cy="6.3" r="0.7" fill="#0f172a"/>
+  <path d="M4 14.2h16" stroke="#22c55e" stroke-width="0.9" stroke-dasharray="1.4 1.2" opacity="0.85"/>
+  <circle cx="20.5" cy="6.3" r="2.1" fill="#34d399" stroke="#052e16" stroke-width="0.55"/>
+  <circle cx="20.5" cy="6.3" r="0.7" fill="#052e16"/>
 </svg>

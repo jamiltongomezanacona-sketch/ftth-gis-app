@@ -109,8 +109,8 @@ export function ensureMeasurePolylineLayers(map) {
     filter: ['==', ['get', 'kind'], 'line'],
     layout: { 'line-join': 'round', 'line-cap': 'round' },
     paint: {
-      /* Alineado con iconos Medir/GPS (cian elegante, trazo continuo) */
-      'line-color': '#38bdf8',
+      /* Coherente con botón Medir (verde) */
+      'line-color': '#22c55e',
       'line-width': 3,
       'line-opacity': 0.96,
       'line-blur': 0.08
@@ -124,9 +124,9 @@ export function ensureMeasurePolylineLayers(map) {
     filter: ['==', ['get', 'kind'], 'vertex'],
     paint: {
       'circle-radius': 5,
-      'circle-color': '#0f172a',
+      'circle-color': '#052e16',
       'circle-stroke-width': 2.25,
-      'circle-stroke-color': '#38bdf8'
+      'circle-stroke-color': '#4ade80'
     }
   });
 
