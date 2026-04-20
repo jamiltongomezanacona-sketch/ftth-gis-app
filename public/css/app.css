@@ -3939,8 +3939,8 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 
 /* Icono personalizado (alto contraste sobre botón oscuro). */
 #map button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-  background-image: url("/icons/editor/geolocate.svg") !important;
-  background-size: 21px 21px !important;
+  background-image: url("/icons/editor/gps-compass.png") !important;
+  background-size: 24px 24px !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
   opacity: 1 !important;
