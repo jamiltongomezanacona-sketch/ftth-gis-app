@@ -4389,7 +4389,7 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 }
 
 .measure-poly-readout {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 /* Tarjetas DISTANCIA / RESERVA 20% (dock + panel flotante) */
@@ -4397,7 +4397,7 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: stretch;
-  gap: 10px;
+  gap: 8px;
 }
 
 .measure-poly-stat-row--compact {
@@ -4405,23 +4405,23 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 }
 
 .measure-poly-stat-row--compact .measure-poly-stat {
-  padding: 8px 10px;
+  padding: 7px 9px;
   min-height: 0;
 }
 
 .measure-poly-stat-row--compact .measure-poly-stat__label {
-  font-size: 0.58rem;
+  font-size: 0.54rem;
 }
 
 .measure-poly-stat-row--compact .measure-poly-stat__value {
-  font-size: 1rem;
+  font-size: 0.92rem;
 }
 
 .measure-poly-stat {
   flex: 1 1 0;
   min-width: 0;
-  padding: 10px 12px 11px;
-  border-radius: 12px;
+  padding: 8px 10px 9px;
+  border-radius: 11px;
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.92));
   border: 1px solid rgba(100, 116, 139, 0.28);
   box-shadow:
@@ -4430,7 +4430,7 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 5px;
+  gap: 4px;
 }
 
 .measure-poly-stat:nth-child(2) {
@@ -4439,9 +4439,9 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 }
 
 .measure-poly-stat__label {
-  font-size: 0.56rem;
+  font-size: 0.52rem;
   font-weight: 700;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #94a3b8;
   line-height: 1.15;
@@ -4453,7 +4453,7 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 }
 
 .measure-poly-stat__value {
-  font-size: 1.02rem;
+  font-size: 0.94rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1.12;
@@ -4470,9 +4470,9 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 
 .measure-polyline-inner {
   pointer-events: auto;
-  width: min(308px, calc(100vw - 28px));
-  padding: 12px 12px 11px;
-  border-radius: 16px;
+  width: min(270px, calc(100vw - 24px));
+  padding: 9px 9px 8px;
+  border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.16);
   background: linear-gradient(
     165deg,
@@ -4491,9 +4491,9 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 
 .measure-polyline-actions {
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 38px 1fr 38px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .measure-poly-btn {
@@ -4538,9 +4538,9 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 
 /* Deshacer: tile neutro + icono mint / gris */
 .measure-poly-btn--undo {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
   padding: 0;
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.98));
   border: 1px solid rgba(148, 163, 184, 0.22);
@@ -4565,8 +4565,8 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 }
 
 .measure-poly-btn__swatch--undo {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   background: linear-gradient(160deg, rgba(52, 211, 153, 0.22), rgba(51, 65, 85, 0.85));
   border: 1px solid rgba(110, 231, 183, 0.22);
   box-shadow:
@@ -4577,9 +4577,9 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 .measure-poly-btn--ok {
   width: 100%;
   min-width: 0;
-  height: 44px;
-  border-radius: 12px;
-  padding: 0 14px;
+  height: 38px;
+  border-radius: 11px;
+  padding: 0 10px;
   background: linear-gradient(135deg, #0f766e 0%, #059669 45%, #047857 100%);
   border: 1px solid rgba(110, 231, 183, 0.28);
   box-shadow:
@@ -4595,9 +4595,9 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 }
 
 .measure-poly-btn--trash {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
   padding: 0;
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.98));
   border: 1px solid rgba(100, 116, 139, 0.28);
@@ -4616,15 +4616,15 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
 
 .measure-poly-ico {
   display: block;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 
 .measure-poly-ico--ok {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .measure-float-results {
