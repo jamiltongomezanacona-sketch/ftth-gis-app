@@ -599,7 +599,10 @@ body.editor-body #layout {
 .editor-chrome {
   grid-column: 1;
   grid-row: 1;
-  z-index: 520;
+  /* Debe quedar por encima del FAB stack lateral (540) para que el listbox
+     del buscador no se meta por debajo de los botones, pero por debajo de
+     paneles/backdrop flotantes (575/585). */
+  z-index: 560;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -620,6 +623,8 @@ body.editor-body #layout {
   display: flex;
   align-items: center;
   justify-content: stretch;
+  /* Reservar aire visual para el stack flotante de la izquierda. */
+  margin-left: 64px;
 }
 
 .editor-chrome-toggle {
@@ -3411,6 +3416,7 @@ body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
     min-width: 0;
     max-width: none;
     justify-content: stretch;
+    margin-left: 62px;
   }
 
   body.editor-body .cable-search-mount--chrome {
@@ -5582,7 +5588,7 @@ body.editor-body .editor-chrome {
   right: 0;
   width: 100%;
   box-sizing: border-box;
-  z-index: 520;
+  z-index: 560;
   height: auto;
   min-height: 0;
   padding: max(10px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) 8px
@@ -5811,6 +5817,7 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
     min-width: 0;
     max-width: none;
     justify-content: stretch;
+    margin-left: 58px;
   }
 
   body.editor-body .editor-chrome-toggle,
