@@ -1,7 +1,11 @@
 import { snapLngLatToLine } from './measurements.js';
 
+const OFFLINE_QUEUE_KEY = 'reporteEventoQueueV1';
+/** Distancia máxima (metros) entre GPS del técnico y una ruta para asociarla automáticamente. */
+const GPS_ROUTE_SNAP_RADIUS_M = 150;
+
 /**
- * Sidebar «REPORTE EVENTO»: primero clic en tendido (coordenada), luego formulario y POST.
+ * Sidebar «REPORTE EVENTO»: flujo para técnico en campo (GPS + tap cable + cola offline).
  * @param {{
  *   api: { postEventoReporte: (b: Record<string, unknown>) => Promise<{ ok?: boolean, id?: number }> },
  *   setStatus: (msg: string) => void,
@@ -16,7 +20,12 @@ import { snapLngLatToLine } from './measurements.js';
  *   disarmOtdrPick: () => void,
  *   onArmingChanged?: (armed: boolean) => void,
  *   onEventoGuardado?: () => void,
- *   closeReportePanelUi?: () => void
+ *   closeReportePanelUi?: () => void,
+ *   findNearestRouteForLngLat?: (lng: number, lat: number, maxM: number) => null | {
+ *     feature: import('geojson').Feature<import('geojson').LineString>,
+ *     snapped: [number, number],
+ *     meters: number
+ *   }
  * }} opts
  */
 export function initReporteEventoSidebar(opts) {
@@ -31,7 +40,8 @@ export function initReporteEventoSidebar(opts) {
     disarmOtdrPick,
     onArmingChanged,
     onEventoGuardado,
-    closeReportePanelUi
+    closeReportePanelUi,
+    findNearestRouteForLngLat
   } = opts;
 
   const details = /** @type {HTMLElement | null} */ (document.getElementById('reporte-evento-details'));
@@ -46,6 +56,9 @@ export function initReporteEventoSidebar(opts) {
   const btnGuardar = document.getElementById('btn-reporte-evento-guardar');
   const btnCancelWait = document.getElementById('btn-reporte-cancel-wait');
   const btnRepick = document.getElementById('btn-reporte-repick');
+  const btnUseGps = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-use-gps'));
+  const gpsStatusEl = document.getElementById('reporte-ev-gps-status');
+  const offlineNoteEl = document.getElementById('reporte-ev-offline-note');
 
   if (!tipoEl || !estadoEl || !accionEl || !descEl || !btnGuardar || !details) {
     return {
@@ -64,9 +77,7 @@ export function initReporteEventoSidebar(opts) {
     return details.classList.contains(FLOAT_OPEN);
   }
 
-  /** Esperando clic en una línea del mapa. */
   let awaitingMapPick = false;
-  /** Coordenada proyectada en el tendido (tras clic). */
   let pinnedLngLat = /** @type {{ lng: number, lat: number } | null} */ (null);
 
   function refreshFechaText() {
@@ -89,11 +100,17 @@ export function initReporteEventoSidebar(opts) {
     phaseForm.hidden = !has;
   }
 
+  function setGpsStatus(msg, level) {
+    if (!gpsStatusEl) return;
+    gpsStatusEl.textContent = msg || '';
+    gpsStatusEl.dataset.level = level || '';
+  }
+
   function startAwaitingMapPick() {
     awaitingMapPick = true;
     details.classList.add('reporte-ev--armed');
     disarmOtdrPick();
-    setStatus('Reporte evento: haz clic en el tendido en el punto exacto del incidente.');
+    setStatus('Reporte evento: toca el tendido o usa GPS para fijar el punto del incidente.');
     onArmingChanged?.(true);
     updatePhaseDom();
   }
@@ -149,6 +166,94 @@ export function initReporteEventoSidebar(opts) {
     return true;
   }
 
+  /**
+   * Flujo GPS: el técnico está físicamente sobre el corte.
+   * Toma la ubicación del móvil y la asocia automáticamente a la ruta más cercana
+   * (≤ GPS_ROUTE_SNAP_RADIUS_M metros). Si no hay ruta cerca, igualmente guarda el punto crudo.
+   */
+  function handleGpsPick() {
+    if (!('geolocation' in navigator)) {
+      setGpsStatus('Tu dispositivo no permite ubicación GPS.', 'error');
+      return;
+    }
+    if (!btnUseGps) return;
+    btnUseGps.disabled = true;
+    btnUseGps.classList.add('is-loading');
+    setGpsStatus('Obteniendo ubicación…', 'info');
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        btnUseGps.disabled = false;
+        btnUseGps.classList.remove('is-loading');
+        const lng = Number(pos.coords.longitude);
+        const lat = Number(pos.coords.latitude);
+        const acc = Number(pos.coords.accuracy);
+        if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+          setGpsStatus('Ubicación inválida. Intenta de nuevo.', 'error');
+          return;
+        }
+
+        let finalLng = lng;
+        let finalLat = lat;
+        let attachedRouteMsg = '';
+
+        const nearest = findNearestRouteForLngLat?.(lng, lat, GPS_ROUTE_SNAP_RADIUS_M) || null;
+        if (nearest?.feature && Array.isArray(nearest.snapped) && nearest.snapped.length === 2) {
+          finalLng = nearest.snapped[0];
+          finalLat = nearest.snapped[1];
+          try {
+            applyReportePickedRoute(nearest.feature, /** @type {any} */ ({ lngLat: { lng: finalLng, lat: finalLat } }));
+          } catch {
+            /* no-op: aplicar ruta seleccionada no debe bloquear el guardado. */
+          }
+          attachedRouteMsg = ` · Asociado al tendido «${String(nearest.feature.properties?.nombre ?? nearest.feature.id)}» (${Math.round(nearest.meters)} m).`;
+        } else {
+          attachedRouteMsg = ' · No hay tendido cercano: se guardará solo la coordenada GPS.';
+        }
+
+        pinnedLngLat = { lng: finalLng, lat: finalLat };
+        setReportePin([finalLng, finalLat]);
+        awaitingMapPick = false;
+        details.classList.remove('reporte-ev--armed');
+        onArmingChanged?.(false);
+
+        try {
+          const map = getMap();
+          map.easeTo({ center: [finalLng, finalLat], zoom: Math.max(map.getZoom(), 17), duration: 600 });
+        } catch {
+          /* */
+        }
+
+        updatePhaseDom();
+        refreshFechaText();
+        const accTxt = Number.isFinite(acc) ? ` ±${Math.round(acc)} m` : '';
+        setGpsStatus(`GPS obtenido${accTxt}.${attachedRouteMsg}`, 'ok');
+        setStatus(`Reporte evento: ubicación fijada por GPS${accTxt}.${attachedRouteMsg}`);
+
+        try {
+          if (distEl) distEl.focus();
+          else tipoEl.focus();
+        } catch {
+          /* */
+        }
+      },
+      (err) => {
+        btnUseGps.disabled = false;
+        btnUseGps.classList.remove('is-loading');
+        const codeMsg =
+          err?.code === 1
+            ? 'Permiso denegado. Habilita la ubicación para este sitio en el navegador.'
+            : err?.code === 2
+            ? 'Ubicación no disponible. Revisa GPS/datos móviles e inténtalo de nuevo.'
+            : err?.code === 3
+            ? 'Tiempo de espera agotado. Intenta otra vez al aire libre.'
+            : 'No se pudo obtener la ubicación.';
+        setGpsStatus(codeMsg, 'error');
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
+  }
+
   function resetForCableCleared() {
     cancelAwaitingMapPickOnly();
     pinnedLngLat = null;
@@ -162,6 +267,7 @@ export function initReporteEventoSidebar(opts) {
   function clearPinnedAndRearm() {
     pinnedLngLat = null;
     setReportePin(null);
+    setGpsStatus('', '');
     if (isReportePanelOpen()) {
       startAwaitingMapPick();
     }
@@ -196,9 +302,77 @@ export function initReporteEventoSidebar(opts) {
     return mapCenterLngLat();
   }
 
+  /* ——— Cola offline ——— */
+  function loadQueue() {
+    try {
+      const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveQueue(arr) {
+    try {
+      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(arr));
+    } catch {
+      /* cuota excedida o modo privado: ignoramos, el fallo se notifica arriba. */
+    }
+  }
+
+  function updateOfflineBadge() {
+    if (!offlineNoteEl) return;
+    const n = loadQueue().length;
+    if (n <= 0) {
+      offlineNoteEl.hidden = true;
+      offlineNoteEl.textContent = '';
+      return;
+    }
+    offlineNoteEl.hidden = false;
+    offlineNoteEl.textContent = `${n} reporte(s) pendiente(s) por enviar. Se reintentan al recuperar conexión.`;
+  }
+
+  function isTransientError(err) {
+    if (!navigator.onLine) return true;
+    const msg = err instanceof Error ? err.message : String(err || '');
+    /* 0/Failed fetch = red caída; 5xx = servidor temporal. */
+    if (/^0:|Failed to fetch|NetworkError|TypeError/.test(msg)) return true;
+    if (/^(502|503|504):/.test(msg)) return true;
+    return false;
+  }
+
+  async function flushQueue() {
+    const q = loadQueue();
+    if (!q.length) return { sent: 0, left: 0 };
+    const left = [];
+    let sent = 0;
+    for (const body of q) {
+      try {
+        await api.postEventoReporte(body);
+        sent++;
+      } catch (err) {
+        if (isTransientError(err)) {
+          left.push(body);
+        } else {
+          /* Errores definitivos (400 validación, etc.) se descartan para no bloquear la cola; se avisa. */
+          console.warn('Reporte offline descartado por error definitivo:', err);
+        }
+      }
+    }
+    saveQueue(left);
+    updateOfflineBadge();
+    if (sent > 0) {
+      setStatus(`Reporte evento: ${sent} evento(s) en cola enviados correctamente.`);
+      onEventoGuardado?.();
+    }
+    return { sent, left: left.length };
+  }
+
   async function submit() {
     if (!pinnedLngLat) {
-      setStatus('Reporte evento: primero indica el punto en el tendido (abre el panel y haz clic en el cable).');
+      setStatus('Reporte evento: primero indica el punto (usa GPS o toca el cable en el mapa).');
       return;
     }
     const tipo = tipoEl.value.trim();
@@ -237,8 +411,8 @@ export function initReporteEventoSidebar(opts) {
       lat
     };
 
+    btnGuardar.disabled = true;
     try {
-      btnGuardar.disabled = true;
       const res = await api.postEventoReporte(body);
       setStatus(`Evento guardado (id ${res?.id ?? '—'}).`);
       onEventoGuardado?.();
@@ -249,16 +423,35 @@ export function initReporteEventoSidebar(opts) {
       accionEl.value = '';
       pinnedLngLat = null;
       setReportePin(null);
+      setGpsStatus('', '');
       if (isReportePanelOpen()) {
         startAwaitingMapPick();
       }
       refreshFechaText();
     } catch (err) {
-      let msg = err instanceof Error ? err.message : String(err);
-      if (/^503:/.test(msg) || msg.includes('eventos_reporte')) {
-        msg += ' · En la carpeta del proyecto: npm run db:apply-eventos (o ejecuta sql/06_eventos_reporte.sql en PostgreSQL).';
+      if (isTransientError(err)) {
+        const q = loadQueue();
+        q.push(body);
+        saveQueue(q);
+        updateOfflineBadge();
+        setStatus('Sin conexión: evento guardado en el dispositivo. Se enviará cuando vuelva la red.');
+        descEl.value = '';
+        if (distEl) distEl.value = '';
+        tipoEl.value = '';
+        estadoEl.value = '';
+        accionEl.value = '';
+        pinnedLngLat = null;
+        setReportePin(null);
+        setGpsStatus('', '');
+        if (isReportePanelOpen()) startAwaitingMapPick();
+        refreshFechaText();
+      } else {
+        let msg = err instanceof Error ? err.message : String(err);
+        if (/^503:/.test(msg) || msg.includes('eventos_reporte')) {
+          msg += ' · En la carpeta del proyecto: npm run db:apply-eventos (o ejecuta sql/06_eventos_reporte.sql en PostgreSQL).';
+        }
+        setStatus(`Reporte evento: ${msg}`);
       }
-      setStatus(`Reporte evento: ${msg}`);
     } finally {
       btnGuardar.disabled = false;
       refreshFechaText();
@@ -266,9 +459,12 @@ export function initReporteEventoSidebar(opts) {
   }
 
   refreshFechaText();
+  updateOfflineBadge();
 
   function notifyReportePanelOpened() {
     refreshFechaText();
+    updateOfflineBadge();
+    void flushQueue();
     if (!pinnedLngLat) {
       startAwaitingMapPick();
     }
@@ -289,7 +485,15 @@ export function initReporteEventoSidebar(opts) {
 
   btnRepick?.addEventListener('click', () => {
     clearPinnedAndRearm();
-    setStatus('Reporte evento: haz clic de nuevo en el tendido para el nuevo punto.');
+    setStatus('Reporte evento: vuelve a elegir el punto (GPS o toque en el cable).');
+  });
+
+  btnUseGps?.addEventListener('click', () => handleGpsPick());
+
+  /* Flush al recuperar red y cuando vuelve el foco de la pestaña. */
+  window.addEventListener('online', () => void flushQueue());
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') void flushQueue();
   });
 
   return {

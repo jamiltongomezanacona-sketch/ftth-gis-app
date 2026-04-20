@@ -150,4 +150,4 @@ export class RoutesLayer {
   }
 }
 
-export { LAYER_ID as ROUTES_LAYER_ID };
+export { LAYER_ID as ROUTES_LAYER_ID, SOURCE_ID as ROUTES_SOURCE_ID };

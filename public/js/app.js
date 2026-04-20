@@ -1,6 +1,6 @@
 import { ensureAuthenticated } from './authGate.js';
 import { createRutasApi } from './api.js';
-import { RoutesLayer, ROUTES_LAYER_ID } from './routesLayer.js';
+import { RoutesLayer, ROUTES_LAYER_ID, ROUTES_SOURCE_ID } from './routesLayer.js';
 import { CentralesEtBLayer } from './centralesLayer.js';
 import { OtdrCutLayer } from './otdrCutLayer.js';
 import { MedidaEventoMarkerLayer } from './medidaEventoMarkerLayer.js';
@@ -1488,6 +1488,67 @@ export async function boot() {
     api,
     setStatus,
     getMap: () => map,
+    resolveRouteForMapClick: (e) => {
+      try {
+        if (!map.getLayer(ROUTES_LAYER_ID)) return null;
+        const pt = e.point;
+        const pad = 16;
+        const box = [
+          [pt.x - pad, pt.y - pad],
+          [pt.x + pad, pt.y + pad]
+        ];
+        const hits = map.queryRenderedFeatures(box, { layers: [ROUTES_LAYER_ID] });
+        const f = hits.find((x) => {
+          const g = /** @type {any} */ (x?.geometry);
+          return g?.type === 'LineString' && Array.isArray(g.coordinates) && g.coordinates.length >= 2;
+        });
+        return f ? /** @type {any} */ (f) : null;
+      } catch {
+        return null;
+      }
+    },
+    /**
+     * Resuelve la ruta más cercana a una coordenada (p. ej. GPS del técnico).
+     * Escanea todas las features del source de rutas (estén o no en pantalla)
+     * y devuelve la más cercana dentro del radio en metros indicado.
+     */
+    findNearestRouteForLngLat: (lng, lat, maxM) => {
+      try {
+        if (!map.getSource(ROUTES_SOURCE_ID)) return null;
+        /** querySourceFeatures: devuelve todas las features cargadas del source GeoJSON. */
+        const feats = map.querySourceFeatures(ROUTES_SOURCE_ID) || [];
+        if (!feats.length) return null;
+        const pt = turf.point([lng, lat]);
+        /** @type {{ feature: any, snapped: [number, number], meters: number } | null} */
+        let best = null;
+        /** Evita evaluar duplicados: un LineString partido en tiles puede aparecer varias veces. */
+        const seen = new Set();
+        for (const f of feats) {
+          const g = /** @type {any} */ (f?.geometry);
+          if (!g || g.type !== 'LineString' || !Array.isArray(g.coordinates) || g.coordinates.length < 2) continue;
+          const id = f.id ?? f.properties?.id ?? null;
+          const dedupKey = id != null ? `id:${id}` : `coords:${g.coordinates.length}:${g.coordinates[0]?.join(',')}`;
+          if (seen.has(dedupKey)) continue;
+          seen.add(dedupKey);
+          try {
+            const snap = turf.nearestPointOnLine(turf.lineString(g.coordinates), pt, { units: 'meters' });
+            const d = Number(snap?.properties?.dist);
+            if (!Number.isFinite(d)) continue;
+            if (!best || d < best.meters) {
+              const sc = /** @type {[number, number]} */ (snap.geometry.coordinates);
+              best = { feature: /** @type {any} */ (f), snapped: sc, meters: d };
+            }
+          } catch {
+            /* tolera geometrías raras y sigue con la siguiente. */
+          }
+        }
+        if (!best) return null;
+        if (Number.isFinite(maxM) && maxM > 0 && best.meters > maxM) return null;
+        return best;
+      } catch {
+        return null;
+      }
+    },
     getSelectedFeature: () => selectedFeature,
     turf,
     applyReportePickedRoute: (f, e) => {
@@ -3009,6 +3070,11 @@ export async function boot() {
 
     map.on('click', (e) => {
       if (editing) return;
+      try {
+        if (reporteCtl.handleMapTapPick?.(e)) return;
+      } catch {
+        /* */
+      }
       const polyBusy = measurePolylineActive && !measurePolylineConfirmed;
       if (!polyBusy) {
         const ov = queryMoleculeOverlayFeatureAtPoint(e.point);

@@ -12,7 +12,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260428fiber" />
+  <link rel="stylesheet" href="/css/app.css?v=20260429reporteGps" />
 </head>
 <body class="editor-body">
   <div id="auth-gate-root" class="auth-gate-root"></div>
@@ -321,11 +321,22 @@
           </div>
           <div id="reporte-ev-phase-wait" class="reporte-ev-phase reporte-ev-phase-wait">
             <p class="reporte-ev-wait-hint">
-              <strong>Modo mapa activo.</strong> Haz clic en el <strong>tendido</strong> en el punto exacto del incidente; luego se mostrará el formulario.
+              <strong>Técnico en sitio:</strong> usa tu ubicación actual o toca el tendido en el mapa.
             </p>
+            <button type="button" id="btn-reporte-use-gps" class="reporte-ev-btn reporte-ev-btn--gps">
+              <svg class="reporte-ev-gps-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.9"/>
+                <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6" opacity="0.7"/>
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+              Usar mi ubicación (GPS)
+            </button>
+            <p id="reporte-ev-gps-status" class="reporte-ev-gps-status" aria-live="polite"></p>
+            <p class="reporte-ev-or"><span>o toca el tendido en el mapa</span></p>
             <button type="button" id="btn-reporte-cancel-wait" class="reporte-ev-btn reporte-ev-btn--ghost-sm">
               Cancelar
             </button>
+            <p id="reporte-ev-offline-note" class="reporte-ev-offline-note" hidden></p>
           </div>
           <div id="reporte-ev-phase-form" class="reporte-ev-phase reporte-ev-phase-form" hidden>
             <button type="button" id="btn-reporte-repick" class="reporte-ev-btn reporte-ev-btn--ghost-sm reporte-ev-repick">
@@ -449,6 +460,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260429measureorange"></script>
+  <script type="module" src="/js/app.js?v=20260429reporteGps"></script>
 </body>
 </html>
