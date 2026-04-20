@@ -2732,6 +2732,7 @@ body.editor-body #sidebar.sidebar--dock-top-left,
 #layout:not(.sidebar-collapsed) #sidebar.sidebar--dock-top-left,
 #layout.sidebar-collapsed #sidebar.sidebar--dock-top-left {
   position: fixed !important;
+  display: flex !important;
   left: max(10px, env(safe-area-inset-left, 0px)) !important;
   right: auto !important;
   top: calc(var(--editor-chrome-stack, 80px) + 8px) !important;
@@ -2756,6 +2757,21 @@ body.editor-body #sidebar.sidebar--dock-top-left,
   visibility: visible !important;
   pointer-events: auto !important;
   overflow: visible !important;
+}
+
+/* Override explicito de la regla mobile que oculta el sidebar al colapsar
+   (línea ~4644 del legacy): el dock-top-left debe verse SIEMPRE porque solo
+   contiene botones que abren los paneles flotantes; el comportamiento de
+   auto-colapso al hacer clic en el mapa ya no aplica. */
+@media (max-width: 900px) {
+  #layout.sidebar-collapsed #sidebar.sidebar--dock-top-left,
+  body.editor-body #layout.sidebar-collapsed #sidebar.sidebar--dock-top-left {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: none !important;
+  }
 }
 
 #sidebar.sidebar--dock-top-left::before {
