@@ -619,7 +619,7 @@ body.editor-body #layout {
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: stretch;
 }
 
 .editor-chrome-toggle {
@@ -2565,9 +2565,11 @@ body.editor-body .cable-search-mount:not(.cable-search-mount--chrome) {
   left: auto;
   transform: none;
   z-index: 1;
-  width: 100%;
-  max-width: min(560px, 100%);
-  margin: 0 auto;
+  /* El buscador debe ocupar todo el hueco libre del chrome bar y llegar
+     visualmente hasta la casita, dejando solo un pequeño respiro. */
+  width: calc(100% - 6px);
+  max-width: none;
+  margin: 0;
   filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 1px rgba(56, 189, 248, 0.08));
 }
 
@@ -3401,13 +3403,14 @@ body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
     gap: 8px;
   }
 
-  /* Una sola fila: menú | buscador (ancho acotado) | casita */
+  /* Una sola fila: buscador (alargado) | casita. Aprovechamos el ancho
+     completo del chrome bar dejando solo espacio para la casita (~52px). */
   body.editor-body .editor-chrome-search-slot {
     order: 0;
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-width: 0;
-    max-width: min(280px, calc(100vw - 100px));
-    justify-content: center;
+    max-width: none;
+    justify-content: stretch;
   }
 
   body.editor-body .cable-search-mount--chrome {
@@ -5811,8 +5814,8 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
   body.editor-body .editor-chrome-search-slot {
     flex: 1 1 auto;
     min-width: 0;
-    max-width: min(220px, calc(100vw - 188px));
-    justify-content: center;
+    max-width: none;
+    justify-content: stretch;
   }
 
   body.editor-body .editor-chrome-toggle,
