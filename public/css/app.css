@@ -2889,13 +2889,13 @@ body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   margin-top: 0;
-  border-radius: var(--app-radius-md, 12px);
-  border: 1px solid var(--app-stroke-strong, rgba(148, 163, 184, 0.28));
+  border-radius: 14px;
+  border: 1px solid var(--app-stroke, rgba(148, 163, 184, 0.18));
   background: var(--app-surface-2, rgba(15, 23, 42, 0.92));
-  box-shadow: var(--app-shadow-soft, 0 8px 24px rgba(0, 0, 0, 0.22));
+  box-shadow: var(--app-shadow-soft, 0 8px 22px rgba(0, 0, 0, 0.32));
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -3622,7 +3622,7 @@ body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
  * La pila ArcGIS por defecto es blanca; aquí se alinea a .editor-chrome-home.
  */
 body.editor-body #map .mapboxgl-ctrl-top-right {
-  --map-fab-size: 38px;
+  --map-fab-size: 46px;
   --map-fab-gap: 8px;
   margin: calc(var(--editor-chrome-stack) + 8px) 12px 0 0;
 }
@@ -3638,30 +3638,30 @@ body.editor-body #map .measure-fab-ico {
 }
 
 body.editor-body #map .map-widget-stack--arcgis {
-  width: var(--map-fab-size, 38px);
-  background: rgba(15, 23, 42, 0.82);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 10px;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.4),
-    0 6px 22px rgba(0, 0, 0, 0.45),
-    0 2px 10px rgba(56, 189, 248, 0.12);
-  backdrop-filter: blur(14px) saturate(1.15);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  width: auto;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: visible;
 }
 
 body.editor-body #map .map-widget-stack--arcgis .map-fab-row--measure {
-  border-top-color: rgba(148, 163, 184, 0.22);
+  border-top: none;
 }
 
 body.editor-body #map .map-widget-stack--arcgis .map-fab-row--navigate .mapboxgl-ctrl-group,
 body.editor-body #map .map-widget-stack--arcgis .measure-fab-mapbox-group.mapboxgl-ctrl-group {
-  background: transparent !important;
-  box-shadow: none !important;
+  background: var(--app-surface-2, rgba(15, 23, 42, 0.92)) !important;
+  border: 1px solid var(--app-stroke, rgba(148, 163, 184, 0.18)) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--app-shadow-soft, 0 8px 22px rgba(0, 0, 0, 0.32)) !important;
 }
 
 body.editor-body #map .map-widget-stack--arcgis .map-fab-row--navigate .mapboxgl-ctrl-group button.mapboxgl-ctrl-geolocate {
-  border-radius: 0 !important;
+  border-radius: 14px !important;
   background: transparent !important;
   box-shadow: none !important;
 }
@@ -3683,7 +3683,7 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate .
 }
 
 body.editor-body #map .map-widget-stack--arcgis .measure-fab {
-  border-radius: 0 !important;
+  border-radius: 14px !important;
   background: transparent !important;
   box-shadow: none !important;
   color: #f1f5f9 !important;
@@ -3780,12 +3780,12 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: var(--map-fab-size, 32px);
-  background: #fff;
-  border: 1px solid var(--arcgis-widget-border);
-  border-radius: 3px;
-  box-shadow: var(--arcgis-widget-shadow);
-  overflow: hidden;
+  width: auto;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
   flex-shrink: 0;
 }
 
@@ -3794,11 +3794,11 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 0;
+  gap: 8px;
 }
 
 #map .map-widget-stack--arcgis .map-fab-row--measure {
-  border-top: 1px solid #d2d2d2;
+  border-top: none;
 }
 
 #map .map-widget-stack--arcgis .map-fab-label {
@@ -3850,15 +3850,10 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   max-height: var(--map-fab-size) !important;
   margin: 0 !important;
   padding: 0 !important;
-  border-radius: 50% !important;
+  border-radius: 14px !important;
   overflow: hidden !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(0, 0, 0, 0.5),
-    inset 0 2px 4px rgba(255, 255, 255, 0.05),
-    inset 0 -3px 8px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid var(--app-stroke, rgba(148, 163, 184, 0.18)) !important;
+  box-shadow: var(--app-shadow-soft, 0 8px 22px rgba(0, 0, 0, 0.32)) !important;
   flex-shrink: 0;
   align-self: center;
 }
@@ -3877,7 +3872,7 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   min-width: var(--map-fab-size) !important;
   min-height: var(--map-fab-size) !important;
   border: none !important;
-  border-radius: 50% !important;
+  border-radius: 14px !important;
   background:
     radial-gradient(circle at 50% 38%, rgba(56, 189, 248, 0.14) 0%, transparent 52%),
     linear-gradient(165deg, #2a2a2e 0%, #18181b 48%, #0f0f10 100%) !important;
@@ -4044,7 +4039,7 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   padding: 0 !important;
   margin: 0 !important;
   border: none !important;
-  border-radius: 50% !important;
+  border-radius: 14px !important;
   background:
     radial-gradient(circle at 50% 38%, rgba(45, 212, 191, 0.11) 0%, transparent 52%),
     linear-gradient(165deg, #2a2a2e 0%, #18181b 48%, #0f0f10 100%) !important;
@@ -6016,20 +6011,18 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
   }
 
   body.editor-body #map .mapboxgl-ctrl-top-right {
-    --map-fab-size: 34px;
+    --map-fab-size: 42px;
     --map-fab-gap: 6px;
     margin: calc(var(--editor-chrome-stack) + 10px) max(10px, env(safe-area-inset-right, 0px)) 0 0;
   }
 
   body.editor-body #map .map-widget-stack--arcgis {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(15, 23, 42, 0.72);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.1),
-      0 4px 14px rgba(0, 0, 0, 0.18);
-    border-radius: 12px;
-    backdrop-filter: blur(16px) saturate(1.05);
-    -webkit-backdrop-filter: blur(16px) saturate(1.05);
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   body.editor-body #map .measure-fab-ico {
