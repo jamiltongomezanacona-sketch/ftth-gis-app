@@ -9,76 +9,137 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/app.css?v=20260427green" />
+  <link rel="stylesheet" href="/css/app.css?v=20260428fiber" />
 </head>
 <body class="home-body auth-pending">
   <div id="auth-gate-root" class="auth-gate-root"></div>
+
+  <!-- Fondo decorativo: fibra óptica + gradientes -->
+  <div class="home-bg" aria-hidden="true">
+    <div class="home-bg-glow home-bg-glow--cyan"></div>
+    <div class="home-bg-glow home-bg-glow--violet"></div>
+    <div class="home-bg-glow home-bg-glow--emerald"></div>
+    <svg class="home-bg-grid" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" role="presentation">
+      <defs>
+        <pattern id="hbgGrid" width="48" height="48" patternUnits="userSpaceOnUse">
+          <path d="M48 0H0V48" fill="none" stroke="rgba(148,163,184,0.08)" stroke-width="0.6"/>
+        </pattern>
+        <linearGradient id="hbgFiber1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#22d3ee" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="hbgFiber2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#34d399" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#22d3ee" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#hbgGrid)"/>
+      <path d="M-20 180 C 200 120, 420 260, 640 180 S 1060 120, 1240 200" fill="none" stroke="url(#hbgFiber1)" stroke-width="1.6" opacity="0.95"/>
+      <path d="M-20 560 C 240 620, 480 440, 720 520 S 1080 640, 1240 540" fill="none" stroke="url(#hbgFiber2)" stroke-width="1.3" opacity="0.85"/>
+    </svg>
+  </div>
+
   <div class="home-shell">
-    <header class="home-header">
-      <div class="home-brand">
-        <img src="/icons/ui/layers.svg" width="40" height="40" alt="" decoding="async" />
-        <div>
-          <h1 class="home-title">GIS · inventario de red</h1>
-          <p class="home-sub">
-            PostGIS, Mapbox y APIs propias. Panel operativo tipo SaaS, editores por red y analítica: cada red es independiente en base de datos.
-          </p>
+    <header class="home-hero">
+      <div class="home-hero-head">
+        <span class="home-kicker">
+          <span class="home-kicker-dot"></span>
+          Plataforma GIS · Mapas inteligentes de fibra
+        </span>
+        <h1 class="home-title">
+          Inventario y operación de <span class="home-title-grad">red óptica</span> en tiempo real
+        </h1>
+        <p class="home-sub">
+          PostGIS · Mapbox · APIs propias. Panel operativo tipo SaaS, editores por red y analítica en vivo; cada red es independiente en base de datos.
+        </p>
+        <div class="home-chips" role="list">
+          <span class="home-chip" role="listitem"><span class="home-chip-ico home-chip-ico--postgis"></span>PostGIS</span>
+          <span class="home-chip" role="listitem"><span class="home-chip-ico home-chip-ico--mapbox"></span>Mapbox GL</span>
+          <span class="home-chip" role="listitem"><span class="home-chip-ico home-chip-ico--fiber"></span>FTTH + Corporativa</span>
+          <span class="home-chip home-chip--live" role="listitem"><span class="home-chip-pulse"></span>API en vivo</span>
         </div>
       </div>
+
+      <aside class="home-stats" aria-label="Indicadores">
+        <div class="home-stat">
+          <span class="home-stat-label">Redes independientes</span>
+          <span class="home-stat-value">2<small>uds</small></span>
+          <span class="home-stat-foot">FTTH · Corporativa</span>
+        </div>
+        <div class="home-stat">
+          <span class="home-stat-label">Módulos operativos</span>
+          <span class="home-stat-value">4</span>
+          <span class="home-stat-foot">Dashboard · Editor · Analítica</span>
+        </div>
+        <div class="home-stat">
+          <span class="home-stat-label">Motor geoespacial</span>
+          <span class="home-stat-value home-stat-value--sm">PostGIS</span>
+          <span class="home-stat-foot">Geodesia · Topología</span>
+        </div>
+      </aside>
     </header>
 
     <nav class="home-grid" aria-label="Módulos principales">
       <a class="home-card home-card--dashboard" href="/dashboard/">
-        <span class="home-card-ico" aria-hidden="true">
-          <img src="/icons/ui/layers.svg" width="48" height="48" alt="" decoding="async" />
+        <span class="home-card-tag">Panel principal</span>
+        <span class="home-card-ico home-card-ico--dashboard" aria-hidden="true">
+          <img src="/icons/ui/layers.svg" width="28" height="28" alt="" decoding="async" />
         </span>
         <h2 class="home-card-title">Dashboard operativo</h2>
         <p class="home-card-desc">
-          Vista unificada de KPIs, mapa (Mapbox), detalle de eventos y gráficas. Enlace rápido a FTTH, corporativa y analítica desde el menú lateral.
+          KPIs unificados, mapa Mapbox, detalle de eventos y gráficas. Acceso rápido a FTTH, corporativa y analítica desde el menú lateral.
         </p>
-        <span class="home-card-cta">Abrir dashboard</span>
+        <span class="home-card-cta">Abrir dashboard <span class="home-card-cta-arrow" aria-hidden="true"></span></span>
       </a>
 
       <a class="home-card home-card--ftth" href="/editor.html?red=ftth">
-        <span class="home-card-ico" aria-hidden="true">
-          <img src="/icons/ui/home.svg" width="48" height="48" alt="" decoding="async" />
+        <span class="home-card-tag">Red FTTH</span>
+        <span class="home-card-ico home-card-ico--ftth" aria-hidden="true">
+          <img src="/icons/ui/home.svg" width="28" height="28" alt="" decoding="async" />
         </span>
         <h2 class="home-card-title">Red FTTH</h2>
-        <p class="home-card-desc">Editor de tendidos, centrales ETB, búsqueda, medición y trazado (fibra) sobre el mapa.</p>
-        <span class="home-card-cta">Abrir editor</span>
+        <p class="home-card-desc">
+          Editor de tendidos, centrales ETB, búsqueda geoespacial, medición y trazado de fibra sobre el mapa.
+        </p>
+        <span class="home-card-cta">Abrir editor <span class="home-card-cta-arrow" aria-hidden="true"></span></span>
       </a>
 
       <a class="home-card home-card--corp" href="/editor.html?red=corporativa">
-        <span class="home-card-ico" aria-hidden="true">
-          <img src="/icons/ui/building.svg" width="48" height="48" alt="" decoding="async" />
+        <span class="home-card-tag">Red corporativa</span>
+        <span class="home-card-ico home-card-ico--corp" aria-hidden="true">
+          <img src="/icons/ui/building.svg" width="28" height="28" alt="" decoding="async" />
         </span>
         <h2 class="home-card-title">Red corporativa</h2>
-        <p class="home-card-desc">Mismo editor con catálogo y nodos filtrados por <code>red_tipo=corporativa</code>.</p>
-        <span class="home-card-cta">Abrir editor</span>
+        <p class="home-card-desc">
+          Mismo editor con catálogo y nodos filtrados por <code>red_tipo=corporativa</code>.
+        </p>
+        <span class="home-card-cta">Abrir editor <span class="home-card-cta-arrow" aria-hidden="true"></span></span>
       </a>
 
       <a class="home-card home-card--analytics" href="/analitica.html">
-        <span class="home-card-ico" aria-hidden="true">
-          <img src="/icons/ui/chart.svg" width="48" height="48" alt="" decoding="async" />
+        <span class="home-card-tag">Analítica</span>
+        <span class="home-card-ico home-card-ico--analytics" aria-hidden="true">
+          <img src="/icons/ui/chart.svg" width="28" height="28" alt="" decoding="async" />
         </span>
         <h2 class="home-card-title">Analítica</h2>
-        <p class="home-card-desc">Resumen en vivo: tablas PostgreSQL, conteos por red, longitud geodésica de tendidos y estado de API.</p>
-        <span class="home-card-cta">Ver panel</span>
+        <p class="home-card-desc">
+          Resumen en vivo: tablas PostgreSQL, conteos por red, longitud geodésica de tendidos y estado de la API.
+        </p>
+        <span class="home-card-cta">Ver panel <span class="home-card-cta-arrow" aria-hidden="true"></span></span>
       </a>
     </nav>
 
     <footer class="home-foot">
-      <p>
-        Accesos directos:
+      <div class="home-foot-links">
+        <span class="home-foot-label">Accesos directos</span>
         <a href="/dashboard/">/dashboard/</a>
-        ·
         <a href="/ftth.html">/ftth.html</a>
-        ·
         <a href="/corporativa.html">/corporativa.html</a>
-        ·
         <code>/api/db-check</code>
-        ·
-        <button type="button" class="auth-logout-btn" id="auth-logout">Salir</button>
-      </p>
+      </div>
+      <button type="button" class="auth-logout-btn" id="auth-logout">Cerrar sesión</button>
     </footer>
   </div>
   <script type="module">
