@@ -1428,14 +1428,14 @@ export async function boot() {
     }
   }
 
-  /** GPS del navegador (Geolocation API). Esquina superior derecha; icono en CSS (`/icons/editor/geolocate.svg`). */
+  /** GPS del navegador (Geolocation API). Esquina inferior derecha; icono en CSS (`/icons/editor/geolocate.svg`). */
   const geolocate = new mapboxgl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
     trackUserLocation: true,
     showUserHeading: true,
     showAccuracyCircle: true
   });
-  map.addControl(geolocate, 'top-right');
+  map.addControl(geolocate, 'bottom-right');
   geolocate.on('error', () => {
     setStatus(
       'GPS: sin señal o permiso denegado. Revisa permisos del sitio y que la ubicación esté activa (móvil/PC).'
@@ -2386,33 +2386,12 @@ export async function boot() {
     });
     forceCloseMeasureOverlaysForMapReset();
 
-    /** GPS + medición: se agrupan en `.map-widget-stack--arcgis` (barra flotante estilo ArcGIS; ver CSS). */
+    /** Medición: se mantiene en la parte superior; GPS vive aparte en bottom-right. */
     const mapTopRight = map.getContainer().querySelector('.mapboxgl-ctrl-top-right');
-    const geoBtn = mapTopRight?.querySelector('button.mapboxgl-ctrl-geolocate');
-    const geoGroup = geoBtn?.closest('.mapboxgl-ctrl-group');
-    if (geoGroup && mapTopRight && !geoGroup.closest('.map-fab-row')) {
-      const navRow = document.createElement('div');
-      navRow.className = 'map-fab-row map-fab-row--navigate';
-      const navLabel = document.createElement('span');
-      navLabel.className = 'map-fab-label';
-      navLabel.textContent = 'NAVEGAR';
-      navRow.appendChild(navLabel);
-      geoGroup.replaceWith(navRow);
-      navRow.appendChild(geoGroup);
-    }
     const measureRow = document.getElementById('map-fab-row-measure');
     const measureDock = document.getElementById('measure-fab-dock');
-    const navRowEl = mapTopRight?.querySelector('.map-fab-row--navigate');
     if (measureRow && mapTopRight) {
-      if (navRowEl && !measureRow.closest('.map-widget-stack--arcgis')) {
-        const stack = document.createElement('div');
-        stack.className = 'map-widget-stack map-widget-stack--arcgis';
-        stack.setAttribute('role', 'toolbar');
-        stack.setAttribute('aria-label', 'Ubicación y medición en mapa');
-        mapTopRight.insertBefore(stack, navRowEl);
-        stack.appendChild(navRowEl);
-        stack.appendChild(measureRow);
-      } else {
+      if (!measureRow.closest('.mapboxgl-ctrl-top-right')) {
         mapTopRight.appendChild(measureRow);
       }
       measureDock?.classList.add('measure-fab-dock--in-map');

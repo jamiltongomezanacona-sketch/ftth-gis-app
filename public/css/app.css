@@ -6021,6 +6021,11 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
     margin: calc(var(--editor-chrome-stack) + 10px) max(10px, env(safe-area-inset-right, 0px)) 0 0;
   }
 
+  body.editor-body #map .mapboxgl-ctrl-bottom-right {
+    --map-fab-size: 42px;
+    margin-right: max(10px, env(safe-area-inset-right, 0px));
+  }
+
   body.editor-body #map .map-widget-stack--arcgis {
     border: none;
     background: transparent;
@@ -6994,6 +6999,49 @@ body.editor-body .evento-popup-wrap .mapboxgl-popup-close-button:hover {
  * Editor: FAB oscuros si GPS/medición cuelgan directo de .mapboxgl-ctrl-top-right (sin pila ArcGIS).
  * Con .map-widget-stack--arcgis el estilo unificado va más arriba (misma familia que la casita).
  */
+body.editor-body #map .mapboxgl-ctrl-bottom-right {
+  --map-fab-size: 46px;
+  margin: 0 12px 0 0;
+}
+
+body.editor-body #map .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group {
+  width: var(--map-fab-size) !important;
+  min-width: var(--map-fab-size) !important;
+  max-width: var(--map-fab-size) !important;
+  height: var(--map-fab-size) !important;
+  min-height: var(--map-fab-size) !important;
+  max-height: var(--map-fab-size) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--app-stroke, rgba(148, 163, 184, 0.18)) !important;
+  box-shadow: var(--app-shadow-soft, 0 8px 22px rgba(0, 0, 0, 0.32)) !important;
+  background: var(--app-surface-2, rgba(15, 23, 42, 0.92)) !important;
+}
+
+body.editor-body #map .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-geolocate {
+  width: var(--map-fab-size) !important;
+  height: var(--map-fab-size) !important;
+  min-width: var(--map-fab-size) !important;
+  min-height: var(--map-fab-size) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  background: linear-gradient(165deg, #2a2a2e 0%, #18181b 48%, #0f0f10 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+}
+
+body.editor-body #map .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-geolocate:hover:not(:disabled) {
+  background: linear-gradient(165deg, #3f3f46 0%, #27272a 45%, #18181b 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(56, 189, 248, 0.35) !important;
+}
+
+body.editor-body #map .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-geolocate:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
 body.editor-body #map .mapboxgl-ctrl-top-right > .map-fab-row--navigate .mapboxgl-ctrl-group,
 body.editor-body #map .mapboxgl-ctrl-top-right > .map-fab-row--measure .measure-fab-mapbox-group.mapboxgl-ctrl-group {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -7680,4 +7728,10 @@ body.editor-network-corporativa .editor-status-bar__dot {
 body.editor-body .mapboxgl-ctrl-bottom-left,
 body.editor-body .mapboxgl-ctrl-bottom-right {
   bottom: calc(var(--app-status-bar-h, 26px) + env(safe-area-inset-bottom, 0px) + 2px) !important;
+}
+
+/* Si la barra de medición inferior está visible, subir el GPS para evitar
+   solape con ese dock fijo bottom-right. */
+body.editor-body:has(#measure-polyline-dock:not([hidden])) .mapboxgl-ctrl-bottom-right {
+  bottom: calc(var(--app-status-bar-h, 26px) + env(safe-area-inset-bottom, 0px) + 86px) !important;
 }
