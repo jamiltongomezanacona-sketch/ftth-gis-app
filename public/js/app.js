@@ -1193,15 +1193,6 @@ export async function boot() {
       const hasActiveMoleculeFilter = !!getMoleculeFilterForEventosApi();
       const wantPins = hasActiveMoleculeFilter && wantPinsCheckbox;
       eventosReporteLayer.setVisible(opts?.suppressMapPins ? false : wantPins);
-      const introEv = document.getElementById('reporte-ev-list-intro');
-      if (introEv) {
-        const baseIntro =
-          'Incidencias en catálogo (máx. 40). Clic en una fila: resumen en la barra de estado.';
-        introEv.textContent =
-          items.length > 0 && nMapPoints === 0
-            ? `${baseIntro} Si no ves pins: pueden faltar coordenadas en BD o el cable activo filtra por molécula.`
-            : baseIntro;
-      }
       const ul = document.getElementById('reporte-ev-ul');
       if (ul) {
         ul.replaceChildren();
