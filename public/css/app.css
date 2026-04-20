@@ -2722,24 +2722,24 @@ body.editor-body #sidebar-toggle[hidden] {
 }
 
 /* ===========================================================================
-   DOCK INFERIOR HORIZONTAL: el rail con los botones Trazar / Reporte evento
-   se posiciona como una barra flotante centrada abajo, en lugar del sidebar
-   lateral. Se aplica tanto en escritorio como en móvil con la clase
-   `.sidebar--dock-bottom` en `#sidebar`.
+   DOCK SUPERIOR IZQUIERDA: el rail con los botones Trazar / Reporte evento
+   se posiciona como una barra flotante anclada debajo del chrome bar, en
+   lugar del sidebar lateral. Se aplica tanto en escritorio como en móvil
+   con la clase `.sidebar--dock-top-left` en `#sidebar`.
    =========================================================================== */
-#sidebar.sidebar--dock-bottom,
-body.editor-body #sidebar.sidebar--dock-bottom,
-#layout:not(.sidebar-collapsed) #sidebar.sidebar--dock-bottom,
-#layout.sidebar-collapsed #sidebar.sidebar--dock-bottom {
+#sidebar.sidebar--dock-top-left,
+body.editor-body #sidebar.sidebar--dock-top-left,
+#layout:not(.sidebar-collapsed) #sidebar.sidebar--dock-top-left,
+#layout.sidebar-collapsed #sidebar.sidebar--dock-top-left {
   position: fixed !important;
-  left: 50% !important;
+  left: max(10px, env(safe-area-inset-left, 0px)) !important;
   right: auto !important;
-  top: auto !important;
-  bottom: max(14px, env(safe-area-inset-bottom, 0px)) !important;
-  transform: translateX(-50%) !important;
+  top: calc(var(--editor-chrome-stack, 80px) + 8px) !important;
+  bottom: auto !important;
+  transform: none !important;
   width: auto !important;
   min-width: 0 !important;
-  max-width: calc(100vw - 24px) !important;
+  max-width: calc(100vw - 20px) !important;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
@@ -2758,11 +2758,11 @@ body.editor-body #sidebar.sidebar--dock-bottom,
   overflow: visible !important;
 }
 
-#sidebar.sidebar--dock-bottom::before {
+#sidebar.sidebar--dock-top-left::before {
   display: none !important;
 }
 
-#sidebar.sidebar--dock-bottom .sidebar-inner {
+#sidebar.sidebar--dock-top-left .sidebar-inner {
   padding: 0;
   margin: 0;
   display: flex;
@@ -2771,7 +2771,7 @@ body.editor-body #sidebar.sidebar--dock-bottom,
   max-width: 100%;
 }
 
-#sidebar.sidebar--dock-bottom .sidebar-body {
+#sidebar.sidebar--dock-top-left .sidebar-body {
   padding: 0;
   background: transparent;
   border: none;
@@ -2791,8 +2791,8 @@ body.editor-body .sidebar-tool-rail.sidebar-tool-rail--horizontal {
 }
 
 /* Botón compacto en formato horizontal: 150px de ancho fijo, alto bajo, ícono+texto. */
-#sidebar.sidebar--dock-bottom .sidebar-tool-btn,
-body.editor-body #sidebar.sidebar--dock-bottom .sidebar-tool-btn {
+#sidebar.sidebar--dock-top-left .sidebar-tool-btn,
+body.editor-body #sidebar.sidebar--dock-top-left .sidebar-tool-btn {
   width: 158px;
   min-width: 0;
   flex: 0 0 auto;
@@ -2802,22 +2802,22 @@ body.editor-body #sidebar.sidebar--dock-bottom .sidebar-tool-btn {
 
 /* En pantallas muy estrechas, los botones se reducen para caber. */
 @media (max-width: 420px) {
-  #sidebar.sidebar--dock-bottom .sidebar-tool-btn,
-  body.editor-body #sidebar.sidebar--dock-bottom .sidebar-tool-btn {
+  #sidebar.sidebar--dock-top-left .sidebar-tool-btn,
+  body.editor-body #sidebar.sidebar--dock-top-left .sidebar-tool-btn {
     width: calc((100vw - 56px) / 2);
     max-width: 158px;
     padding: 8px 10px;
   }
 
-  body.editor-body #sidebar.sidebar--dock-bottom .sidebar-tool-btn__lbl {
+  body.editor-body #sidebar.sidebar--dock-top-left .sidebar-tool-btn__lbl {
     font-size: 0.74rem;
   }
 }
 
 /* Cuando el dock está en pantalla, asegurar que NO se aplica el efecto de
    colapso lateral heredado (translate negativo). */
-#layout.sidebar-collapsed #sidebar.sidebar--dock-bottom {
-  transform: translateX(-50%) !important;
+#layout.sidebar-collapsed #sidebar.sidebar--dock-top-left {
+  transform: none !important;
 }
 
 /* Casita «panel principal»: barra superior derecha (.editor-chrome-home); legacy .cable-search-home por si el buscador flota sin chrome */
@@ -7612,13 +7612,8 @@ body.editor-network-corporativa .editor-status-bar__dot {
   }
 }
 
-/* El dock inferior debe ubicarse ENCIMA de la status bar. */
-#sidebar.sidebar--dock-bottom,
-body.editor-body #sidebar.sidebar--dock-bottom,
-#layout:not(.sidebar-collapsed) #sidebar.sidebar--dock-bottom,
-#layout.sidebar-collapsed #sidebar.sidebar--dock-bottom {
-  bottom: calc(var(--app-status-bar-bottom-gap, 32px) + env(safe-area-inset-bottom, 0px)) !important;
-}
+/* (Antes había un override aquí para subir el dock por encima de la status
+   bar; ya no es necesario porque el dock está anclado top-left.) */
 
 /* Mapbox attribution / logo: subirlos para no quedar bajo la status bar. */
 body.editor-body .mapboxgl-ctrl-bottom-left,
