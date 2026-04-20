@@ -486,6 +486,68 @@ function syncBrowserUrlRed(red) {
   }
 }
 
+function syncEditorFloatBackdrop() {
+  const bd = document.getElementById('editor-float-backdrop');
+  if (!bd) return;
+  const t = document.getElementById('editor-float-trazar')?.classList.contains('editor-float-panel--open');
+  const r = document
+    .getElementById('reporte-evento-details')
+    ?.classList.contains('editor-float-panel--open');
+  if (t || r) {
+    bd.removeAttribute('hidden');
+    bd.setAttribute('aria-hidden', 'false');
+  } else {
+    bd.setAttribute('hidden', '');
+    bd.setAttribute('aria-hidden', 'true');
+  }
+}
+
+/** Cierra ventanas flotantes Trazar / Reporte (backdrop + estado de botones). */
+function closeAllEditorFloatPanels() {
+  document.getElementById('editor-float-trazar')?.classList.remove('editor-float-panel--open');
+  document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
+  document.getElementById('btn-open-panel-trazar')?.setAttribute('aria-expanded', 'false');
+  document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
+  syncEditorFloatBackdrop();
+}
+
+/**
+ * Abre/cierra una ventana flotante de herramienta (solo una visible; mismo botón cierra).
+ * @param {'trazar'|'reporte'} which
+ * @param {{ onReporteOpen?: () => void, onReporteClose?: () => void }} [hooks]
+ */
+function toggleEditorFloatPanel(which, hooks) {
+  const tr = document.getElementById('editor-float-trazar');
+  const rep = document.getElementById('reporte-evento-details');
+  const openT = !!tr?.classList.contains('editor-float-panel--open');
+  const openR = !!rep?.classList.contains('editor-float-panel--open');
+  if (which === 'trazar') {
+    if (openT) {
+      tr?.classList.remove('editor-float-panel--open');
+    } else {
+      if (openR) hooks?.onReporteClose?.();
+      rep?.classList.remove('editor-float-panel--open');
+      tr?.classList.add('editor-float-panel--open');
+    }
+  } else if (openR) {
+    rep?.classList.remove('editor-float-panel--open');
+    hooks?.onReporteClose?.();
+  } else {
+    if (openT) tr?.classList.remove('editor-float-panel--open');
+    rep?.classList.add('editor-float-panel--open');
+    hooks?.onReporteOpen?.();
+  }
+  syncEditorFloatBackdrop();
+  document.getElementById('btn-open-panel-trazar')?.setAttribute(
+    'aria-expanded',
+    tr?.classList.contains('editor-float-panel--open') ? 'true' : 'false'
+  );
+  document.getElementById('btn-open-panel-reporte')?.setAttribute(
+    'aria-expanded',
+    rep?.classList.contains('editor-float-panel--open') ? 'true' : 'false'
+  );
+}
+
 /** v2: migración para quitar estado «colapsado» heredado cuando el panel quedaba detrás del mapa. */
 const SIDEBAR_COLLAPSED_KEY = 'ftth-gis-sidebar-collapsed-v2';
 
@@ -524,6 +586,7 @@ function initSidebarRail(mapInstance, opts) {
   }
 
   function setCollapsed(/** @type {boolean} */ c) {
+    if (c) closeAllEditorFloatPanels();
     layout.classList.toggle('sidebar-collapsed', c);
     applyExpandedUi(!c);
     try {
@@ -550,6 +613,7 @@ function initSidebarRail(mapInstance, opts) {
   mapInstance.on('click', () => {
     if (layout.classList.contains('sidebar-collapsed')) return;
     if (opts?.getSuppressMapSidebarCollapse?.()) return;
+    closeAllEditorFloatPanels();
     setCollapsed(true);
   });
 }
@@ -1278,7 +1342,12 @@ export async function boot() {
         /* */
       }
     },
-    onEventoGuardado: () => void refreshEventosReporteDisplay()
+    onEventoGuardado: () => void refreshEventosReporteDisplay(),
+    closeReportePanelUi: () => {
+      document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
+      document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
+      syncEditorFloatBackdrop();
+    }
   });
 
   initSidebarRail(map, {
@@ -1293,6 +1362,43 @@ export async function boot() {
       }
       return false;
     }
+  });
+
+  const editorFloatHooks = {
+    onReporteOpen: () => {
+      void refreshEventosReporteDisplay();
+      reporteCtl.notifyReportePanelOpened();
+    },
+    onReporteClose: () => {
+      reporteCtl.notifyReportePanelClosed();
+    }
+  };
+
+  document.getElementById('btn-open-panel-trazar')?.addEventListener('click', () => {
+    toggleEditorFloatPanel('trazar', editorFloatHooks);
+  });
+  document.getElementById('btn-open-panel-reporte')?.addEventListener('click', () => {
+    toggleEditorFloatPanel('reporte', editorFloatHooks);
+  });
+
+  document.getElementById('editor-float-backdrop')?.addEventListener('click', () => {
+    editorFloatHooks.onReporteClose();
+    closeAllEditorFloatPanels();
+  });
+
+  document.querySelectorAll('[data-close-float]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const which = btn.getAttribute('data-close-float');
+      if (which === 'reporte') {
+        editorFloatHooks.onReporteClose();
+        document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
+        document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
+      } else if (which === 'trazar') {
+        document.getElementById('editor-float-trazar')?.classList.remove('editor-float-panel--open');
+        document.getElementById('btn-open-panel-trazar')?.setAttribute('aria-expanded', 'false');
+      }
+      syncEditorFloatBackdrop();
+    });
   });
 
   function updateMetrics(geom, turfNs) {
@@ -2299,11 +2405,6 @@ export async function boot() {
         eventosReporteLayer.setVisible(reporteEvVis.checked);
       });
     }
-    document.getElementById('reporte-evento-details')?.addEventListener('toggle', (ev) => {
-      const d = /** @type {HTMLDetailsElement} */ (ev.target);
-      if (d.open) void refreshEventosReporteDisplay();
-    });
-
     async function refreshFtthMoleculeOverlayIfFiltered() {
       if (appNetwork !== 'ftth' || !editorMoleculeFilter) return;
       const { central, molecula } = editorMoleculeFilter;

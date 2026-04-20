@@ -15,7 +15,8 @@ import { snapLngLatToLine } from './measurements.js';
  *   setReportePin: (lngLat: [number, number] | null) => void,
  *   disarmOtdrPick: () => void,
  *   onArmingChanged?: (armed: boolean) => void,
- *   onEventoGuardado?: () => void
+ *   onEventoGuardado?: () => void,
+ *   closeReportePanelUi?: () => void
  * }} opts
  */
 export function initReporteEventoSidebar(opts) {
@@ -29,10 +30,11 @@ export function initReporteEventoSidebar(opts) {
     setReportePin,
     disarmOtdrPick,
     onArmingChanged,
-    onEventoGuardado
+    onEventoGuardado,
+    closeReportePanelUi
   } = opts;
 
-  const details = /** @type {HTMLDetailsElement | null} */ (document.getElementById('reporte-evento-details'));
+  const details = /** @type {HTMLElement | null} */ (document.getElementById('reporte-evento-details'));
   const phaseWait = document.getElementById('reporte-ev-phase-wait');
   const phaseForm = document.getElementById('reporte-ev-phase-form');
   const fechaEl = document.getElementById('reporte-evento-fecha');
@@ -50,8 +52,16 @@ export function initReporteEventoSidebar(opts) {
       handleRouteLinePick: () => false,
       cancelMapPickMode: () => {},
       resetForCableCleared: () => {},
-      isAwaitingRoutePick: () => false
+      isAwaitingRoutePick: () => false,
+      notifyReportePanelOpened: () => {},
+      notifyReportePanelClosed: () => {}
     };
+  }
+
+  const FLOAT_OPEN = 'editor-float-panel--open';
+
+  function isReportePanelOpen() {
+    return details.classList.contains(FLOAT_OPEN);
   }
 
   /** Esperando clic en una línea del mapa. */
@@ -73,7 +83,7 @@ export function initReporteEventoSidebar(opts) {
 
   function updatePhaseDom() {
     if (!phaseWait || !phaseForm) return;
-    if (!details.open) return;
+    if (!isReportePanelOpen()) return;
     const has = pinnedLngLat != null;
     phaseWait.hidden = has;
     phaseForm.hidden = !has;
@@ -152,7 +162,7 @@ export function initReporteEventoSidebar(opts) {
   function clearPinnedAndRearm() {
     pinnedLngLat = null;
     setReportePin(null);
-    if (details.open) {
+    if (isReportePanelOpen()) {
       startAwaitingMapPick();
     }
   }
@@ -239,7 +249,7 @@ export function initReporteEventoSidebar(opts) {
       accionEl.value = '';
       pinnedLngLat = null;
       setReportePin(null);
-      if (details.open) {
+      if (isReportePanelOpen()) {
         startAwaitingMapPick();
       }
       refreshFechaText();
@@ -257,23 +267,23 @@ export function initReporteEventoSidebar(opts) {
 
   refreshFechaText();
 
-  details.addEventListener('toggle', () => {
+  function notifyReportePanelOpened() {
     refreshFechaText();
-    if (!details.open) {
-      cancelAwaitingMapPickOnly();
-      return;
-    }
     if (!pinnedLngLat) {
       startAwaitingMapPick();
     }
     updatePhaseDom();
-  });
+  }
+
+  function notifyReportePanelClosed() {
+    cancelAwaitingMapPickOnly();
+  }
 
   btnGuardar.addEventListener('click', () => void submit());
 
   btnCancelWait?.addEventListener('click', () => {
     cancelAwaitingMapPickOnly();
-    details.open = false;
+    closeReportePanelUi?.();
     setStatus('Reporte evento: modo mapa cancelado.');
   });
 
@@ -286,6 +296,8 @@ export function initReporteEventoSidebar(opts) {
     handleRouteLinePick,
     cancelMapPickMode,
     resetForCableCleared,
-    isAwaitingRoutePick: () => awaitingMapPick
+    isAwaitingRoutePick: () => awaitingMapPick,
+    notifyReportePanelOpened,
+    notifyReportePanelClosed
   };
 }
