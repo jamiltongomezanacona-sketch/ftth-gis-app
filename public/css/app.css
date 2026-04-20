@@ -7027,15 +7027,13 @@ body.editor-body #map .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group button.ma
   min-height: var(--map-fab-size) !important;
   border: none !important;
   border-radius: 12px !important;
-  background: linear-gradient(165deg, #2a2a2e 0%, #18181b 48%, #0f0f10 100%) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.editor-body #map .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-geolocate:hover:not(:disabled) {
-  background: linear-gradient(165deg, #3f3f46 0%, #27272a 45%, #18181b 100%) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(56, 189, 248, 0.35) !important;
+  background: rgba(56, 189, 248, 0.12) !important;
+  box-shadow: none !important;
 }
 
 body.editor-body #map .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-geolocate:active:not(:disabled) {
@@ -7052,28 +7050,24 @@ body.editor-body #map .mapboxgl-ctrl-top-right > .map-fab-row--measure .measure-
 }
 
 body.editor-body #map .mapboxgl-ctrl-top-right > .map-fab-row--navigate .mapboxgl-ctrl-group button.mapboxgl-ctrl-geolocate {
-  background: linear-gradient(165deg, #2a2a2e 0%, #18181b 48%, #0f0f10 100%) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.editor-body #map .mapboxgl-ctrl-top-right > .map-fab-row--navigate .mapboxgl-ctrl-group button.mapboxgl-ctrl-geolocate:hover:not(:disabled) {
-  background: linear-gradient(165deg, #3f3f46 0%, #27272a 45%, #18181b 100%) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(56, 189, 248, 0.35) !important;
+  background: rgba(56, 189, 248, 0.12) !important;
+  box-shadow: none !important;
 }
 
 body.editor-body #map .mapboxgl-ctrl-top-right > .map-fab-row--measure .measure-fab {
-  background: linear-gradient(165deg, #2a2a2e 0%, #18181b 48%, #0f0f10 100%) !important;
+  background: transparent !important;
   color: #f1f5f9 !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
+  box-shadow: none !important;
 }
 
 body.editor-body #map .mapboxgl-ctrl-top-right > .map-fab-row--measure .measure-fab:hover:not(:disabled) {
-  background: linear-gradient(165deg, #3f3f46 0%, #27272a 45%, #18181b 100%) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 0 0 1px rgba(45, 212, 191, 0.35) !important;
+  background: rgba(45, 212, 191, 0.12) !important;
+  box-shadow: none !important;
 }
 
 body.editor-body #map .mapboxgl-ctrl-top-right > .map-fab-row--measure .measure-fab-mapbox-group:has(.measure-fab--muted:not(:disabled)) {
