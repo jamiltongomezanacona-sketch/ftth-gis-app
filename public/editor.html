@@ -11,7 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/app.css" />
+  <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
+  <link rel="stylesheet" href="/css/app.css?v=20260420c" />
 </head>
 <body class="editor-body">
   <div id="auth-gate-root" class="auth-gate-root"></div>
@@ -66,6 +67,7 @@
         aria-controls="sidebar-body"
         aria-label="Mostrar panel de herramientas"
         title="Mostrar herramientas"
+        hidden
       >
         <span class="editor-chrome-burger" aria-hidden="true">
           <span class="editor-chrome-burger-line"></span>
@@ -118,10 +120,10 @@
         </div>
       </div>
     </div>
-    <aside id="sidebar" aria-label="Panel de control">
+    <aside id="sidebar" class="sidebar--dock-bottom" aria-label="Panel de control">
       <div class="sidebar-inner">
         <div id="sidebar-body" class="sidebar-body sidebar-body--tool-rail">
-          <div class="sidebar-tool-rail" role="toolbar" aria-label="Herramientas de operación">
+          <div class="sidebar-tool-rail sidebar-tool-rail--horizontal" role="toolbar" aria-label="Herramientas de operación">
             <button
               type="button"
               id="btn-open-panel-trazar"
@@ -153,6 +155,35 @@
   </div>
 
   <div id="editor-float-backdrop" class="editor-float-backdrop" hidden aria-hidden="true"></div>
+
+  <!-- Barra de estado inferior estilo VSCode: contexto persistente del editor.
+       Muestra coordenadas del cursor, escala del mapa, red activa, último guardado y atajos. -->
+  <footer id="editor-status-bar" class="editor-status-bar" role="status" aria-label="Barra de estado del editor">
+    <div class="editor-status-bar__group editor-status-bar__group--left">
+      <span class="editor-status-bar__item editor-status-bar__item--net" id="status-bar-net">
+        <span class="editor-status-bar__dot" aria-hidden="true"></span>
+        <span class="editor-status-bar__net-label">FTTH</span>
+      </span>
+      <span class="editor-status-bar__item editor-status-bar__item--coords" id="status-bar-coords" title="Coordenadas WGS84 del cursor sobre el mapa">
+        <span class="editor-status-bar__ico" aria-hidden="true">⌖</span>
+        <span class="editor-status-bar__coords-text">—, —</span>
+      </span>
+      <span class="editor-status-bar__item editor-status-bar__item--zoom" id="status-bar-zoom" title="Nivel de zoom actual del mapa">
+        <span class="editor-status-bar__ico" aria-hidden="true">z</span>
+        <span class="editor-status-bar__zoom-text">—</span>
+      </span>
+    </div>
+    <div class="editor-status-bar__group editor-status-bar__group--right">
+      <span class="editor-status-bar__item editor-status-bar__item--save" id="status-bar-save" title="Última actividad guardada">
+        <span class="editor-status-bar__ico" aria-hidden="true">●</span>
+        <span class="editor-status-bar__save-text">Listo</span>
+      </span>
+      <span class="editor-status-bar__item editor-status-bar__item--hints" title="Atajos">
+        <kbd class="editor-status-bar__kbd">Esc</kbd>
+        <span class="editor-status-bar__hint-text">cancelar</span>
+      </span>
+    </div>
+  </footer>
 
   <div
     id="editor-float-trazar"
@@ -432,6 +463,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/app.js?v=20260420c"></script>
 </body>
 </html>

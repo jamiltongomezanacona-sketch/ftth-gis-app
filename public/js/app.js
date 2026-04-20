@@ -7,7 +7,7 @@ import { MedidaEventoMarkerLayer } from './medidaEventoMarkerLayer.js';
 import {
   EventosReporteLayer,
   EVENTOS_REPORTE_INTERACTIVE_LAYER_IDS
-} from './eventosReporteLayer.js';
+} from './eventosReporteLayer.js?v=20260420c';
 import { snapEventPointsToRouteCatalog } from './eventosReporteSnap.js';
 import { RouteDrawEditor } from './routeDrawEditor.js';
 import { createCableSearchBar } from './cableSearchBar.js';
@@ -512,6 +512,38 @@ function closeAllEditorFloatPanels() {
 }
 
 /**
+ * Activa o desactiva el «modo pick» en un panel flotante: el panel se reduce
+ * a una píldora arriba con un botón Cancelar, dejando el mapa totalmente
+ * libre para el clic. Si el panel está cerrado, lo abre brevemente para que
+ * la píldora sea visible (estado armado).
+ *
+ * @param {'trazar'|'reporte'} which Panel a marcar.
+ * @param {boolean} on `true` para entrar en modo pick, `false` para restaurar.
+ */
+function setEditorFloatPickMode(which, on) {
+  const id = which === 'reporte' ? 'reporte-evento-details' : 'editor-float-trazar';
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (on) {
+    /* Si el usuario armó la herramienta sin el panel abierto (caso raro pero posible),
+       garantizamos que la píldora se vea: añadimos --open + --pick-mode. */
+    el.classList.add('editor-float-panel--open');
+    el.classList.add('editor-float-panel--pick-mode');
+    if (which === 'reporte') {
+      el.classList.add('editor-float-panel--pick-mode-reporte');
+    }
+    document.body.classList.add('editor-pick-mode-active');
+    syncEditorFloatBackdrop();
+  } else {
+    el.classList.remove('editor-float-panel--pick-mode');
+    el.classList.remove('editor-float-panel--pick-mode-reporte');
+    /* Si ningún panel sigue armado, retiramos la marca global del body. */
+    const stillArmed = document.querySelector('.editor-float-panel--pick-mode');
+    if (!stillArmed) document.body.classList.remove('editor-pick-mode-active');
+  }
+}
+
+/**
  * Abre/cierra una ventana flotante de herramienta (solo una visible; mismo botón cierra).
  * @param {'trazar'|'reporte'} which
  * @param {{ onReporteOpen?: () => void, onReporteClose?: () => void }} [hooks]
@@ -616,6 +648,111 @@ function initSidebarRail(mapInstance, opts) {
     closeAllEditorFloatPanels();
     setCollapsed(true);
   });
+}
+
+/**
+ * Inicializa la status bar inferior (estilo VSCode).
+ * Suscribe a eventos del mapa para refrescar coordenadas y zoom en vivo,
+ * y expone un control mínimo para los indicadores de red y guardado.
+ *
+ * @param {{ on: Function, getZoom: () => number }} mapInstance
+ * @returns {{ setNet: (label: string) => void, setSave: (state: 'ready'|'busy'|'ok'|'error', msg?: string) => void }}
+ */
+function initStatusBar(mapInstance) {
+  const coordsEl = document.querySelector('#status-bar-coords .editor-status-bar__coords-text');
+  const zoomEl = document.querySelector('#status-bar-zoom .editor-status-bar__zoom-text');
+  const netEl = document.querySelector('#status-bar-net .editor-status-bar__net-label');
+  const saveItem = document.getElementById('status-bar-save');
+  const saveTextEl = saveItem?.querySelector('.editor-status-bar__save-text') ?? null;
+
+  /** Formatea coordenadas con 5 decimales (~1.1m de precisión, suficiente para FTTH urbano). */
+  function fmtLngLat(/** @type {number} */ lng, /** @type {number} */ lat) {
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return '—, —';
+    const lngTxt = lng.toFixed(5);
+    const latTxt = lat.toFixed(5);
+    return `${latTxt}, ${lngTxt}`;
+  }
+
+  function fmtZoom(/** @type {number} */ z) {
+    if (!Number.isFinite(z)) return '—';
+    return z.toFixed(2);
+  }
+
+  /** Throttle simple via rAF: actualizamos coords como mucho 60 fps. */
+  let pendingFrame = false;
+  let lastLngLat = /** @type {[number, number] | null} */ (null);
+  function scheduleCoordsPaint() {
+    if (pendingFrame || !coordsEl) return;
+    pendingFrame = true;
+    window.requestAnimationFrame(() => {
+      pendingFrame = false;
+      if (!lastLngLat) return;
+      coordsEl.textContent = fmtLngLat(lastLngLat[0], lastLngLat[1]);
+    });
+  }
+
+  try {
+    mapInstance.on('mousemove', (/** @type {{ lngLat: { lng: number, lat: number } }} */ e) => {
+      lastLngLat = [e.lngLat.lng, e.lngLat.lat];
+      scheduleCoordsPaint();
+    });
+    mapInstance.on('mouseout', () => {
+      if (coordsEl) coordsEl.textContent = '—, —';
+    });
+  } catch {
+    /* mapInstance puede no soportar el evento; ignorar. */
+  }
+
+  function paintZoom() {
+    try {
+      if (zoomEl) zoomEl.textContent = fmtZoom(mapInstance.getZoom());
+    } catch {
+      /* */
+    }
+  }
+  paintZoom();
+  try {
+    mapInstance.on('zoom', paintZoom);
+    mapInstance.on('zoomend', paintZoom);
+  } catch {
+    /* */
+  }
+
+  /** Cambia el indicador de red activa (FTTH / Corporativa) en la status bar. */
+  function setNet(/** @type {string} */ label) {
+    if (netEl) netEl.textContent = label;
+  }
+
+  /**
+   * Indicador de guardado / actividad. Estados:
+   *   'ready' (verde, "Listo"), 'busy' (naranja parpadea), 'ok' (verde, mensaje), 'error' (rojo).
+   */
+  let resetSaveTimer = /** @type {number | null} */ (null);
+  function setSave(/** @type {'ready'|'busy'|'ok'|'error'} */ state, /** @type {string} */ msg) {
+    if (!saveItem) return;
+    saveItem.classList.remove('editor-status-bar__item--save-busy', 'editor-status-bar__item--save-error');
+    if (state === 'busy') saveItem.classList.add('editor-status-bar__item--save-busy');
+    if (state === 'error') saveItem.classList.add('editor-status-bar__item--save-error');
+    const defaultText =
+      state === 'busy' ? 'Guardando…' :
+      state === 'error' ? 'Error' :
+      state === 'ok' ? (msg || 'Guardado') :
+      'Listo';
+    if (saveTextEl) saveTextEl.textContent = msg || defaultText;
+    if (resetSaveTimer != null) {
+      window.clearTimeout(resetSaveTimer);
+      resetSaveTimer = null;
+    }
+    if (state === 'ok' || state === 'error') {
+      resetSaveTimer = window.setTimeout(() => {
+        if (saveTextEl) saveTextEl.textContent = 'Listo';
+        saveItem.classList.remove('editor-status-bar__item--save-busy', 'editor-status-bar__item--save-error');
+        resetSaveTimer = null;
+      }, 3500);
+    }
+  }
+
+  return { setNet, setSave };
 }
 
 function waitForNetworkChoice() {
@@ -887,6 +1024,11 @@ export async function boot() {
   const otdrCutLayer = new OtdrCutLayer(map);
   const medidaEventoMarkerLayer = new MedidaEventoMarkerLayer(map);
   const eventosReporteLayer = new EventosReporteLayer(map);
+  /* Blindaje contra "flash" de pines al arrancar: dejamos memorizada la
+     intención de "no visibles" antes de que cualquier carga async pueda
+     materializar la capa. La regla real (mostrar solo si hay molécula
+     activa) se aplica más adelante en `refreshEventosReporteDisplay`. */
+  eventosReporteLayer.setVisible(false);
 
   /** Conteos de eventos tras último GET exitoso (para la barra superior). */
   let lastChromeEventCounts = /** @type {{ list: number | null, map: number | null }} */ ({
@@ -1042,7 +1184,14 @@ export async function boot() {
       eventosReporteLayer.ensureLayer();
       eventosReporteLayer.setData(fcForMap);
       const evCb = document.getElementById('reporte-ev-layer-visible');
-      const wantPins = evCb instanceof HTMLInputElement ? evCb.checked : true;
+      const wantPinsCheckbox = evCb instanceof HTMLInputElement ? evCb.checked : true;
+      /* Regla de negocio: los pines de eventos en el MAPA solo se pintan
+         cuando hay una molécula activa (búsqueda de tendido en FTTH).
+         Sin molécula activa => pines ocultos en mapa, pero la lista del
+         panel «Reporte evento» sí se rellena con todos los registros.
+         Esto evita el ruido visual al abrir el editor. */
+      const hasActiveMoleculeFilter = !!getMoleculeFilterForEventosApi();
+      const wantPins = hasActiveMoleculeFilter && wantPinsCheckbox;
       eventosReporteLayer.setVisible(opts?.suppressMapPins ? false : wantPins);
       const introEv = document.getElementById('reporte-ev-list-intro');
       if (introEv) {
@@ -1263,6 +1412,20 @@ export async function boot() {
 
   function setStatus(msg) {
     statusEl.textContent = msg;
+    /* Heurística pequeña: si el texto sugiere actividad de guardado/error,
+       reflejarlo en el indicador discreto de la status bar. */
+    try {
+      const lower = String(msg ?? '').toLowerCase();
+      if (/error|fall(o|ó)|no se pudo/.test(lower)) {
+        statusBar.setSave('error', 'Error');
+      } else if (/guardad|salvad|crear?|cre(a|ó|ado)|actualiza/.test(lower)) {
+        statusBar.setSave('ok', 'Guardado');
+      } else if (/guardando|enviando|subiendo|cargando/.test(lower)) {
+        statusBar.setSave('busy');
+      }
+    } catch {
+      /* */
+    }
   }
 
   /** GPS del navegador (Geolocation API). Esquina superior derecha; icono en CSS (`/icons/editor/geolocate.svg`). */
@@ -1334,6 +1497,7 @@ export async function boot() {
       } catch {
         /* */
       }
+      setEditorFloatPickMode('trazar', false);
     },
     onArmingChanged: (armed) => {
       try {
@@ -1341,14 +1505,27 @@ export async function boot() {
       } catch {
         /* */
       }
+      /* Encoge el panel a píldora flotante para que el mapa quede 100% libre. */
+      setEditorFloatPickMode('reporte', !!armed);
     },
-    onEventoGuardado: () => void refreshEventosReporteDisplay(),
+    onEventoGuardado: () => {
+      void refreshEventosReporteDisplay();
+      try {
+        statusBar.setSave('ok', 'Evento guardado');
+      } catch {
+        /* */
+      }
+    },
     closeReportePanelUi: () => {
       document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
       document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
       syncEditorFloatBackdrop();
     }
   });
+
+  /* Status bar inferior (estilo VSCode): coords del cursor, zoom, red activa, guardado. */
+  const statusBar = initStatusBar(map);
+  statusBar.setNet(appNetwork === 'corporativa' ? 'CORP' : 'FTTH');
 
   initSidebarRail(map, {
     getSuppressMapSidebarCollapse: () => {
@@ -1389,6 +1566,36 @@ export async function boot() {
   document.querySelectorAll('[data-close-float]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const which = btn.getAttribute('data-close-float');
+      const panelId = which === 'reporte' ? 'reporte-evento-details' : 'editor-float-trazar';
+      const panel = document.getElementById(panelId);
+      /* Si el panel está en modo «pick chip», el botón actúa como Cancelar
+         del armado y restaura el panel a su estado normal en lugar de cerrarlo. */
+      if (panel?.classList.contains('editor-float-panel--pick-mode')) {
+        if (which === 'reporte') {
+          try {
+            reporteCtl?.cancelMapPickMode?.();
+          } catch {
+            /* */
+          }
+        } else if (which === 'trazar') {
+          if (otdrAwaitingCableClick) {
+            otdrAwaitingCableClick = false;
+            try {
+              btnOtdrArmClick.classList.remove('active');
+            } catch {
+              /* */
+            }
+            setStatus('Referencia por clic cancelada.');
+            try {
+              syncButtons();
+            } catch {
+              /* */
+            }
+          }
+        }
+        setEditorFloatPickMode(/** @type {'trazar'|'reporte'} */ (which), false);
+        return;
+      }
       if (which === 'reporte') {
         editorFloatHooks.onReporteClose();
         document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
@@ -1486,6 +1693,7 @@ export async function boot() {
     if (!ok) {
       otdrAwaitingCableClick = false;
       btnOtdrArmClick.classList.remove('active');
+      setEditorFloatPickMode('trazar', false);
     }
     updateOtdrClickPanelVisibility();
   }
@@ -1500,6 +1708,7 @@ export async function boot() {
     otdrClickRefLngLat = null;
     otdrAwaitingCableClick = false;
     btnOtdrArmClick.classList.remove('active');
+    setEditorFloatPickMode('trazar', false);
     otdrClickStatus.textContent = 'Referencia: —';
     syncMedidaEventoPin();
   }
@@ -2400,9 +2609,13 @@ export async function boot() {
 
     const reporteEvVis = document.getElementById('reporte-ev-layer-visible');
     if (reporteEvVis instanceof HTMLInputElement) {
-      eventosReporteLayer.setVisible(reporteEvVis.checked);
+      /* Coherente con la regla: pines de eventos solo visibles si hay
+         molécula activa Y la checkbox está marcada. */
+      const computeWantPins = () =>
+        reporteEvVis.checked && !!getMoleculeFilterForEventosApi();
+      eventosReporteLayer.setVisible(computeWantPins());
       reporteEvVis.addEventListener('change', () => {
-        eventosReporteLayer.setVisible(reporteEvVis.checked);
+        eventosReporteLayer.setVisible(computeWantPins());
       });
     }
     async function refreshFtthMoleculeOverlayIfFiltered() {
@@ -2755,6 +2968,7 @@ export async function boot() {
           otdrCutLayer.bringToFront();
           otdrAwaitingCableClick = false;
           btnOtdrArmClick.classList.remove('active');
+          setEditorFloatPickMode('trazar', false);
           otdrClickStatus.textContent = `Referencia en tramo: ${fmtM(otdrClickRefFromStartM)} desde inicio (por tendido).`;
           setStatus(
             'Referencia fijada. Metros de fibra y sentido; luego <strong>Marcar corte</strong>.'
@@ -2835,6 +3049,7 @@ export async function boot() {
       if (getOtdrRef() !== 'click') {
         otdrAwaitingCableClick = false;
         btnOtdrArmClick.classList.remove('active');
+        setEditorFloatPickMode('trazar', false);
         otdrClickRefFromStartM = null;
         otdrClickRefLngLat = null;
         otdrClickStatus.textContent = 'Referencia: —';
@@ -2849,6 +3064,7 @@ export async function boot() {
     if (otdrAwaitingCableClick) {
       otdrAwaitingCableClick = false;
       btnOtdrArmClick.classList.remove('active');
+      setEditorFloatPickMode('trazar', false);
       setStatus('Referencia por clic cancelada.');
       syncButtons();
       return;
@@ -2856,7 +3072,8 @@ export async function boot() {
     reporteCtl?.cancelMapPickMode?.();
     otdrAwaitingCableClick = true;
     btnOtdrArmClick.classList.add('active');
-    setStatus('Clic en el tendido seleccionado para fijar referencia de trazado.');
+    setEditorFloatPickMode('trazar', true);
+    setStatus('Haz clic en el tendido seleccionado para fijar la referencia de trazado.');
   });
 
   btnOtdrMark.addEventListener('click', () => markOtdrCut());

@@ -31,17 +31,13 @@ export class EventosReporteLayer {
     this.imageId = IMAGE_ID;
     /** @type {boolean} */
     this._imageLoading = false;
-  }
-
-  _syncVisibilityFromDom() {
-    try {
-      const el = document.getElementById('reporte-ev-layer-visible');
-      if (el instanceof HTMLInputElement) {
-        this.setVisible(el.checked);
-      }
-    } catch {
-      /* */
-    }
+    /**
+     * Visibilidad deseada por el cliente. Empieza `false` para evitar el
+     * "flash" de pines al abrir el editor: solo aparecen cuando hay una
+     * molécula buscada (regla controlada en `app.js`).
+     * @type {boolean}
+     */
+    this._desiredVisibility = false;
   }
 
   _addSymbolLayer() {
@@ -65,13 +61,13 @@ export class EventosReporteLayer {
         ],
         'icon-anchor': 'center',
         'icon-allow-overlap': true,
-        'icon-ignore-placement': true
+        'icon-ignore-placement': true,
+        visibility: this._desiredVisibility ? 'visible' : 'none'
       },
       paint: {
         'icon-opacity': 0.98
       }
     });
-    this._syncVisibilityFromDom();
   }
 
   _addCircleLayer() {
@@ -80,6 +76,9 @@ export class EventosReporteLayer {
       id: this.circleLayerId,
       type: 'circle',
       source: this.sourceId,
+      layout: {
+        visibility: this._desiredVisibility ? 'visible' : 'none'
+      },
       paint: {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 7, 18, 9],
         'circle-color': '#dc2626',
@@ -88,7 +87,6 @@ export class EventosReporteLayer {
         'circle-opacity': 0.95
       }
     });
-    this._syncVisibilityFromDom();
   }
 
   /**
@@ -108,7 +106,6 @@ export class EventosReporteLayer {
 
     if (this.map.hasImage(this.imageId)) {
       this._addSymbolLayer();
-      this._syncVisibilityFromDom();
       return;
     }
 
@@ -160,6 +157,10 @@ export class EventosReporteLayer {
 
   /** @param {boolean} visible */
   setVisible(visible) {
+    /* Memorizar el deseo aunque la capa todavía no exista (carga async de
+       la imagen): cuando _addSymbolLayer/_addCircleLayer se ejecute, leerá
+       este flag para nacer con la visibilidad correcta. */
+    this._desiredVisibility = !!visible;
     const v = visible ? 'visible' : 'none';
     for (const id of [this.symbolLayerId, this.circleLayerId]) {
       if (!this.map.getLayer(id)) continue;
