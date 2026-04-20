@@ -12,7 +12,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260423measure" />
+  <link rel="stylesheet" href="/css/app.css?v=20260426fab" />
 </head>
 <body class="editor-body">
   <div id="auth-gate-root" class="auth-gate-root"></div>
@@ -95,35 +95,8 @@
             aria-label="Iniciar o detener medición por trazo libre en el mapa"
             title="Medición por trazo libre · distancia y +20 % reserva fibra (clic para activar o desactivar)"
           >
-            <svg class="measure-fab-ico" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <!-- Profundidad sutil (no usa #64748b: evita reglas ArcGIS en esta capa) -->
-              <path
-                d="M5.35 18.65L18.65 5.35"
-                stroke="#0f172a"
-                stroke-width="3.4"
-                stroke-linecap="round"
-                opacity="0.35"
-              />
-              <path
-                d="M5.35 18.65L18.65 5.35"
-                stroke="#38bdf8"
-                stroke-width="2.05"
-                stroke-linecap="round"
-              />
-              <!-- Marcas de escala refinadas -->
-              <path
-                d="M7.1 16.9l.62-.62M9.35 14.65l.62-.62M11.6 12.4l.62-.62M13.85 10.15l.62-.62M16.1 7.9l.62-.62"
-                stroke="#64748b"
-                stroke-width="0.88"
-                stroke-linecap="round"
-                opacity="0.9"
-              />
-              <!-- Anclajes tipo pin moderno (mismos fills que el tema / ArcGIS) -->
-              <circle cx="5.35" cy="18.65" r="2.05" fill="#38bdf8" />
-              <circle cx="5.35" cy="18.65" r="0.68" fill="#0f172a" />
-              <circle cx="18.65" cy="5.35" r="2.05" fill="#22d3ee" />
-              <circle cx="18.65" cy="5.35" r="0.68" fill="#0f172a" />
-            </svg>
+            <!-- Icono vía CSS + /icons/editor/measure-fab*.svg (no SVG inline: evita caché del HTML) -->
+            <span class="measure-fab-ico" aria-hidden="true"></span>
           </button>
         </div>
         </div>

@@ -3636,9 +3636,10 @@ body.editor-body #map .mapboxgl-ctrl-top-right button.mapboxgl-ctrl-geolocate .m
   background-size: 28px 28px !important;
 }
 
-body.editor-body #map .measure-fab-ico {
-  width: 17px;
-  height: 17px;
+body.editor-body #map .measure-fab .measure-fab-ico {
+  width: 24px;
+  height: 24px;
+  background-size: 24px 24px !important;
 }
 
 body.editor-body #map .map-widget-stack--arcgis {
@@ -3714,26 +3715,6 @@ body.editor-body #map .map-widget-stack--arcgis .measure-fab--active:not(:disabl
 
 body.editor-body #map .map-widget-stack--arcgis .measure-fab-ico {
   filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.35)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.75));
-}
-
-body.editor-body #map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico path[stroke="#38bdf8"] {
-  stroke: #7dd3fc;
-}
-
-body.editor-body #map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico circle[fill="#38bdf8"] {
-  fill: #7dd3fc;
-}
-
-body.editor-body #map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico circle[fill="#22d3ee"] {
-  fill: #22d3ee;
-}
-
-body.editor-body #map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico circle[fill="#0f172a"] {
-  fill: rgba(15, 23, 42, 0.95);
-}
-
-body.editor-body #map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico path[stroke="#64748b"] {
-  stroke: #94a3b8;
 }
 
 body.editor-body #map .map-widget-stack--arcgis .measure-fab-mapbox-group:has(.measure-fab--muted:not(:disabled)) {
@@ -4174,60 +4155,34 @@ body.editor-body #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-act
   background: #005a8f !important;
 }
 
-.measure-fab-ico {
+/* Medir: icono solo vía SVG externo (?v= fuerza nueva versión ante caché agresivo). */
+body.editor-body .measure-fab .measure-fab-ico {
   display: block;
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   overflow: visible;
   pointer-events: none;
+  background-image: url("/icons/editor/measure-fab.svg?v=20260426");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 24px 24px;
   filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.35)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
+#map .map-widget-stack--arcgis .measure-fab:not(:disabled):not(.measure-fab--active) .measure-fab-ico,
+body.editor-body #map .map-widget-stack--arcgis .measure-fab:not(:disabled):not(.measure-fab--active) .measure-fab-ico {
+  background-image: url("/icons/editor/measure-fab-arcgis.svg?v=20260426");
+}
+
+#map .map-widget-stack--arcgis .measure-fab--active:not(:disabled) .measure-fab-ico,
+body.editor-body #map .map-widget-stack--arcgis .measure-fab--active:not(:disabled) .measure-fab-ico {
+  background-image: url("/icons/editor/measure-fab-arcgis-active.svg?v=20260426");
+}
+
 #map .map-widget-stack--arcgis .measure-fab-ico {
   filter: none;
-}
-
-#map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico path[stroke="#38bdf8"] {
-  stroke: #4a4a4a;
-}
-
-#map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico circle[fill="#38bdf8"] {
-  fill: #4a4a4a;
-}
-
-#map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico circle[fill="#22d3ee"] {
-  fill: var(--arcgis-widget-blue, #0079c1);
-  stroke: none;
-}
-
-#map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico circle[fill="#0f172a"] {
-  fill: #fff;
-}
-
-#map .map-widget-stack--arcgis .measure-fab:not(:disabled) .measure-fab-ico path[stroke="#64748b"] {
-  stroke: #8a8a8a;
-}
-
-#map .map-widget-stack--arcgis .measure-fab--active:not(:disabled) .measure-fab-ico path[stroke="#38bdf8"] {
-  stroke: #fff;
-}
-
-#map .map-widget-stack--arcgis .measure-fab--active:not(:disabled) .measure-fab-ico circle[fill="#38bdf8"] {
-  fill: #fff;
-}
-
-#map .map-widget-stack--arcgis .measure-fab--active:not(:disabled) .measure-fab-ico circle[fill="#22d3ee"] {
-  fill: #fff;
-}
-
-#map .map-widget-stack--arcgis .measure-fab--active:not(:disabled) .measure-fab-ico path[stroke="#64748b"] {
-  stroke: rgba(255, 255, 255, 0.75);
-}
-
-#map .map-widget-stack--arcgis .measure-fab--active:not(:disabled) .measure-fab-ico circle[fill="#0f172a"] {
-  fill: var(--arcgis-widget-blue, #0079c1);
 }
 
 .measure-fab:hover:not(:disabled) .measure-fab-ico {
@@ -6046,9 +6001,10 @@ body.editor-body .cable-search-mount--chrome .cable-search-clear:hover:not(:disa
     -webkit-backdrop-filter: none;
   }
 
-  body.editor-body #map .measure-fab-ico {
-    width: 15px;
-    height: 15px;
+  body.editor-body #map .measure-fab .measure-fab-ico {
+    width: 20px;
+    height: 20px;
+    background-size: 20px 20px !important;
   }
 
   body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
