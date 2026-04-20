@@ -1896,9 +1896,17 @@ body.editor-body #sidebar {
   to { opacity: 0; transform: translateX(-50%) translateY(14px) scale(0.98); }
 }
 
-/* ——— Barra Guardar «sticky» en móvil ——— */
+/* ——— Barra Guardar sticky al fondo del panel (móvil y escritorio).
+   Desde que el cuerpo del panel tiene scroll propio, el botón debe
+   quedar anclado para no perderse al expandir las secciones. ——— */
 .reporte-ev-actions--sticky {
-  margin-top: 16px;
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin: 16px -12px -10px;
+  padding: 10px 12px 12px;
+  background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0%, rgba(8, 12, 22, 0.95) 45%);
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .reporte-ev-btn--guardar .reporte-ev-save-ico {
@@ -2003,14 +2011,85 @@ body.editor-body #sidebar {
   color: var(--muted);
 }
 
+/* El cuerpo del panel Reporte evento necesita scroll propio: vive dentro de
+   un `.editor-float-panel` (flex column con max-height limitado). Sin esto
+   la lista de secciones excede el panel y el usuario no puede desplazar. */
 .reporte-ev-body {
   padding-top: 4px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .reporte-ev-showcase {
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(100, 116, 139, 0.28);
+  margin: 0;
+  padding: 0;
+}
+
+/* Secciones desplegables del panel Reporte evento.
+   Agrupan historial, plantillas rápidas y detalles del formulario.
+   El usuario puede plegar/expandir cada bloque con un toque en el header
+   para reducir el alto total del panel en pantallas pequeñas. */
+.reporte-ev-collapse {
+  margin: 0 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.32);
+  overflow: hidden;
+}
+
+.reporte-ev-collapse[open] {
+  background: rgba(15, 23, 42, 0.44);
+  border-color: rgba(148, 163, 184, 0.26);
+}
+
+.reporte-ev-collapse > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  min-height: 44px;
+  box-sizing: border-box;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #e2e8f0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reporte-ev-collapse > summary::-webkit-details-marker {
+  display: none;
+}
+
+.reporte-ev-collapse > summary:hover {
+  color: #f8fafc;
+}
+
+.reporte-ev-collapse__chev {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid rgba(148, 163, 184, 0.85);
+  border-bottom: 2px solid rgba(148, 163, 184, 0.85);
+  transform: rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.reporte-ev-collapse[open] > summary .reporte-ev-collapse__chev {
+  transform: rotate(-135deg);
+  margin-top: 4px;
+}
+
+.reporte-ev-collapse__body {
+  padding: 4px 12px 12px;
 }
 
 .reporte-ev-ul {

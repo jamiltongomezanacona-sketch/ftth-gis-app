@@ -313,9 +313,18 @@
     <div class="sidebar-details-body reporte-ev-body">
           <!-- Visibilidad de pins de eventos en mapa; lista sincronizada desde el API en app.js -->
           <input type="checkbox" id="reporte-ev-layer-visible" checked hidden aria-hidden="true" />
-          <div class="reporte-ev-showcase">
-            <ul id="reporte-ev-ul" class="reporte-ev-ul" aria-label="Lista de eventos"></ul>
-          </div>
+          <!-- Historial de incidencias: desplegable, cerrado por defecto para compactar el panel -->
+          <details class="reporte-ev-collapse reporte-ev-collapse--list">
+            <summary class="reporte-ev-collapse__summary">
+              <span class="reporte-ev-collapse__label">Incidencias recientes</span>
+              <span class="reporte-ev-collapse__chev" aria-hidden="true"></span>
+            </summary>
+            <div class="reporte-ev-collapse__body">
+              <div class="reporte-ev-showcase">
+                <ul id="reporte-ev-ul" class="reporte-ev-ul" aria-label="Lista de eventos"></ul>
+              </div>
+            </div>
+          </details>
           <div id="reporte-ev-phase-wait" class="reporte-ev-phase reporte-ev-phase-wait">
             <p class="reporte-ev-wait-hint">
               <strong>Técnico en sitio:</strong> usa tu ubicación actual o toca el tendido en el mapa.
@@ -358,86 +367,107 @@
               </div>
             </div>
 
-            <!-- Plantillas rápidas: un tap llena tipo + estado + acción -->
-            <div class="reporte-ev-presets" role="group" aria-label="Plantillas rápidas">
-              <button type="button" class="reporte-ev-preset" data-preset="corte-obras">
-                <span class="reporte-ev-preset__title">Corte por obras</span>
-                <span class="reporte-ev-preset__sub">Obras civiles · Crítico</span>
-              </button>
-              <button type="button" class="reporte-ev-preset" data-preset="vandalismo">
-                <span class="reporte-ev-preset__title">Vandalismo</span>
-                <span class="reporte-ev-preset__sub">Vandalismo · Crítico</span>
-              </button>
-              <button type="button" class="reporte-ev-preset" data-preset="terceros">
-                <span class="reporte-ev-preset__title">Daño terceros</span>
-                <span class="reporte-ev-preset__sub">Daño · Crítico</span>
-              </button>
-              <button type="button" class="reporte-ev-preset" data-preset="mantenimiento">
-                <span class="reporte-ev-preset__title">Mantenimiento</span>
-                <span class="reporte-ev-preset__sub">Mant. · En proceso</span>
-              </button>
-            </div>
+            <!-- Plantillas rápidas: un tap llena tipo + estado + acción.
+                 Va dentro de <details> para poder plegarse cuando el técnico
+                 ya eligió una plantilla y quiere ahorrar espacio vertical. -->
+            <details class="reporte-ev-collapse reporte-ev-collapse--presets" open>
+              <summary class="reporte-ev-collapse__summary">
+                <span class="reporte-ev-collapse__label">Plantillas rápidas</span>
+                <span class="reporte-ev-collapse__chev" aria-hidden="true"></span>
+              </summary>
+              <div class="reporte-ev-collapse__body">
+                <div class="reporte-ev-presets" role="group" aria-label="Plantillas rápidas">
+                  <button type="button" class="reporte-ev-preset" data-preset="corte-obras">
+                    <span class="reporte-ev-preset__title">Corte por obras</span>
+                    <span class="reporte-ev-preset__sub">Obras civiles · Crítico</span>
+                  </button>
+                  <button type="button" class="reporte-ev-preset" data-preset="vandalismo">
+                    <span class="reporte-ev-preset__title">Vandalismo</span>
+                    <span class="reporte-ev-preset__sub">Vandalismo · Crítico</span>
+                  </button>
+                  <button type="button" class="reporte-ev-preset" data-preset="terceros">
+                    <span class="reporte-ev-preset__title">Daño terceros</span>
+                    <span class="reporte-ev-preset__sub">Daño · Crítico</span>
+                  </button>
+                  <button type="button" class="reporte-ev-preset" data-preset="mantenimiento">
+                    <span class="reporte-ev-preset__title">Mantenimiento</span>
+                    <span class="reporte-ev-preset__sub">Mant. · En proceso</span>
+                  </button>
+                </div>
+              </div>
+            </details>
 
-          <div class="reporte-ev-field">
-            <label class="reporte-ev-label" for="reporte-ev-dist-odf">
-              Dist ODF
-              <span id="reporte-ev-dist-auto" class="reporte-ev-auto-tag" hidden>auto</span>
-            </label>
-            <input
-              type="number"
-              id="reporte-ev-dist-odf"
-              class="reporte-ev-input"
-              min="0"
-              step="0.1"
-              inputmode="decimal"
-              placeholder="Opcional — distancia al ODF (m)"
-            />
-          </div>
-          <div class="reporte-ev-field">
-            <label class="reporte-ev-label" for="reporte-ev-tipo">Tipo de evento <span class="reporte-ev-req">*</span></label>
-            <select id="reporte-ev-tipo" class="reporte-ev-select" required>
-              <option value="">Selecciona</option>
-              <option value="VANDALISMO">VANDALISMO</option>
-              <option value="OBRAS CIVILES">OBRAS CIVILES</option>
-              <option value="DETERIORO">DETERIORO</option>
-              <option value="MANTENIMIENTO">MANTENIMIENTO</option>
-              <option value="DAÑO POR TERCEROS">DAÑO POR TERCEROS</option>
-            </select>
-          </div>
-          <div class="reporte-ev-field">
-            <label class="reporte-ev-label" for="reporte-ev-estado">Estado <span class="reporte-ev-req">*</span></label>
-            <select id="reporte-ev-estado" class="reporte-ev-select reporte-ev-select--estado" required>
-              <option value="">Selecciona</option>
-              <option value="CRITICO" class="reporte-ev-opt--critico">CRITICO</option>
-              <option value="EN PROCESO" class="reporte-ev-opt--proceso">EN PROCESO</option>
-              <option value="RESUELTO" class="reporte-ev-opt--resuelto">RESUELTO</option>
-              <option value="PENDIENTE" class="reporte-ev-opt--pendiente">PENDIENTE</option>
-              <option value="ESCALADO" class="reporte-ev-opt--escalado">ESCALADO</option>
-            </select>
-          </div>
-          <div class="reporte-ev-field">
-            <label class="reporte-ev-label" for="reporte-ev-accion">Acción <span class="reporte-ev-req">*</span></label>
-            <select id="reporte-ev-accion" class="reporte-ev-select" required>
-              <option value="">Selecciona acción</option>
-              <option value="REEMPLAZO DE FIBRA">REEMPLAZO DE FIBRA</option>
-              <option value="SE INSTALA CIERRE">SE INSTALA CIERRE</option>
-              <option value="INTERVENCIÓN TECNICA">INTERVENCIÓN TECNICA</option>
-            </select>
-          </div>
-          <p id="reporte-evento-fecha" class="reporte-ev-fecha" aria-live="polite">Fecha: —</p>
-          <div class="reporte-ev-field">
-            <label class="reporte-ev-label" for="reporte-ev-descripcion">
-              Descripción <span class="reporte-ev-req">*</span>
-              <span id="reporte-ev-desc-draft" class="reporte-ev-auto-tag" hidden>borrador guardado</span>
-            </label>
-            <textarea
-              id="reporte-ev-descripcion"
-              class="reporte-ev-textarea"
-              rows="4"
-              maxlength="8000"
-              placeholder="Detalle del incidente (qué, dónde exactamente, causa aparente)"
-            ></textarea>
-          </div>
+            <!-- Detalles del evento: agrupamos los campos del formulario en un
+                 desplegable abierto por defecto. El técnico puede plegarlos si
+                 la pantalla es muy pequeña. -->
+            <details class="reporte-ev-collapse reporte-ev-collapse--fields" open>
+              <summary class="reporte-ev-collapse__summary">
+                <span class="reporte-ev-collapse__label">Detalles del evento</span>
+                <span class="reporte-ev-collapse__chev" aria-hidden="true"></span>
+              </summary>
+              <div class="reporte-ev-collapse__body">
+                <div class="reporte-ev-field">
+                  <label class="reporte-ev-label" for="reporte-ev-dist-odf">
+                    Dist ODF
+                    <span id="reporte-ev-dist-auto" class="reporte-ev-auto-tag" hidden>auto</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="reporte-ev-dist-odf"
+                    class="reporte-ev-input"
+                    min="0"
+                    step="0.1"
+                    inputmode="decimal"
+                    placeholder="Opcional — distancia al ODF (m)"
+                  />
+                </div>
+                <div class="reporte-ev-field">
+                  <label class="reporte-ev-label" for="reporte-ev-tipo">Tipo de evento <span class="reporte-ev-req">*</span></label>
+                  <select id="reporte-ev-tipo" class="reporte-ev-select" required>
+                    <option value="">Selecciona</option>
+                    <option value="VANDALISMO">VANDALISMO</option>
+                    <option value="OBRAS CIVILES">OBRAS CIVILES</option>
+                    <option value="DETERIORO">DETERIORO</option>
+                    <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+                    <option value="DAÑO POR TERCEROS">DAÑO POR TERCEROS</option>
+                  </select>
+                </div>
+                <div class="reporte-ev-field">
+                  <label class="reporte-ev-label" for="reporte-ev-estado">Estado <span class="reporte-ev-req">*</span></label>
+                  <select id="reporte-ev-estado" class="reporte-ev-select reporte-ev-select--estado" required>
+                    <option value="">Selecciona</option>
+                    <option value="CRITICO" class="reporte-ev-opt--critico">CRITICO</option>
+                    <option value="EN PROCESO" class="reporte-ev-opt--proceso">EN PROCESO</option>
+                    <option value="RESUELTO" class="reporte-ev-opt--resuelto">RESUELTO</option>
+                    <option value="PENDIENTE" class="reporte-ev-opt--pendiente">PENDIENTE</option>
+                    <option value="ESCALADO" class="reporte-ev-opt--escalado">ESCALADO</option>
+                  </select>
+                </div>
+                <div class="reporte-ev-field">
+                  <label class="reporte-ev-label" for="reporte-ev-accion">Acción <span class="reporte-ev-req">*</span></label>
+                  <select id="reporte-ev-accion" class="reporte-ev-select" required>
+                    <option value="">Selecciona acción</option>
+                    <option value="REEMPLAZO DE FIBRA">REEMPLAZO DE FIBRA</option>
+                    <option value="SE INSTALA CIERRE">SE INSTALA CIERRE</option>
+                    <option value="INTERVENCIÓN TECNICA">INTERVENCIÓN TECNICA</option>
+                  </select>
+                </div>
+                <p id="reporte-evento-fecha" class="reporte-ev-fecha" aria-live="polite">Fecha: —</p>
+                <div class="reporte-ev-field">
+                  <label class="reporte-ev-label" for="reporte-ev-descripcion">
+                    Descripción <span class="reporte-ev-req">*</span>
+                    <span id="reporte-ev-desc-draft" class="reporte-ev-auto-tag" hidden>borrador guardado</span>
+                  </label>
+                  <textarea
+                    id="reporte-ev-descripcion"
+                    class="reporte-ev-textarea"
+                    rows="4"
+                    maxlength="8000"
+                    placeholder="Detalle del incidente (qué, dónde exactamente, causa aparente)"
+                  ></textarea>
+                </div>
+              </div>
+            </details>
           <div class="reporte-ev-actions reporte-ev-actions--sticky">
             <button type="button" id="btn-reporte-evento-guardar" class="reporte-ev-btn reporte-ev-btn--guardar">
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" class="reporte-ev-save-ico">
