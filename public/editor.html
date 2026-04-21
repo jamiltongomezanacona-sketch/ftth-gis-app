@@ -17,7 +17,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260420mobileops" />
+  <link rel="stylesheet" href="/css/app.css?v=20260420sidebarflash" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -169,6 +169,19 @@
         </svg>
       </span>
     </button>
+    <!-- Estado colapsado antes del primer pintado: evita «se abre y luego se cierra». -->
+    <script>
+      (function () {
+        try {
+          var k = 'ftth-gis-field-sidebar-collapsed-v3';
+          if (localStorage.getItem(k) !== '1') return;
+          var root = document.getElementById('map-field-sidebar');
+          var toggle = document.getElementById('map-field-sidebar-toggle');
+          if (root) root.classList.add('map-field-sidebar--collapsed');
+          if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        } catch (e) {}
+      })();
+    </script>
     <div class="map-field-sidebar__panel" id="map-field-sidebar-panel">
       <p class="map-field-sidebar__hint">Esc cancela medición o dibujo activo.</p>
       <div class="map-field-sidebar__actions">

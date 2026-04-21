@@ -759,8 +759,8 @@ function initStatusBar(mapInstance) {
   return { setNet, setSave };
 }
 
-/** v2: primera versión quedaba colapsada en localStorage sin panel visible. */
-const FIELD_SIDEBAR_COLLAPSED_KEY = 'ftth-gis-field-sidebar-collapsed-v2';
+/** v3: script en editor.html aplica estado antes del pintado; v2 ya no se lee. */
+const FIELD_SIDEBAR_COLLAPSED_KEY = 'ftth-gis-field-sidebar-collapsed-v3';
 
 /**
  * Panel lateral «Campo» sobre el mapa: GPS, medición, Trazar/Reporte (toques grandes).
