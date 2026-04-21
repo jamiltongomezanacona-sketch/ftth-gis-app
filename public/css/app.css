@@ -139,15 +139,15 @@ body.editor-body {
 @media (max-width: 900px) {
   body.editor-body {
     overflow-x: clip;
-    --editor-op-sheet-expanded-max: min(400px, min(46dvh, 52svh));
-    --editor-op-sheet-peek-max: 88px;
+    --editor-op-sheet-expanded-max: min(320px, min(36dvh, 42svh));
+    --editor-op-sheet-peek-max: 80px;
   }
 }
 
 @media (max-width: 520px) {
   body.editor-body {
-    --editor-op-sheet-expanded-max: min(360px, min(42dvh, 48svh));
-    --editor-op-sheet-peek-max: 84px;
+    --editor-op-sheet-expanded-max: min(280px, min(31dvh, 36svh));
+    --editor-op-sheet-peek-max: 74px;
   }
 }
 
@@ -3559,7 +3559,7 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__panel {
-    padding: 0 14px max(12px, calc(10px + env(safe-area-inset-bottom, 0px)));
+    padding: 0 12px max(8px, calc(8px + env(safe-area-inset-bottom, 0px)));
     -webkit-overflow-scrolling: touch;
     overflow-x: hidden;
     box-sizing: border-box;
@@ -3578,30 +3578,30 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__actions {
     grid-template-columns: 1fr;
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 6px;
+    margin-bottom: 4px;
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn {
     flex-direction: column;
     align-items: stretch;
     justify-content: center;
-    gap: 3px;
+    gap: 2px;
     min-height: auto;
-    padding: 10px 12px;
+    padding: 8px 10px;
     text-align: left;
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn-label {
-    font-size: 0.9rem;
+    font-size: 0.86rem;
     width: 100%;
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn-sub {
     display: block;
     width: 100%;
-    font-size: 0.64rem;
-    line-height: 1.3;
+    font-size: 0.6rem;
+    line-height: 1.2;
     text-align: left;
     opacity: 0.92;
     white-space: normal;
@@ -3627,8 +3627,8 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn {
-    padding: 12px 12px;
-    min-height: 48px;
+    padding: 9px 10px;
+    min-height: 40px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
