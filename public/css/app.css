@@ -132,21 +132,21 @@ body.editor-body {
 
 /*
  * Móvil editor: una sola fuente de verdad para el sheet inferior.
- * - dvh: barra dinámica del navegador (iOS/Android).
- * - svh: fallback estable cuando el teclado o barra no juega bien con vh.
+ * - svh: viewport pequeño estable (evita “saltos” al ocultar/mostrar barra URL).
+ * - usamos svh fijo para que el sheet no cambie de tamaño segundos después.
  * - overflow-x: clip evita la “línea blanca” por 100vw + scrollbar.
  */
 @media (max-width: 900px) {
   body.editor-body {
     overflow-x: clip;
-    --editor-op-sheet-expanded-max: min(320px, min(36dvh, 42svh));
+    --editor-op-sheet-expanded-max: clamp(220px, 34svh, 300px);
     --editor-op-sheet-peek-max: 80px;
   }
 }
 
 @media (max-width: 520px) {
   body.editor-body {
-    --editor-op-sheet-expanded-max: min(280px, min(31dvh, 36svh));
+    --editor-op-sheet-expanded-max: clamp(200px, 30svh, 260px);
     --editor-op-sheet-peek-max: 74px;
   }
 }
