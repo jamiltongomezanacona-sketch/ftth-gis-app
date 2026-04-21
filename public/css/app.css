@@ -117,9 +117,22 @@ body.network-gate-open {
   overflow: hidden;
 }
 
+/*
+ * Editor: altura = viewport dinámico (dvh/svh), no 100vh (Safari/iOS lo interpreta mal con barra URL).
+ * -webkit-fill-available: respaldo iOS con notch / home indicator.
+ */
+html:has(body.editor-body) {
+  height: 100%;
+  min-height: 100%;
+}
+
 /* Editor: altura explícita del viewport para que el grid y Mapbox GL tengan tamaño no nulo (100% en cadena suele fallar). */
 body.editor-body {
   height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  min-height: 100svh;
   min-height: 100dvh;
   overflow: hidden;
   /* Panel «Campo» / #layout: debe leer la pila del chrome aquí (no solo desde #map-wrap). */
@@ -4311,6 +4324,7 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     grid-template-rows: 1fr;
     height: 100%;
     min-height: 0;
+    max-height: 100%;
     position: relative;
   }
 

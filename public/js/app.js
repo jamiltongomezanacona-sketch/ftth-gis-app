@@ -1173,6 +1173,15 @@ export async function boot() {
 
   scheduleMapResize(0);
 
+  /** Móvil: el lienzo debe coincidir con el tamaño real de #map-wrap (padding, barra URL, teclado). */
+  const mapWrapEl = document.getElementById('map-wrap');
+  if (mapWrapEl && typeof ResizeObserver !== 'undefined') {
+    const mapWrapRo = new ResizeObserver(() => {
+      scheduleMapResize(0);
+    });
+    mapWrapRo.observe(mapWrapEl);
+  }
+
   const routesLayer = new RoutesLayer(map);
   const moleculeOverlayLayer = new MoleculeOverlayLayer(map);
   const centralesLayer = new CentralesEtBLayer(map);
@@ -1639,6 +1648,7 @@ export async function boot() {
         }, 120);
       };
       vv.addEventListener('resize', bump);
+      vv.addEventListener('scroll', bump);
       bump();
     }
   }
