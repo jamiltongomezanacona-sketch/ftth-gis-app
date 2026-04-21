@@ -3441,6 +3441,17 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__
   transform: scale(0.99);
 }
 
+.map-field-sidebar__btn--warn {
+  border-color: rgba(251, 146, 60, 0.35);
+  background: rgba(120, 53, 15, 0.28);
+  color: #fed7aa;
+}
+
+.map-field-sidebar__btn--warn:hover {
+  border-color: rgba(251, 146, 60, 0.55);
+  background: rgba(120, 53, 15, 0.45);
+}
+
 body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn {
   min-height: 44px;
   padding: 8px 10px;

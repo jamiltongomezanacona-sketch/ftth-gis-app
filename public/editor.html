@@ -17,7 +17,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260420opsorder" />
+  <link rel="stylesheet" href="/css/app.css?v=20260420opsfix" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -171,13 +171,15 @@
     </button>
     <div class="map-field-sidebar__panel" id="map-field-sidebar-panel">
       <p class="map-field-sidebar__hint">Esc cancela medición o dibujo activo.</p>
-      <div class="map-field-sidebar__row">
-        <button type="button" class="map-field-sidebar__chip" id="map-field-btn-trazar">Trazar</button>
-        <button type="button" class="map-field-sidebar__chip map-field-sidebar__chip--warn" id="map-field-btn-reporte">
-          Reporte evento
-        </button>
-      </div>
       <div class="map-field-sidebar__actions">
+        <button type="button" class="map-field-sidebar__btn" id="map-field-btn-trazar">
+          <span class="map-field-sidebar__btn-label">Trazar</span>
+          <span class="map-field-sidebar__btn-sub">Abrir panel de trazado</span>
+        </button>
+        <button type="button" class="map-field-sidebar__btn map-field-sidebar__btn--warn" id="map-field-btn-reporte">
+          <span class="map-field-sidebar__btn-label">Reporte evento</span>
+          <span class="map-field-sidebar__btn-sub">Abrir panel de incidente</span>
+        </button>
         <button type="button" class="map-field-sidebar__btn" id="map-field-btn-gps">
           <span class="map-field-sidebar__btn-label">Mi ubicación</span>
           <span class="map-field-sidebar__btn-sub">Centrar en GPS</span>
