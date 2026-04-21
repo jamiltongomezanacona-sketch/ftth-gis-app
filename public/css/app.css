@@ -2330,6 +2330,95 @@ body.editor-body #sidebar {
   font-weight: 700;
 }
 
+/* Popup: enlaces a Google Maps / Waze en punto del mapa */
+.map-external-nav-popup-wrap .mapboxgl-popup-content {
+  background: rgba(15, 23, 42, 0.96);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(2, 6, 23, 0.45);
+  padding: 0;
+}
+
+.map-external-nav-popup-wrap .mapboxgl-popup-close-button {
+  color: #94a3b8;
+  font-size: 18px;
+  padding: 8px 10px;
+}
+
+.map-external-nav-popup-wrap .mapboxgl-popup-close-button:hover {
+  color: #f1f5f9;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.map-external-nav-popup {
+  padding: 14px 16px 16px;
+  min-width: 220px;
+}
+
+.map-external-nav-popup__title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+  color: #f8fafc;
+}
+
+.map-external-nav-popup__hint {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+
+.map-external-nav-popup__coords {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: #cbd5e1;
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
+.map-external-nav-popup__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.map-external-nav-popup__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.map-external-nav-popup__btn--gmaps {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  color: #bfdbfe;
+}
+
+.map-external-nav-popup__btn--gmaps:hover {
+  background: rgba(59, 130, 246, 0.32);
+}
+
+.map-external-nav-popup__btn--waze {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  color: #a5f3fc;
+}
+
+.map-external-nav-popup__btn--waze:hover {
+  background: rgba(56, 189, 248, 0.22);
+}
+
 /* Popup al hacer clic en un evento (incidencia) en el mapa — ficha tipo “propiedades” */
 .evento-popup-wrap .mapboxgl-popup-content {
   background: #ffffff;

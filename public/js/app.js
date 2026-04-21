@@ -1207,6 +1207,18 @@ export async function boot() {
     cierreMapPopup = null;
   }
 
+  /** Popup: abrir punto en Waze / Google Maps (clic en mapa sin features GIS). */
+  let mapExternalNavPopup = /** @type {import('mapbox-gl').Popup | null} */ (null);
+
+  function closeMapExternalNavPopup() {
+    try {
+      mapExternalNavPopup?.remove();
+    } catch {
+      /* */
+    }
+    mapExternalNavPopup = null;
+  }
+
   /** Se asignan al montar el mapa (callbacks de popups con acceso a `api`). */
   let attachEventoPopupAdmin = /** @type {((popup: import('mapbox-gl').Popup, p: Record<string, unknown>) => void) | null} */ (
     null
@@ -3205,6 +3217,69 @@ export async function boot() {
       syncButtons();
     });
 
+    function collectInteractiveLayerIdsForExternalNavHitTest() {
+      /** @type {string[]} */
+      const ids = [];
+      if (map.getLayer(ROUTES_LAYER_ID)) ids.push(ROUTES_LAYER_ID);
+      for (const id of EVENTOS_REPORTE_INTERACTIVE_LAYER_IDS) {
+        if (map.getLayer(id)) ids.push(id);
+      }
+      for (const id of MOLECULE_OVERLAY_INTERACTIVE_LAYER_IDS) {
+        if (map.getLayer(id)) ids.push(id);
+      }
+      const centralId = centralesLayer.getInteractiveLayerId();
+      if (centralId) ids.push(centralId);
+      for (const id of [
+        'otdr-cut-symbol',
+        'otdr-cut-circle',
+        'otdr-cut-label',
+        'medida-evento-symbol',
+        'medida-evento-circle',
+        'measure-polyline-line',
+        'measure-polyline-vertices',
+        'measure-polyline-labels'
+      ]) {
+        if (map.getLayer(id)) ids.push(id);
+      }
+      return ids;
+    }
+
+    /**
+     * @param {mapboxgl.LngLat} lngLat
+     */
+    function openMapExternalNavPopup(lngLat) {
+      const lat = lngLat.lat;
+      const lng = lngLat.lng;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      closeMapExternalNavPopup();
+      const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
+      const wUrl = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+      const html = `
+    <div class="map-external-nav-popup">
+      <div class="map-external-nav-popup__title">Navegar a este punto</div>
+      <div class="map-external-nav-popup__hint">Zona sin tendido ni marcas GIS. En PC: Mayús+clic aquí aunque haya trazado.</div>
+      <div class="map-external-nav-popup__coords">${escapeHtml(lat.toFixed(6))}, ${escapeHtml(lng.toFixed(6))}</div>
+      <div class="map-external-nav-popup__actions">
+        <a class="map-external-nav-popup__btn map-external-nav-popup__btn--gmaps" href="${gUrl}" target="_blank" rel="noopener noreferrer">Google Maps</a>
+        <a class="map-external-nav-popup__btn map-external-nav-popup__btn--waze" href="${wUrl}" target="_blank" rel="noopener noreferrer">Waze</a>
+      </div>
+    </div>`;
+      const popup = new mapboxgl.Popup({
+        className: 'map-external-nav-popup-wrap',
+        closeButton: true,
+        closeOnClick: true,
+        maxWidth: 'min(92vw, 280px)',
+        offset: 12
+      })
+        .setLngLat(lngLat)
+        .setHTML(html)
+        .addTo(map);
+      mapExternalNavPopup = popup;
+      popup.on('close', () => {
+        if (mapExternalNavPopup === popup) mapExternalNavPopup = null;
+      });
+    }
+
     map.on('click', (e) => {
       if (editing) return;
       try {
@@ -3235,6 +3310,21 @@ export async function boot() {
         syncButtons();
         return;
       }
+      if (document.body.classList.contains('editor-pick-mode-active')) return;
+      if (otdrAwaitingCableClick) return;
+      const forceNav =
+        e.originalEvent &&
+        ('shiftKey' in e.originalEvent ? /** @type {MouseEvent} */ (e.originalEvent).shiftKey : false);
+      if (!forceNav) {
+        try {
+          const layers = collectInteractiveLayerIdsForExternalNavHitTest();
+          const hits = layers.length ? map.queryRenderedFeatures(e.point, { layers: layers }) : [];
+          if (hits.length > 0) return;
+        } catch {
+          /* */
+        }
+      }
+      openMapExternalNavPopup(e.lngLat);
     });
   });
 
