@@ -651,9 +651,8 @@ function initSidebarRail(mapInstance, opts) {
 }
 
 /**
- * Inicializa la status bar inferior (estilo VSCode).
- * Suscribe a eventos del mapa para refrescar coordenadas y zoom en vivo,
- * y expone un control mínimo para los indicadores de red y guardado.
+ * Indicadores de red / guardado (la barra inferior VSCode es opcional en DOM).
+ * Coordenadas y zoom solo se pintan si existen los nodos `#status-bar-*`.
  *
  * @param {{ on: Function, getZoom: () => number }} mapInstance
  * @returns {{ setNet: (label: string) => void, setSave: (state: 'ready'|'busy'|'ok'|'error', msg?: string) => void }}

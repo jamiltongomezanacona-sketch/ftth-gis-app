@@ -75,8 +75,6 @@
   --app-shadow-elevated: 0 18px 38px rgba(0, 0, 0, 0.36);
   --app-blur-soft: blur(10px) saturate(1.1);
   --app-blur-strong: blur(18px) saturate(1.15);
-  --app-status-bar-h: 26px;
-  --app-status-bar-bottom-gap: calc(var(--app-status-bar-h) + 6px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3262,7 +3260,7 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze {
   position: fixed;
   left: max(12px, env(safe-area-inset-left, 0px));
   right: max(12px, env(safe-area-inset-right, 0px));
-  bottom: calc(var(--app-status-bar-h, 26px) + env(safe-area-inset-bottom, 0px) + 6px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
   top: auto;
   z-index: 535;
   visibility: visible;
@@ -8607,172 +8605,14 @@ body.editor-body
   }
 }
 
-/* ===========================================================================
-   STATUS BAR INFERIOR (estilo VSCode)
-   Da contexto persistente del editor: red activa, coordenadas del cursor,
-   zoom del mapa, último guardado y atajos de teclado. Es delgada (26px) y se
-   apoya en safe-area-inset-bottom para iPhone.
-   =========================================================================== */
-.editor-status-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: calc(var(--app-status-bar-h, 26px) + env(safe-area-inset-bottom, 0px));
-  padding: 0 12px env(safe-area-inset-bottom, 0px) 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-family: var(--font);
-  font-size: 11.5px;
-  letter-spacing: 0.01em;
-  color: var(--app-text-soft, #94a3b8);
-  background: linear-gradient(180deg, rgba(8, 12, 22, 0.78), rgba(8, 12, 22, 0.92));
-  border-top: 1px solid var(--app-stroke, rgba(148, 163, 184, 0.16));
-  backdrop-filter: var(--app-blur-soft, blur(10px) saturate(1.1));
-  -webkit-backdrop-filter: var(--app-blur-soft, blur(10px) saturate(1.1));
-  z-index: 530;
-  user-select: none;
-  pointer-events: none;
-}
-
-.editor-status-bar > * {
-  pointer-events: auto;
-}
-
-.editor-status-bar__group {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-}
-
-.editor-status-bar__group--right {
-  margin-left: auto;
-}
-
-.editor-status-bar__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.editor-status-bar__ico {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--app-accent, #38bdf8);
-  opacity: 0.85;
-}
-
-.editor-status-bar__item--save .editor-status-bar__ico {
-  color: var(--success, #34d399);
-}
-
-.editor-status-bar__item--save.editor-status-bar__item--save-busy .editor-status-bar__ico {
-  color: var(--app-warn, #fb923c);
-  animation: editorStatusBlink 1.1s ease-in-out infinite;
-}
-
-.editor-status-bar__item--save.editor-status-bar__item--save-error .editor-status-bar__ico {
-  color: var(--danger, #f87171);
-}
-
-@keyframes editorStatusBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-
-.editor-status-bar__net-label,
-.editor-status-bar__coords-text,
-.editor-status-bar__zoom-text,
-.editor-status-bar__save-text,
-.editor-status-bar__hint-text {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.editor-status-bar__coords-text {
-  letter-spacing: 0.02em;
-}
-
-.editor-status-bar__item--net {
-  color: var(--app-text, #e2e8f0);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 10.5px;
-}
-
-.editor-status-bar__dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--success, #34d399);
-  box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
-}
-
-body.editor-network-corporativa .editor-status-bar__dot {
-  background: var(--app-warn, #fb923c);
-  box-shadow: 0 0 6px rgba(251, 146, 60, 0.6);
-}
-
-.editor-status-bar__kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 16px;
-  padding: 0 5px;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--app-text, #e2e8f0);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-@media (max-width: 600px) {
-  .editor-status-bar {
-    font-size: 10.5px;
-    padding: 0 8px env(safe-area-inset-bottom, 0px) 8px;
-  }
-  .editor-status-bar__group {
-    gap: 10px;
-  }
-  /* En móviles muy estrechos ocultamos las pistas de atajos para no saturar. */
-  .editor-status-bar__item--hints {
-    display: none;
-  }
-}
-
-@media (max-width: 380px) {
-  .editor-status-bar__item--zoom {
-    display: none;
-  }
-}
-
-/* (Antes había un override aquí para subir el dock por encima de la status
-   bar; ya no es necesario porque el dock está anclado top-left.) */
-
-/* Mapbox attribution / logo: subirlos para no quedar bajo la status bar. */
+/* Mapbox attribution / logo: margen inferior (safe area). */
 body.editor-body .mapboxgl-ctrl-bottom-left,
 body.editor-body .mapboxgl-ctrl-bottom-right {
-  bottom: calc(var(--app-status-bar-h, 26px) + env(safe-area-inset-bottom, 0px) + 2px) !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
 }
 
 /* Si la barra de medición inferior está visible, subir el GPS para evitar
    solape con ese dock fijo bottom-right. */
 body.editor-body:has(#measure-polyline-dock:not([hidden])) .mapboxgl-ctrl-bottom-right {
-  bottom: calc(var(--app-status-bar-h, 26px) + env(safe-area-inset-bottom, 0px) + 86px) !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 86px) !important;
 }

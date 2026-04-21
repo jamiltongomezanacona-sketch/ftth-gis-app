@@ -17,7 +17,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260420hidefabs" />
+  <link rel="stylesheet" href="/css/app.css?v=20260420nostatusbar" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -170,7 +170,7 @@
       </span>
     </button>
     <div class="map-field-sidebar__panel" id="map-field-sidebar-panel">
-      <p class="map-field-sidebar__hint">Coordenadas y zoom en la barra inferior.</p>
+      <p class="map-field-sidebar__hint">Esc cancela medición o dibujo activo.</p>
       <div class="map-field-sidebar__actions">
         <button type="button" class="map-field-sidebar__btn" id="map-field-btn-gps">
           <span class="map-field-sidebar__btn-label">Mi ubicación</span>
@@ -192,35 +192,6 @@
   </aside>
 
   <div id="editor-float-backdrop" class="editor-float-backdrop" hidden aria-hidden="true"></div>
-
-  <!-- Barra de estado inferior estilo VSCode: contexto persistente del editor.
-       Muestra coordenadas del cursor, escala del mapa, red activa, último guardado y atajos. -->
-  <footer id="editor-status-bar" class="editor-status-bar" role="status" aria-label="Barra de estado del editor">
-    <div class="editor-status-bar__group editor-status-bar__group--left">
-      <span class="editor-status-bar__item editor-status-bar__item--net" id="status-bar-net">
-        <span class="editor-status-bar__dot" aria-hidden="true"></span>
-        <span class="editor-status-bar__net-label">FTTH</span>
-      </span>
-      <span class="editor-status-bar__item editor-status-bar__item--coords" id="status-bar-coords" title="Coordenadas WGS84 del cursor sobre el mapa">
-        <span class="editor-status-bar__ico" aria-hidden="true">⌖</span>
-        <span class="editor-status-bar__coords-text">—, —</span>
-      </span>
-      <span class="editor-status-bar__item editor-status-bar__item--zoom" id="status-bar-zoom" title="Nivel de zoom actual del mapa">
-        <span class="editor-status-bar__ico" aria-hidden="true">z</span>
-        <span class="editor-status-bar__zoom-text">—</span>
-      </span>
-    </div>
-    <div class="editor-status-bar__group editor-status-bar__group--right">
-      <span class="editor-status-bar__item editor-status-bar__item--save" id="status-bar-save" title="Última actividad guardada">
-        <span class="editor-status-bar__ico" aria-hidden="true">●</span>
-        <span class="editor-status-bar__save-text">Listo</span>
-      </span>
-      <span class="editor-status-bar__item editor-status-bar__item--hints" title="Atajos">
-        <kbd class="editor-status-bar__kbd">Esc</kbd>
-        <span class="editor-status-bar__hint-text">cancelar</span>
-      </span>
-    </div>
-  </footer>
 
   <div
     id="editor-float-trazar"
