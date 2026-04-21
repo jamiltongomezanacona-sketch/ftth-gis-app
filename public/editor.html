@@ -17,7 +17,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260420searchcenter" />
+  <link rel="stylesheet" href="/css/app.css?v=20260420opsorder" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -171,6 +171,12 @@
     </button>
     <div class="map-field-sidebar__panel" id="map-field-sidebar-panel">
       <p class="map-field-sidebar__hint">Esc cancela medición o dibujo activo.</p>
+      <div class="map-field-sidebar__row">
+        <button type="button" class="map-field-sidebar__chip" id="map-field-btn-trazar">Trazar</button>
+        <button type="button" class="map-field-sidebar__chip map-field-sidebar__chip--warn" id="map-field-btn-reporte">
+          Reporte evento
+        </button>
+      </div>
       <div class="map-field-sidebar__actions">
         <button type="button" class="map-field-sidebar__btn" id="map-field-btn-gps">
           <span class="map-field-sidebar__btn-label">Mi ubicación</span>
@@ -179,12 +185,6 @@
         <button type="button" class="map-field-sidebar__btn" id="map-field-btn-measure">
           <span class="map-field-sidebar__btn-label">Medir</span>
           <span class="map-field-sidebar__btn-sub">Distancia + reserva fibra</span>
-        </button>
-      </div>
-      <div class="map-field-sidebar__row">
-        <button type="button" class="map-field-sidebar__chip" id="map-field-btn-trazar">Trazar</button>
-        <button type="button" class="map-field-sidebar__chip map-field-sidebar__chip--warn" id="map-field-btn-reporte">
-          Reporte
         </button>
       </div>
       <a class="map-field-sidebar__link" href="/">← Panel principal</a>
