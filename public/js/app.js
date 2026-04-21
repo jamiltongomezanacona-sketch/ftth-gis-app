@@ -3241,33 +3241,6 @@ export async function boot() {
       syncButtons();
     });
 
-    function collectInteractiveLayerIdsForExternalNavHitTest() {
-      /** @type {string[]} */
-      const ids = [];
-      if (map.getLayer(ROUTES_LAYER_ID)) ids.push(ROUTES_LAYER_ID);
-      for (const id of EVENTOS_REPORTE_INTERACTIVE_LAYER_IDS) {
-        if (map.getLayer(id)) ids.push(id);
-      }
-      for (const id of MOLECULE_OVERLAY_INTERACTIVE_LAYER_IDS) {
-        if (map.getLayer(id)) ids.push(id);
-      }
-      const centralId = centralesLayer.getInteractiveLayerId();
-      if (centralId) ids.push(centralId);
-      for (const id of [
-        'otdr-cut-symbol',
-        'otdr-cut-circle',
-        'otdr-cut-label',
-        'medida-evento-symbol',
-        'medida-evento-circle',
-        'measure-polyline-line',
-        'measure-polyline-vertices',
-        'measure-polyline-labels'
-      ]) {
-        if (map.getLayer(id)) ids.push(id);
-      }
-      return ids;
-    }
-
     /**
      * @param {mapboxgl.LngLat} lngLat
      */
@@ -3281,7 +3254,7 @@ export async function boot() {
       const html = `
     <div class="map-external-nav-popup">
       <div class="map-external-nav-popup__title">Navegar a este punto</div>
-      <div class="map-external-nav-popup__hint">Zona sin tendido ni marcas GIS. En PC: Mayús+clic aquí aunque haya trazado.</div>
+      <div class="map-external-nav-popup__hint">Mantén pulsado el mapa ~2 s (sin mover). En PC: Mayús+clic.</div>
       <div class="map-external-nav-popup__coords">${escapeHtml(lat.toFixed(6))}, ${escapeHtml(lng.toFixed(6))}</div>
       <div class="map-external-nav-popup__actions">
         <a class="map-external-nav-popup__btn map-external-nav-popup__btn--gmaps" href="${gUrl}" target="_blank" rel="noopener noreferrer">Google Maps</a>
@@ -3303,6 +3276,112 @@ export async function boot() {
         if (mapExternalNavPopup === popup) mapExternalNavPopup = null;
       });
     }
+
+    /** Waze / Google Maps: mantener pulsado ~2 s en el mapa (táctil o ratón). */
+    const LONG_PRESS_NAV_MS = 2000;
+    const LONG_PRESS_MOVE_CANCEL_PX = 16;
+    let navLongPressTimer = 0;
+    /** @type {{ x: number, y: number, lngLat: mapboxgl.LngLat } | null} */
+    let navLongPressStart = null;
+    let navLongPressMouseDown = false;
+
+    function lngLatFromCanvasClient(clientX, clientY) {
+      const rect = map.getCanvas().getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      return map.unproject([x, y]);
+    }
+
+    function shouldBlockExternalNavLongPress() {
+      if (editing) return true;
+      if (document.body.classList.contains('editor-pick-mode-active')) return true;
+      if (otdrAwaitingCableClick) return true;
+      if (measurePolylineActive && !measurePolylineConfirmed) return true;
+      return false;
+    }
+
+    function clearNavLongPress() {
+      if (navLongPressTimer) {
+        window.clearTimeout(navLongPressTimer);
+        navLongPressTimer = 0;
+      }
+      navLongPressStart = null;
+    }
+
+    function startNavLongPress(clientX, clientY) {
+      clearNavLongPress();
+      if (shouldBlockExternalNavLongPress()) return;
+      try {
+        const lngLat = lngLatFromCanvasClient(clientX, clientY);
+        navLongPressStart = { x: clientX, y: clientY, lngLat };
+        navLongPressTimer = window.setTimeout(() => {
+          navLongPressTimer = 0;
+          if (!navLongPressStart) return;
+          openMapExternalNavPopup(navLongPressStart.lngLat);
+          try {
+            if (navigator.vibrate) navigator.vibrate(20);
+          } catch {
+            /* */
+          }
+          navLongPressStart = null;
+        }, LONG_PRESS_NAV_MS);
+      } catch {
+        clearNavLongPress();
+      }
+    }
+
+    function moveNavLongPress(clientX, clientY) {
+      if (!navLongPressStart || !navLongPressTimer) return;
+      const dx = clientX - navLongPressStart.x;
+      const dy = clientY - navLongPressStart.y;
+      if (dx * dx + dy * dy > LONG_PRESS_MOVE_CANCEL_PX * LONG_PRESS_MOVE_CANCEL_PX) {
+        clearNavLongPress();
+      }
+    }
+
+    const mapCanvas = map.getCanvas();
+    mapCanvas.addEventListener(
+      'touchstart',
+      (ev) => {
+        if (ev.touches.length !== 1) return;
+        const t = ev.touches[0];
+        startNavLongPress(t.clientX, t.clientY);
+      },
+      { passive: true }
+    );
+    mapCanvas.addEventListener(
+      'touchmove',
+      (ev) => {
+        if (ev.touches.length !== 1) return;
+        const t = ev.touches[0];
+        moveNavLongPress(t.clientX, t.clientY);
+      },
+      { passive: true }
+    );
+    mapCanvas.addEventListener('touchend', () => clearNavLongPress());
+    mapCanvas.addEventListener('touchcancel', () => clearNavLongPress());
+
+    mapCanvas.addEventListener('mousedown', (ev) => {
+      if (ev.button !== 0) return;
+      navLongPressMouseDown = true;
+      startNavLongPress(ev.clientX, ev.clientY);
+    });
+    mapCanvas.addEventListener('mousemove', (ev) => {
+      if (!navLongPressMouseDown) return;
+      moveNavLongPress(ev.clientX, ev.clientY);
+    });
+    mapCanvas.addEventListener('mouseleave', () => {
+      navLongPressMouseDown = false;
+      clearNavLongPress();
+    });
+    window.addEventListener('mouseup', () => {
+      navLongPressMouseDown = false;
+      clearNavLongPress();
+    });
+    mapCanvas.addEventListener('contextmenu', (ev) => {
+      ev.preventDefault();
+    });
+    map.on('dragstart', () => clearNavLongPress());
 
     map.on('click', (e) => {
       if (editing) return;
@@ -3334,20 +3413,13 @@ export async function boot() {
         syncButtons();
         return;
       }
-      if (document.body.classList.contains('editor-pick-mode-active')) return;
-      if (otdrAwaitingCableClick) return;
       const forceNav =
         e.originalEvent &&
-        ('shiftKey' in e.originalEvent ? /** @type {MouseEvent} */ (e.originalEvent).shiftKey : false);
-      if (!forceNav) {
-        try {
-          const layers = collectInteractiveLayerIdsForExternalNavHitTest();
-          const hits = layers.length ? map.queryRenderedFeatures(e.point, { layers: layers }) : [];
-          if (hits.length > 0) return;
-        } catch {
-          /* */
-        }
-      }
+        'shiftKey' in e.originalEvent &&
+        /** @type {MouseEvent} */ (e.originalEvent).shiftKey;
+      if (!forceNav) return;
+      if (document.body.classList.contains('editor-pick-mode-active')) return;
+      if (otdrAwaitingCableClick) return;
       openMapExternalNavPopup(e.lngLat);
     });
   });
