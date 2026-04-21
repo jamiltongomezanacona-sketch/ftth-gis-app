@@ -3355,10 +3355,6 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   min-width: 0;
 }
 
-body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn {
-  min-width: 0;
-}
-
 .map-field-sidebar__waze-title {
   font-size: 0.9rem;
   font-weight: 800;
@@ -3400,14 +3396,10 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__
 }
 
 .map-field-sidebar__panel {
-  padding: 0 14px 14px;
+  padding: 0 12px 12px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
-}
-
-body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__panel {
-  padding: 0 12px 12px;
 }
 
 .map-field-sidebar--collapsed .map-field-sidebar__panel {
@@ -3415,25 +3407,13 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__
 }
 
 .map-field-sidebar__hint {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-size: 0.68rem;
   line-height: 1.35;
   color: #94a3b8;
 }
 
-.map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__hint {
-  margin-bottom: 6px;
-}
-
 .map-field-sidebar__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-/* Menos altura: GPS y Medir en dos columnas en el sheet compacto */
-body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -3446,11 +3426,12 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__
   align-items: flex-start;
   gap: 2px;
   width: 100%;
-  min-height: 48px;
-  padding: 10px 12px;
-  border-radius: 11px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(30, 41, 59, 0.45);
   color: #e5e7eb;
   text-align: left;
   cursor: pointer;
@@ -3481,13 +3462,6 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__
   background: rgba(120, 53, 15, 0.45);
 }
 
-body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn {
-  min-height: 44px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: rgba(30, 41, 59, 0.45);
-}
-
 .map-field-sidebar__btn-label {
   font-size: 0.88rem;
   font-weight: 700;
@@ -3495,13 +3469,9 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__
 }
 
 .map-field-sidebar__btn-sub {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   color: #94a3b8;
   font-weight: 500;
-}
-
-body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn-sub {
-  font-size: 0.62rem;
   line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -3513,27 +3483,17 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 10px;
-}
-
-body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__row {
-  gap: 8px;
   margin-bottom: 6px;
 }
 
-body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__chip {
-  min-height: 40px;
-  font-size: 0.8rem;
-}
-
 .map-field-sidebar__chip {
-  min-height: 44px;
+  min-height: 40px;
   padding: 0 10px;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.16);
   background: rgba(30, 41, 59, 0.5);
   color: #e5e7eb;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -3561,18 +3521,13 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__
 .map-field-sidebar__link {
   display: block;
   text-align: center;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: #94a3b8;
   text-decoration: none;
-  padding: 6px 4px;
+  padding: 4px 4px 2px;
   border-radius: 8px;
   transition: color 0.15s ease, background 0.15s ease;
-}
-
-body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__link {
-  padding: 4px 4px 2px;
-  font-size: 0.72rem;
 }
 
 .map-field-sidebar__link:hover {
