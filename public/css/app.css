@@ -3129,16 +3129,24 @@ body.editor-body #sidebar.sidebar--fab-stack,
   overflow: visible !important;
 }
 
-/* Override mobile: igual que antes, el FAB stack debe verse siempre. */
-@media (max-width: 900px) {
-  #layout.sidebar-collapsed #sidebar.sidebar--fab-stack,
-  body.editor-body #layout.sidebar-collapsed #sidebar.sidebar--fab-stack {
-    display: flex !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    transform: none !important;
-  }
+/* Móvil: antes se forzaba visibilidad del FAB stack; el sheet «Operación» lo sustituye. */
+
+/* Panel «Operación» (sheet inferior) ya expone Trazar, Reporte, Medir y GPS:
+   ocultamos los FAB duplicados. Los nodos siguen en el DOM (initFieldSidebar y
+   measure siguen usando #measure-fab / #btn-open-panel-* por programación). */
+body.editor-body #layout #sidebar.sidebar--fab-stack,
+body.editor-body #sidebar.sidebar--fab-stack {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.editor-body #map .mapboxgl-ctrl-top-right {
+  display: none !important;
+}
+
+body.editor-body #map .mapboxgl-ctrl-bottom-right {
+  display: none !important;
 }
 
 #sidebar.sidebar--fab-stack::before {
