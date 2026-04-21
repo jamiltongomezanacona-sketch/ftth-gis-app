@@ -4328,8 +4328,10 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     min-height: 0;
     height: 100%;
     max-height: none;
+    /* Una sola reserva al sheet: padding-bottom + border-box (no restar también en max-height). */
+    box-sizing: border-box;
     min-height: 100dvh;
-    max-height: calc(100dvh - var(--editor-op-visible-height, 0px));
+    max-height: 100dvh;
     z-index: 0;
     padding-bottom: var(--editor-op-visible-height, 0px);
   }
@@ -4418,10 +4420,12 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   body.editor-body #layout > #map-wrap {
     grid-column: 1;
     grid-row: 1;
+    box-sizing: border-box;
     min-height: 100svh;
     min-height: 100dvh;
-    max-height: calc(100svh - var(--editor-op-visible-height, 0px));
-    max-height: calc(100dvh - var(--editor-op-visible-height, 0px));
+    /* Misma regla: el alto del sheet va solo en padding-bottom + border-box arriba. */
+    max-height: 100svh;
+    max-height: 100dvh;
     height: 100%;
   }
 }

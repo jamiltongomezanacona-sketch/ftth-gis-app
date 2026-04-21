@@ -858,6 +858,20 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
     });
   }
 
+  /** Re-sincroniza tras el primer pintado y cuando el viewport móvil termina de estabilizarse (barra URL, etc.). */
+  function kickMobileLayoutSync() {
+    syncMobileSheetLayout();
+    requestMapResize();
+  }
+  kickMobileLayoutSync();
+  window.requestAnimationFrame(() => {
+    kickMobileLayoutSync();
+    window.requestAnimationFrame(kickMobileLayoutSync);
+  });
+  [120, 380, 900].forEach((ms) => {
+    window.setTimeout(kickMobileLayoutSync, ms);
+  });
+
   toggle.addEventListener('click', () => {
     setCollapsed(!root.classList.contains('map-field-sidebar--collapsed'));
   });
