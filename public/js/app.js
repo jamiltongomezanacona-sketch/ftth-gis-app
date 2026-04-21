@@ -613,6 +613,10 @@ function initSidebarRail(mapInstance, opts) {
   }
 
   function bumpMapResize() {
+    if (typeof opts?.scheduleMapResize === 'function') {
+      opts.scheduleMapResize();
+      return;
+    }
     window.requestAnimationFrame(() => mapInstance.resize());
     window.setTimeout(() => mapInstance.resize(), 120);
   }
@@ -767,14 +771,40 @@ const FIELD_SIDEBAR_COLLAPSED_KEY = 'ftth-gis-field-sidebar-collapsed-v3';
  * @param {{ resize: () => void }} mapInstance
  * @param {{ trigger: () => void }} geolocateCtl
  */
-function initFieldSidebar(mapInstance, geolocateCtl) {
+function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
   const root = document.getElementById('map-field-sidebar');
   const toggle = document.getElementById('map-field-sidebar-toggle');
   if (!root || !toggle) return;
+  const editorBody = document.body;
   const mobileMq = window.matchMedia('(max-width: 900px)');
 
   function isMobileViewport() {
     return mobileMq.matches;
+  }
+
+  function requestMapResize() {
+    if (typeof scheduleMapResize === 'function') {
+      scheduleMapResize();
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      try {
+        mapInstance.resize();
+      } catch {
+        /* */
+      }
+    });
+  }
+
+  function syncMobileSheetLayout() {
+    if (!editorBody) return;
+    if (!isMobileViewport()) {
+      editorBody.style.setProperty('--editor-op-visible-height', '0px');
+      return;
+    }
+    const rect = root.getBoundingClientRect();
+    const visibleHeight = Math.max(0, Math.ceil(rect.height));
+    editorBody.style.setProperty('--editor-op-visible-height', `${visibleHeight}px`);
   }
 
   function readCollapsed() {
@@ -798,26 +828,34 @@ function initFieldSidebar(mapInstance, geolocateCtl) {
       }
     }
     window.requestAnimationFrame(() => {
-      try {
-        mapInstance.resize();
-      } catch {
-        /* */
-      }
+      syncMobileSheetLayout();
+      requestMapResize();
     });
   }
 
   setCollapsed(readCollapsed(), { persist: false });
 
   const syncForViewport = () => {
-    if (isMobileViewport()) {
-      setCollapsed(false, { persist: false });
-    }
+    setCollapsed(isMobileViewport() ? false : readCollapsed(), { persist: false });
   };
 
   if (typeof mobileMq.addEventListener === 'function') {
     mobileMq.addEventListener('change', syncForViewport);
   } else if (typeof mobileMq.addListener === 'function') {
     mobileMq.addListener(syncForViewport);
+  }
+
+  if (typeof ResizeObserver === 'function') {
+    const ro = new ResizeObserver(() => {
+      syncMobileSheetLayout();
+      requestMapResize();
+    });
+    ro.observe(root);
+  } else {
+    window.addEventListener('resize', () => {
+      syncMobileSheetLayout();
+      requestMapResize();
+    });
   }
 
   toggle.addEventListener('click', () => {
@@ -1103,10 +1141,23 @@ export async function boot() {
     zoom: appNetwork === 'ftth' ? MAP_FTTH_CUNI_VIEW.zoom : 11.5
   });
 
-  window.requestAnimationFrame(() => {
-    map.resize();
-  });
-  window.setTimeout(() => map.resize(), 250);
+  let mapResizeTimer = 0;
+  let lastViewportWidth = 0;
+  let lastViewportHeight = 0;
+  function scheduleMapResize(delay = 90) {
+    window.clearTimeout(mapResizeTimer);
+    mapResizeTimer = window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        try {
+          map.resize();
+        } catch {
+          /* */
+        }
+      });
+    }, delay);
+  }
+
+  scheduleMapResize(0);
 
   const routesLayer = new RoutesLayer(map);
   const moleculeOverlayLayer = new MoleculeOverlayLayer(map);
@@ -1551,17 +1602,18 @@ export async function boot() {
     if (vv) {
       let vvTimer = 0;
       const bump = () => {
+        const width = Math.round(vv.width);
+        const height = Math.round(vv.height);
+        if (width === lastViewportWidth && height === lastViewportHeight) return;
+        lastViewportWidth = width;
+        lastViewportHeight = height;
         window.clearTimeout(vvTimer);
         vvTimer = window.setTimeout(() => {
-          try {
-            map.resize();
-          } catch {
-            /* */
-          }
-        }, 60);
+          scheduleMapResize(0);
+        }, 120);
       };
       vv.addEventListener('resize', bump);
-      vv.addEventListener('scroll', bump);
+      bump();
     }
   }
 
@@ -1689,7 +1741,7 @@ export async function boot() {
   const statusBar = initStatusBar(map);
   statusBar.setNet(appNetwork === 'corporativa' ? 'CORP' : 'FTTH');
 
-  initFieldSidebar(map, geolocate);
+  initFieldSidebar(map, geolocate, scheduleMapResize);
 
   initSidebarRail(map, {
     getSuppressMapSidebarCollapse: () => {
@@ -1702,7 +1754,8 @@ export async function boot() {
         /* */
       }
       return false;
-    }
+    },
+    scheduleMapResize
   });
 
   const editorFloatHooks = {
@@ -2544,9 +2597,9 @@ export async function boot() {
   }
 
   map.on('load', async () => {
-    map.resize();
+    scheduleMapResize(0);
     map.once('idle', () => {
-      map.resize();
+      scheduleMapResize(0);
     });
     forceCloseMeasureOverlaysForMapReset();
 
@@ -2559,6 +2612,7 @@ export async function boot() {
         mapTopRight.appendChild(measureRow);
       }
       measureDock?.classList.add('measure-fab-dock--in-map');
+      scheduleMapResize(0);
     }
     ensureGeolocateBottomRight();
 

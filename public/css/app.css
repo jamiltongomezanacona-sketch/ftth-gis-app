@@ -128,6 +128,7 @@ body.editor-body {
   --editor-op-sheet-expanded-max: min(300px, 34vh);
   --editor-op-sheet-peek-max: 96px;
   --editor-op-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --editor-op-visible-height: 0px;
 }
 
 /*
@@ -4239,9 +4240,9 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     height: 100%;
     max-height: none;
     min-height: 100dvh;
-    max-height: 100dvh;
+    max-height: calc(100dvh - var(--editor-op-visible-height, 0px));
     z-index: 0;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: var(--editor-op-visible-height, 0px);
   }
 
   #layout:not(.sidebar-collapsed) #sidebar {
@@ -4330,8 +4331,8 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     grid-row: 1;
     min-height: 100svh;
     min-height: 100dvh;
-    max-height: 100svh;
-    max-height: 100dvh;
+    max-height: calc(100svh - var(--editor-op-visible-height, 0px));
+    max-height: calc(100dvh - var(--editor-op-visible-height, 0px));
     height: 100%;
   }
 }
