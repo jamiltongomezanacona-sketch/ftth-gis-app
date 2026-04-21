@@ -42,7 +42,7 @@ export async function ensureAuthenticated(apiBase = '') {
   <div class="auth-card">
     <div class="auth-card-brand">
       <div class="auth-card-logo" aria-hidden="true">
-        <img src="/icons/ui/layers.svg" width="34" height="34" alt="" decoding="async" />
+        <img src="/branding/login-logo.png" width="88" height="88" alt="" decoding="async" />
       </div>
     </div>
     <h1 id="auth-title" class="auth-card-title">VISOR GIS</h1>
