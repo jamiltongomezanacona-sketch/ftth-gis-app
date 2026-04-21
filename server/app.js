@@ -154,6 +154,9 @@ app.use(
   express.static(publicDir, {
     setHeaders(res, filePath) {
       const fp = filePath.replace(/\\/g, '/');
+      if (fp.endsWith('.webmanifest')) {
+        res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+      }
       if (fp.endsWith('.js') || fp.endsWith('.html')) {
         res.setHeader('Cache-Control', 'no-store, max-age=0');
       }

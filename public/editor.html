@@ -4,7 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="GIS FTTH" />
   <title>Operación · FTTH · GIS</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/pwa/icon-192.png" />
   <link rel="icon" href="/icons/ui/operacion.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,6 +17,7 @@
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
   <link rel="stylesheet" href="/css/app.css?v=20260430reporteUx" />
+  <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
   <div id="auth-gate-root" class="auth-gate-root"></div>
