@@ -5308,6 +5308,49 @@ body.home-body {
   gap: 14px;
 }
 
+.home-grid--compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.home-grid--compact .home-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+}
+
+@media (max-width: 900px) {
+  .home-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .home-grid--compact {
+    grid-template-columns: 1fr;
+  }
+}
+
+.home-grid--compact .home-card-ico {
+  margin-bottom: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.home-grid--compact .home-card-ico img {
+  width: 20px;
+  height: 20px;
+}
+
+.home-grid--compact .home-card-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #e5e7eb;
+}
+
 .home-card {
   position: relative;
   display: flex;
