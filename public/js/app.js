@@ -771,8 +771,14 @@ function initFieldSidebar(mapInstance, geolocateCtl) {
   const root = document.getElementById('map-field-sidebar');
   const toggle = document.getElementById('map-field-sidebar-toggle');
   if (!root || !toggle) return;
+  const mobileMq = window.matchMedia('(max-width: 900px)');
+
+  function isMobileViewport() {
+    return mobileMq.matches;
+  }
 
   function readCollapsed() {
+    if (isMobileViewport()) return false;
     try {
       return localStorage.getItem(FIELD_SIDEBAR_COLLAPSED_KEY) === '1';
     } catch {
@@ -780,13 +786,16 @@ function initFieldSidebar(mapInstance, geolocateCtl) {
     }
   }
 
-  function setCollapsed(/** @type {boolean} */ c) {
+  function setCollapsed(/** @type {boolean} */ c, /** @type {{ persist?: boolean }} */ opts = {}) {
+    const persist = opts.persist !== false;
     root.classList.toggle('map-field-sidebar--collapsed', c);
     toggle.setAttribute('aria-expanded', c ? 'false' : 'true');
-    try {
-      localStorage.setItem(FIELD_SIDEBAR_COLLAPSED_KEY, c ? '1' : '0');
-    } catch {
-      /* */
+    if (persist && !isMobileViewport()) {
+      try {
+        localStorage.setItem(FIELD_SIDEBAR_COLLAPSED_KEY, c ? '1' : '0');
+      } catch {
+        /* */
+      }
     }
     window.requestAnimationFrame(() => {
       try {
@@ -797,7 +806,19 @@ function initFieldSidebar(mapInstance, geolocateCtl) {
     });
   }
 
-  if (readCollapsed()) setCollapsed(true);
+  setCollapsed(readCollapsed(), { persist: false });
+
+  const syncForViewport = () => {
+    if (isMobileViewport()) {
+      setCollapsed(false, { persist: false });
+    }
+  };
+
+  if (typeof mobileMq.addEventListener === 'function') {
+    mobileMq.addEventListener('change', syncForViewport);
+  } else if (typeof mobileMq.addListener === 'function') {
+    mobileMq.addListener(syncForViewport);
+  }
 
   toggle.addEventListener('click', () => {
     setCollapsed(!root.classList.contains('map-field-sidebar--collapsed'));

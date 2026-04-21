@@ -174,6 +174,7 @@
       (function () {
         try {
           var k = 'ftth-gis-field-sidebar-collapsed-v3';
+          if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) return;
           if (localStorage.getItem(k) !== '1') return;
           var root = document.getElementById('map-field-sidebar');
           var toggle = document.getElementById('map-field-sidebar-toggle');
@@ -576,6 +577,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260430reporteUx"></script>
+  <script type="module" src="/js/app.js?v=20260420fieldsidebarfixmobile"></script>
 </body>
 </html>
