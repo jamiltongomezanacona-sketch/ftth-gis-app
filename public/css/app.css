@@ -124,6 +124,9 @@ body.editor-body {
   height: 100vh;
   min-height: 100dvh;
   overflow: hidden;
+  /* Panel «Campo» (#map-field-sidebar) es fixed hijo de body: debe leer la pila del chrome aquí (no solo desde #map-wrap). */
+  --editor-chrome-stack: calc(env(safe-area-inset-top, 0px) + 12px + 40px + 10px);
+  --map-field-top: calc(var(--editor-chrome-stack) + 96px);
 }
 
 body.editor-body #layout {
@@ -3243,6 +3246,285 @@ body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
     var(--app-shadow-elevated, 0 14px 30px rgba(0, 0, 0, 0.4));
 }
 
+/* ---------------------------------------------------------------------------
+   Panel lateral «Campo» sobre el mapa (trabajo en terreno: toques grandes).
+   Debajo del rail FAB (Trazar / Reporte). Gris predominante, glass suave.
+   --------------------------------------------------------------------------- */
+/* Fixed + z-index alto: fuera de #map-wrap (overflow:hidden). Por encima del lienzo Mapbox. */
+body.editor-body .map-field-sidebar {
+  position: fixed;
+  left: max(10px, env(safe-area-inset-left, 0px));
+  top: var(--map-field-top);
+  /* Por debajo de paneles flotantes (585) y del backdrop (575); por encima del mapa y a la par del rail FAB (540). */
+  z-index: 530;
+  visibility: visible;
+  opacity: 1;
+  width: min(280px, calc(100vw - 20px));
+  max-height: min(
+    420px,
+    max(140px, calc(100dvh - var(--map-field-top) - 52px - env(safe-area-inset-bottom, 0px)))
+  );
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  outline: 1px solid rgba(96, 165, 250, 0.35);
+  background: linear-gradient(165deg, rgba(30, 37, 50, 0.94) 0%, rgba(15, 23, 42, 0.97) 100%);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  box-shadow:
+    0 16px 40px rgba(2, 6, 23, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.map-field-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px 10px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  flex-shrink: 0;
+}
+
+.map-field-sidebar__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.map-field-sidebar__kicker {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.map-field-sidebar__net {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #e5e7eb;
+  background: rgba(71, 85, 105, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.map-field-sidebar__net--corp {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(96, 165, 250, 0.35);
+  color: #bfdbfe;
+}
+
+.map-field-sidebar__toggle {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.map-field-sidebar__toggle:hover {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: #f1f5f9;
+}
+
+.map-field-sidebar__toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.45);
+}
+
+.map-field-sidebar__chev {
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.map-field-sidebar--collapsed .map-field-sidebar__chev {
+  transform: rotate(180deg);
+}
+
+.map-field-sidebar__panel {
+  padding: 10px 12px 12px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.map-field-sidebar--collapsed .map-field-sidebar__panel {
+  display: none;
+}
+
+.map-field-sidebar--collapsed {
+  width: 56px;
+  min-height: 0;
+  max-height: none;
+}
+
+.map-field-sidebar--collapsed .map-field-sidebar__header {
+  border-bottom: none;
+  padding: 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-field-sidebar--collapsed .map-field-sidebar__identity {
+  align-items: center;
+}
+
+.map-field-sidebar--collapsed .map-field-sidebar__kicker,
+.map-field-sidebar--collapsed .map-field-sidebar__net {
+  display: none;
+}
+
+.map-field-sidebar__hint {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+.map-field-sidebar__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.map-field-sidebar__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(15, 23, 42, 0.55);
+  color: #e5e7eb;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.12s ease;
+}
+
+.map-field-sidebar__btn:hover {
+  border-color: rgba(96, 165, 250, 0.35);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.map-field-sidebar__btn:active {
+  transform: scale(0.99);
+}
+
+.map-field-sidebar__btn-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.map-field-sidebar__btn-sub {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.map-field-sidebar__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.map-field-sidebar__chip {
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(30, 41, 59, 0.5);
+  color: #e5e7eb;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.map-field-sidebar__chip:hover {
+  border-color: rgba(96, 165, 250, 0.4);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.map-field-sidebar__chip--warn {
+  border-color: rgba(251, 146, 60, 0.35);
+  background: rgba(120, 53, 15, 0.35);
+  color: #fed7aa;
+}
+
+.map-field-sidebar__chip--warn:hover {
+  border-color: rgba(251, 146, 60, 0.55);
+  background: rgba(120, 53, 15, 0.5);
+}
+
+.map-field-sidebar__link {
+  display: block;
+  text-align: center;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: none;
+  padding: 6px 4px;
+  border-radius: 8px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.map-field-sidebar__link:hover {
+  color: #e5e7eb;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+@media (max-width: 900px) {
+  .map-field-sidebar {
+    width: min(260px, calc(100vw - 16px));
+    max-height: min(380px, calc(100dvh - var(--map-field-top) - 48px - env(safe-area-inset-bottom, 0px)));
+  }
+}
+
+@media (max-width: 520px) {
+  body.editor-body {
+    --map-field-top: calc(var(--editor-chrome-stack, 80px) + 88px);
+  }
+
+  .map-field-sidebar {
+    width: min(calc(100vw - 14px), 300px);
+  }
+}
+
 /* Casita «panel principal»: ahora vive en la esquina superior izquierda del
    chrome bar. El selector legacy `.cable-search-home` se conserva por si el
    buscador flota fuera del chrome. */
@@ -3788,6 +4070,11 @@ body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
     --editor-chrome-stack: calc(env(safe-area-inset-top, 0px) + 6px + 6px + 40px + 6px);
   }
 
+  body.editor-body {
+    --editor-chrome-stack: calc(env(safe-area-inset-top, 0px) + 6px + 6px + 40px + 6px);
+    --map-field-top: calc(var(--editor-chrome-stack) + 96px);
+  }
+
   .cable-search-mount.cable-search-mount--chrome .cable-search-col .cable-search-listbox {
     max-height: min(280px, 45dvh);
   }
@@ -3918,6 +4205,7 @@ body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
   min-height: 45dvh;
   overflow: hidden;
   background: #0a0e12;
+  --map-field-top: calc(var(--editor-chrome-stack, 80px) + 96px);
 }
 
 /*

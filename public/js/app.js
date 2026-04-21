@@ -721,6 +721,11 @@ function initStatusBar(mapInstance) {
   /** Cambia el indicador de red activa (FTTH / Corporativa) en la status bar. */
   function setNet(/** @type {string} */ label) {
     if (netEl) netEl.textContent = label;
+    const fieldPill = document.getElementById('map-field-net-pill');
+    if (fieldPill) {
+      fieldPill.textContent = label === 'CORP' ? 'Corporativa' : 'FTTH';
+      fieldPill.classList.toggle('map-field-sidebar__net--corp', label === 'CORP');
+    }
   }
 
   /**
@@ -753,6 +758,71 @@ function initStatusBar(mapInstance) {
   }
 
   return { setNet, setSave };
+}
+
+/** v2: primera versión quedaba colapsada en localStorage sin panel visible. */
+const FIELD_SIDEBAR_COLLAPSED_KEY = 'ftth-gis-field-sidebar-collapsed-v2';
+
+/**
+ * Panel lateral «Campo» sobre el mapa: GPS, medición, Trazar/Reporte (toques grandes).
+ * @param {{ resize: () => void }} mapInstance
+ * @param {{ trigger: () => void }} geolocateCtl
+ */
+function initFieldSidebar(mapInstance, geolocateCtl) {
+  const root = document.getElementById('map-field-sidebar');
+  const toggle = document.getElementById('map-field-sidebar-toggle');
+  if (!root || !toggle) return;
+
+  function readCollapsed() {
+    try {
+      return localStorage.getItem(FIELD_SIDEBAR_COLLAPSED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function setCollapsed(/** @type {boolean} */ c) {
+    root.classList.toggle('map-field-sidebar--collapsed', c);
+    toggle.setAttribute('aria-expanded', c ? 'false' : 'true');
+    try {
+      localStorage.setItem(FIELD_SIDEBAR_COLLAPSED_KEY, c ? '1' : '0');
+    } catch {
+      /* */
+    }
+    window.requestAnimationFrame(() => {
+      try {
+        mapInstance.resize();
+      } catch {
+        /* */
+      }
+    });
+  }
+
+  if (readCollapsed()) setCollapsed(true);
+
+  toggle.addEventListener('click', () => {
+    setCollapsed(!root.classList.contains('map-field-sidebar--collapsed'));
+  });
+
+  document.getElementById('map-field-btn-gps')?.addEventListener('click', () => {
+    try {
+      geolocateCtl.trigger();
+    } catch {
+      /* */
+    }
+  });
+
+  document.getElementById('map-field-btn-measure')?.addEventListener('click', () => {
+    document.getElementById('measure-fab')?.click();
+  });
+
+  document.getElementById('map-field-btn-trazar')?.addEventListener('click', () => {
+    document.getElementById('btn-open-panel-trazar')?.click();
+  });
+
+  document.getElementById('map-field-btn-reporte')?.addEventListener('click', () => {
+    document.getElementById('btn-open-panel-reporte')?.click();
+  });
 }
 
 function waitForNetworkChoice() {
@@ -1598,6 +1668,8 @@ export async function boot() {
   /* Status bar inferior (estilo VSCode): coords del cursor, zoom, red activa, guardado. */
   const statusBar = initStatusBar(map);
   statusBar.setNet(appNetwork === 'corporativa' ? 'CORP' : 'FTTH');
+
+  initFieldSidebar(map, geolocate);
 
   initSidebarRail(map, {
     getSuppressMapSidebarCollapse: () => {
