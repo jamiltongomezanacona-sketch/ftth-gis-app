@@ -1086,14 +1086,14 @@ body.dash {
   html,
   body.dash {
     max-width: 100%;
-    overflow-x: clip;
+    overflow-x: hidden;
   }
 
   .dash-app {
     flex-direction: column;
     min-height: 100dvh;
     max-width: 100%;
-    overflow-x: clip;
+    overflow-x: hidden;
   }
 
   .dash-main-wrap,
@@ -1109,8 +1109,7 @@ body.dash {
   }
 
   .dash-sidebar {
-    position: sticky;
-    top: 0;
+    position: static;
     width: 100%;
     min-height: auto;
     padding: 10px 10px 8px;

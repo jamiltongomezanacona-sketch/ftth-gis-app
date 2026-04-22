@@ -4427,9 +4427,15 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 45dvh;
+  min-height: 0;
   overflow: hidden;
   background: #0a0e12;
+}
+
+@media (min-width: 901px) {
+  #map-wrap {
+    min-height: 45dvh;
+  }
 }
 
 /* WebKit/Android: el lienzo flex a veces no estira; height:0 + flex fuerza el reparto correcto. */
@@ -8744,8 +8750,8 @@ body.editor-body
   }
 
   #layout:not(.sidebar-collapsed) #sidebar {
-    width: min(118px, calc(100vw - 14px));
-    max-width: min(118px, calc(100vw - 14px));
+    width: min(168px, calc(100vw - 14px));
+    max-width: min(168px, calc(100vw - 14px));
   }
 }
 
