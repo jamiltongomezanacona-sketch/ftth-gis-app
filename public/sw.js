@@ -1,8 +1,8 @@
 /**
- * Service worker — PWA (caché ligera del shell; APIs siempre en red).
- * Bumpear SW_CACHE al cambiar la lista de precache.
+ * Service worker — PWA (cacheo controlado para evitar assets stale).
+ * Bumpear SW_CACHE al cambiar estrategia o precache.
  */
-const SW_CACHE = 'ftth-gis-pwa-v2';
+const SW_CACHE = 'ftth-gis-pwa-v3';
 
 const PRECACHE_URLS = [
   '/',
@@ -56,7 +56,40 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html'))
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(SW_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/index.html')))
+    );
+    return;
+  }
+
+  const isHotAsset = request.destination === 'style' || request.destination === 'script' || request.destination === 'document';
+  if (isHotAsset) {
+    // Network-first para CSS/JS/HTML: prioriza cambios recientes y evita servir versiones viejas.
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const ok =
+            response &&
+            response.status === 200 &&
+            (response.type === 'basic' || response.type === 'cors');
+          if (ok) {
+            const copy = response.clone();
+            caches.open(SW_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then(
+            (cached) => cached || new Response('', { status: 503, statusText: 'Offline' })
+          )
+        )
     );
     return;
   }
