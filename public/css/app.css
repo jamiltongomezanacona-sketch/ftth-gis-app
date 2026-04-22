@@ -3227,11 +3227,8 @@ body.editor-body #sidebar-toggle[hidden] {
 }
 
 /* ===========================================================================
-   FAB STACK SUPERIOR IZQUIERDA: dos botones flotantes individuales (Trazar y
-   Reporte evento) apilados verticalmente bajo el chrome bar. El #sidebar es
-   solo un contenedor transparente — cada botón es su propio FAB con
-   glassmorphism, sin la "pastilla" envolvente.
-   Clase: `.sidebar--fab-stack` en `#sidebar`.
+   Menú hamburguesa (`.sidebar--fab-stack`): tarjeta bajo el chrome con filas
+   tipo tabla — icono + nombre (Trazar, Montar evento, GPS, Medir).
    =========================================================================== */
 #sidebar.sidebar--fab-stack,
 body.editor-body #sidebar.sidebar--fab-stack,
@@ -3305,93 +3302,62 @@ body.editor-body #map .mapboxgl-ctrl-bottom-right {
   overflow: visible;
 }
 
-/* Rail vertical para los FABs. */
-.sidebar-tool-rail.sidebar-tool-rail--fab,
-body.editor-body .sidebar-tool-rail.sidebar-tool-rail--fab {
+/* Contenedor «tabla»: tarjeta cristal con filas apiladas. */
+#sidebar.sidebar--fab-stack .sidebar-tool-table,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table {
+  display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: auto;
-  padding: 0;
-  align-items: flex-start;
-}
-
-/* Botón flotante individual: cuadrado redondeado, solo icono visible. */
-.sidebar-tool-btn.sidebar-tool-btn--fab,
-body.editor-body .sidebar-tool-btn.sidebar-tool-btn--fab {
-  width: 40px;
-  height: 40px;
-  min-width: 0;
-  padding: 0;
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  border-radius: 12px;
+  gap: 4px;
+  width: min(288px, calc(100vw - 20px));
+  min-width: min(240px, calc(100vw - 24px));
+  padding: 8px;
+  border-radius: 14px;
   border: 1px solid var(--app-stroke, rgba(148, 163, 184, 0.18));
-  background: var(--app-surface-2, rgba(15, 23, 42, 0.92));
+  background: var(--app-surface-2, rgba(15, 23, 42, 0.94));
   backdrop-filter: var(--app-blur-strong, blur(18px) saturate(1.15));
   -webkit-backdrop-filter: var(--app-blur-strong, blur(18px) saturate(1.15));
   box-shadow: var(--app-shadow-soft, 0 8px 22px rgba(0, 0, 0, 0.32));
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease,
-    background 0.18s ease;
 }
 
-.sidebar-tool-btn.sidebar-tool-btn--fab::before {
-  display: none !important;
-}
-
-.sidebar-tool-btn.sidebar-tool-btn--fab .sidebar-tool-btn__ico {
-  margin: 0;
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
+/* Cada fila: columna icono + columna nombre (alineación tipo tabla). */
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
+  column-gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px 8px 8px;
+  text-align: left;
 }
 
-.sidebar-tool-btn.sidebar-tool-btn--fab .sidebar-tool-btn__ico img {
-  width: 19px;
-  height: 19px;
-  display: block;
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row::before,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row::before {
+  display: none;
 }
 
-/* Etiqueta accesible pero invisible (sr-only): seguimos exponiéndola al lector
-   de pantalla pero no ocupa espacio. */
-.sidebar-tool-btn.sidebar-tool-btn--fab .sidebar-tool-btn__lbl {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico {
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  justify-self: center;
 }
 
-.sidebar-tool-btn.sidebar-tool-btn--fab:hover {
-  transform: translateY(-1px);
-  border-color: rgba(56, 189, 248, 0.45);
-  background: rgba(15, 23, 42, 0.97);
-  box-shadow: var(--app-shadow-elevated, 0 14px 30px rgba(0, 0, 0, 0.4));
-}
-
-.sidebar-tool-btn.sidebar-tool-btn--fab[aria-expanded='true'] {
-  border-color: rgba(56, 189, 248, 0.55);
-  box-shadow:
-    0 0 0 1px rgba(56, 189, 248, 0.4),
-    var(--app-shadow-elevated, 0 14px 30px rgba(0, 0, 0, 0.4));
-}
-
-.sidebar-tool-btn--reporte.sidebar-tool-btn--fab[aria-expanded='true'] {
-  border-color: rgba(251, 146, 60, 0.55);
-  box-shadow:
-    0 0 0 1px rgba(251, 146, 60, 0.4),
-    var(--app-shadow-elevated, 0 14px 30px rgba(0, 0, 0, 0.4));
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__lbl,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__lbl {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
 }
 
 /* ---------------------------------------------------------------------------
@@ -4321,8 +4287,8 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     grid-row: 1;
     align-self: start;
     justify-self: start;
-    width: min(168px, calc(100vw - 14px));
-    max-width: min(168px, calc(100vw - 14px));
+    width: min(300px, calc(100vw - 14px));
+    max-width: min(300px, calc(100vw - 14px));
     margin-top: calc(var(--editor-chrome-stack, 80px) + 4px);
     margin-left: max(6px, env(safe-area-inset-left, 0px));
     margin-right: 0;
@@ -8710,8 +8676,8 @@ body.editor-body
   }
 
   #layout:not(.sidebar-collapsed) #sidebar {
-    width: min(168px, calc(100vw - 14px));
-    max-width: min(168px, calc(100vw - 14px));
+    width: min(300px, calc(100vw - 14px));
+    max-width: min(300px, calc(100vw - 14px));
   }
 }
 
