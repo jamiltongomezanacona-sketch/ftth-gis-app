@@ -1144,6 +1144,34 @@ export async function boot() {
   }
   applyNetworkUi(appNetwork);
 
+  /**
+   * Android/Chrome: `100dvh` en CSS puede no coincidir con el área realmente visible
+   * (barra URL, WebView). Fijamos `--editor-vv-height` al alto del visualViewport para
+   * que body → #layout → #map-wrap encajen antes del primer layout de Mapbox.
+   */
+  function syncEditorVisualViewportHeight() {
+    const root = document.documentElement;
+    const isEditor = document.body?.classList.contains('editor-body');
+    let mqMobile = false;
+    try {
+      mqMobile = window.matchMedia('(max-width: 900px)').matches;
+    } catch {
+      mqMobile = window.innerWidth <= 900;
+    }
+    if (!isEditor || !mqMobile) {
+      root.style.removeProperty('--editor-vv-height');
+      return;
+    }
+    const vv = window.visualViewport;
+    if (vv && Number.isFinite(vv.height) && vv.height > 80) {
+      root.style.setProperty('--editor-vv-height', `${Math.round(vv.height)}px`);
+    } else {
+      root.style.removeProperty('--editor-vv-height');
+    }
+  }
+
+  syncEditorVisualViewportHeight();
+
   mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
   const api = createRutasApi(API_BASE, appNetwork);
 
@@ -1162,6 +1190,7 @@ export async function boot() {
     window.clearTimeout(mapResizeTimer);
     mapResizeTimer = window.setTimeout(() => {
       window.requestAnimationFrame(() => {
+        syncEditorVisualViewportHeight();
         try {
           map.resize();
         } catch {
@@ -1188,6 +1217,7 @@ export async function boot() {
     window.visualViewport.addEventListener('resize', onVisualViewport);
     window.visualViewport.addEventListener('scroll', onVisualViewport);
   }
+  window.addEventListener('orientationchange', () => scheduleMapResize(220));
 
   const routesLayer = new RoutesLayer(map);
   const moleculeOverlayLayer = new MoleculeOverlayLayer(map);
@@ -2641,6 +2671,8 @@ export async function boot() {
 
   map.on('load', async () => {
     scheduleMapResize(0);
+    /* Segundo resize en timer aparte: no cancelar el primero (mismo mapResizeTimer). */
+    window.setTimeout(() => scheduleMapResize(0), 280);
     map.once('idle', () => {
       scheduleMapResize(0);
     });

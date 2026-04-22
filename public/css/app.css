@@ -153,8 +153,17 @@ body.editor-body {
 @media (max-width: 900px) {
   body.editor-body {
     overflow-x: clip;
+    /* `--editor-vv-height` (px) lo fija app.js desde visualViewport: evita desfase vs 100dvh en Android. */
+    height: var(--editor-vv-height, 100dvh);
+    min-height: var(--editor-vv-height, 100dvh);
+    max-height: var(--editor-vv-height, 100dvh);
     --editor-op-sheet-expanded-max: clamp(220px, 34svh, 300px);
     --editor-op-sheet-peek-max: 80px;
+  }
+
+  html:has(body.editor-body) {
+    height: var(--editor-vv-height, 100dvh);
+    min-height: var(--editor-vv-height, 100dvh);
   }
 }
 
@@ -4344,8 +4353,8 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     max-height: none;
     /* Una sola reserva al sheet: padding-bottom + border-box (no restar también en max-height). */
     box-sizing: border-box;
-    min-height: 100dvh;
-    max-height: 100dvh;
+    min-height: var(--editor-vv-height, 100dvh);
+    max-height: var(--editor-vv-height, 100dvh);
     z-index: 0;
     padding-bottom: var(--editor-op-visible-height, 0px);
   }
@@ -4436,11 +4445,19 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     grid-column: 1;
     grid-row: 1;
     box-sizing: border-box;
-    min-height: 100svh;
-    min-height: 100dvh;
-    max-height: 100svh;
-    max-height: 100dvh;
+    min-height: var(--editor-vv-height, 100dvh);
+    max-height: var(--editor-vv-height, 100dvh);
     height: 100%;
+  }
+}
+
+/* WebKit/Android: el lienzo flex a veces no estira; height:0 + flex fuerza el reparto correcto. */
+@media (max-width: 900px) {
+  body.editor-body #map {
+    flex: 1 1 auto;
+    height: 0;
+    min-height: 0;
+    align-self: stretch;
   }
 }
 
