@@ -12,7 +12,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260422gpsicon1" />
+  <link rel="stylesheet" href="/css/app.css?v=20260422gpsinline1" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -91,14 +91,32 @@
           title="GPS · mi ubicación"
           aria-label="Centrar mapa en mi ubicación (GPS)"
         >
-          <img
-            class="editor-map-gps-fab__img"
-            src="/icons/editor/gps-maps-my-location.svg"
-            width="24"
-            height="24"
-            alt=""
-            decoding="async"
-          />
+          <svg
+            class="editor-map-gps-fab__svg"
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <defs>
+              <linearGradient id="editorGpsFabPin" x1="12" y1="2.5" x2="12" y2="21" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#7dd3fc" />
+                <stop offset="0.55" stop-color="#38bdf8" />
+                <stop offset="1" stop-color="#0369a1" />
+              </linearGradient>
+            </defs>
+            <circle cx="12" cy="8.75" r="7.75" fill="none" stroke="rgba(125,211,252,0.35)" stroke-width="1.2" />
+            <path
+              fill="url(#editorGpsFabPin)"
+              stroke="rgba(240,249,255,0.45)"
+              stroke-width="0.35"
+              stroke-linejoin="round"
+              d="M12 2.35c-3.52 0-6.38 2.86-6.38 6.38 0 4.72 5.7 11.45 6.38 12.42.68-.97 6.38-7.7 6.38-12.42 0-3.52-2.86-6.38-6.38-6.38z"
+            />
+            <circle cx="12" cy="8.85" r="2.05" fill="#0c4a6e" opacity="0.22" />
+            <circle cx="12" cy="8.75" r="1.2" fill="#f8fafc" />
+          </svg>
         </button>
       </div>
       <div class="map-fab-row map-fab-row--measure" id="map-fab-row-measure">

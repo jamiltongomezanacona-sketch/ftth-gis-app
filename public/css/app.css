@@ -4423,11 +4423,12 @@ body.editor-body .editor-map-gps-fab__btn:focus-visible {
     var(--app-shadow-soft, 0 8px 22px rgba(0, 0, 0, 0.32));
 }
 
-body.editor-body .editor-map-gps-fab__img {
+body.editor-body .editor-map-gps-fab__svg {
   display: block;
-  width: 24px;
-  height: 24px;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.45));
 }
 
 @media (pointer: coarse) {
@@ -4437,9 +4438,9 @@ body.editor-body .editor-map-gps-fab__img {
     touch-action: manipulation;
   }
 
-  body.editor-body .editor-map-gps-fab__img {
-    width: 24px;
-    height: 24px;
+  body.editor-body .editor-map-gps-fab__svg {
+    width: 28px;
+    height: 28px;
   }
 }
 
