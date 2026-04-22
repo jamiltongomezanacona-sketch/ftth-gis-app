@@ -3227,8 +3227,8 @@ body.editor-body #sidebar-toggle[hidden] {
 }
 
 /* ===========================================================================
-   Menú hamburguesa (`.sidebar--fab-stack`): tarjeta compacta, ancho al texto,
-   filas icono + nombre (Trazar, Montar evento, Medir).
+   Menú hamburguesa (`.sidebar--fab-stack`): inferior derecha, compacto, ancho
+   al texto; filas icono + nombre (Trazar, Montar evento, Medir).
    =========================================================================== */
 #sidebar.sidebar--fab-stack,
 body.editor-body #sidebar.sidebar--fab-stack,
@@ -3236,10 +3236,10 @@ body.editor-body #sidebar.sidebar--fab-stack,
 #layout.sidebar-collapsed #sidebar.sidebar--fab-stack {
   position: fixed !important;
   display: flex !important;
-  left: max(10px, env(safe-area-inset-left, 0px)) !important;
-  right: auto !important;
-  top: calc(var(--editor-chrome-stack, 80px) + 8px) !important;
-  bottom: auto !important;
+  left: auto !important;
+  right: max(10px, env(safe-area-inset-right, 0px)) !important;
+  top: auto !important;
+  bottom: max(44px, calc(env(safe-area-inset-bottom, 0px) + 36px)) !important;
   transform: none !important;
   width: auto !important;
   min-width: 0 !important;
@@ -3307,12 +3307,12 @@ body.editor-body #map .mapboxgl-ctrl-bottom-right {
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   width: max-content;
-  max-width: min(calc(100vw - 24px), 320px);
+  max-width: min(calc(100vw - 20px), 280px);
   min-width: 0;
-  padding: 7px;
-  border-radius: 20px;
+  padding: 5px;
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: linear-gradient(
     165deg,
@@ -3332,18 +3332,18 @@ body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table {
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row {
   display: grid;
-  grid-template-columns: 36px max-content;
+  grid-template-columns: 30px max-content;
   align-items: center;
-  column-gap: 8px;
+  column-gap: 6px;
   width: 100%;
-  min-height: 42px;
-  padding: 6px 10px 6px 6px;
+  min-height: 34px;
+  padding: 4px 8px 4px 4px;
   text-align: left;
-  border-radius: 14px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.05);
   box-shadow: none;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   color: rgba(241, 245, 249, 0.92);
@@ -3373,11 +3373,11 @@ body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-b
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   margin: 0;
   justify-self: center;
-  border-radius: 11px;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(8px);
@@ -3386,8 +3386,8 @@ body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-b
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico img,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico img {
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
   filter: none;
   opacity: 0.92;
 }
@@ -3400,8 +3400,8 @@ body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-b
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico img,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico img {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   filter: saturate(0.82) brightness(1.05);
   opacity: 0.94;
 }
@@ -3448,9 +3448,9 @@ body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-b
 
 @media (pointer: coarse) {
   body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row {
-    min-height: 48px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    min-height: 42px;
+    padding-top: 6px;
+    padding-bottom: 6px;
   }
 }
 
@@ -4379,14 +4379,14 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   body.editor-body #layout:not(.sidebar-collapsed) #sidebar.sidebar--fab-stack {
     grid-column: 1;
     grid-row: 1;
-    align-self: start;
-    justify-self: start;
+    align-self: end;
+    justify-self: end;
     width: max-content;
     max-width: min(320px, calc(100vw - 14px));
-    margin-top: calc(var(--editor-chrome-stack, 80px) + 4px);
-    margin-left: max(6px, env(safe-area-inset-left, 0px));
-    margin-right: 0;
-    margin-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: max(6px, env(safe-area-inset-right, 0px));
+    margin-bottom: max(44px, calc(env(safe-area-inset-bottom, 0px) + 36px));
     z-index: 560;
     max-height: min(46dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 12px), 360px);
     height: auto;
@@ -4476,6 +4476,16 @@ body.editor-body .editor-map-gps-fab {
 /* Dock de medición inferior derecha: subir el GPS para no tapar la tarjeta. */
 body.editor-body:has(#measure-polyline-dock:not([hidden])) .editor-map-gps-fab {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+}
+
+/* Mismo dock: subir el menú hamburguesa (inferior derecha) para no quedar tapado. */
+body.editor-body:has(#measure-polyline-dock:not([hidden])) #sidebar.sidebar--fab-stack {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 100px) !important;
+}
+
+/* Editor: medición solo desde el menú hamburguesa; ocultar FAB duplicado en el mapa. */
+body.editor-body #map-wrap #map-fab-row-measure {
+  display: none !important;
 }
 
 body.editor-body .editor-map-gps-fab__btn {

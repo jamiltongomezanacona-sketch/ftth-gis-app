@@ -762,8 +762,10 @@ function initStatusBar(mapInstance) {
  * Acciones de campo: FAB GPS en mapa, medir y paneles desde el menú lateral.
  * @param {{ resize: () => void }} mapInstance
  * @param {{ trigger: () => void }} geolocateCtl
+ * @param {() => void} scheduleMapResize
+ * @param {() => void} [onToggleMeasurePolyline] En editor el FAB de medir está oculto; el menú llama aquí.
  */
-function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
+function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize, onToggleMeasurePolyline) {
   const editorBody = document.body;
 
   function requestMapResize() {
@@ -804,7 +806,11 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
   });
 
   document.getElementById('btn-open-panel-measure')?.addEventListener('click', () => {
-    document.getElementById('measure-fab')?.click();
+    if (typeof onToggleMeasurePolyline === 'function') {
+      onToggleMeasurePolyline();
+    } else {
+      document.getElementById('measure-fab')?.click();
+    }
   });
 }
 
@@ -1726,7 +1732,7 @@ export async function boot() {
   const statusBar = initStatusBar(map);
   statusBar.setNet(appNetwork === 'corporativa' ? 'CORP' : 'FTTH');
 
-  initFieldSidebar(map, geolocate, scheduleMapResize);
+  initFieldSidebar(map, geolocate, scheduleMapResize, toggleMeasurePolylineMode);
 
   initSidebarRail(map, {
     getSuppressMapSidebarCollapse: () => {
@@ -2590,11 +2596,12 @@ export async function boot() {
     });
     forceCloseMeasureOverlaysForMapReset();
 
-    /** Medición: se mantiene en la parte superior; GPS vive aparte en bottom-right. */
+    /** Medición: rail superior solo fuera del editor; en editor se usa el menú lateral (FAB oculto vía CSS). */
     const mapTopRight = map.getContainer().querySelector('.mapboxgl-ctrl-top-right');
     const measureRow = document.getElementById('map-fab-row-measure');
     const measureDock = document.getElementById('measure-fab-dock');
-    if (measureRow && mapTopRight) {
+    const editorChrome = document.body.classList.contains('editor-body');
+    if (measureRow && mapTopRight && !editorChrome) {
       if (!measureRow.closest('.mapboxgl-ctrl-top-right')) {
         mapTopRight.appendChild(measureRow);
       }
