@@ -117,6 +117,27 @@ body.dash {
   border-bottom: 1px solid var(--dash-border);
 }
 
+.dash-sidebar__menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--dash-radius-sm);
+  border: 1px solid var(--dash-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--dash-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--dash-transition), border-color var(--dash-transition), background var(--dash-transition);
+}
+
+.dash-sidebar__menu-btn:hover {
+  color: var(--dash-text);
+  border-color: var(--dash-border-strong);
+  background: rgba(148, 163, 184, 0.08);
+}
+
 .dash-app.is-sidebar-collapsed .dash-sidebar__brand-text {
   opacity: 0;
   width: 0;
@@ -1130,6 +1151,10 @@ body.dash {
     border-bottom: none;
   }
 
+  .dash-sidebar__menu-btn {
+    display: inline-flex;
+  }
+
   .dash-app.is-sidebar-collapsed .dash-sidebar__brand-text {
     opacity: 1;
     width: auto;
@@ -1138,12 +1163,17 @@ body.dash {
   }
 
   .dash-nav {
+    display: none;
     flex-direction: row;
     gap: 8px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     padding-bottom: 2px;
     scrollbar-width: thin;
+  }
+
+  .dash-app.is-mobile-sidebar-open .dash-nav {
+    display: flex;
   }
 
   .dash-nav__link {

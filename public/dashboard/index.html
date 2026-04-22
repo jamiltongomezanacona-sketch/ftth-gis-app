@@ -15,6 +15,16 @@
   <div class="dash-app" id="dash-app">
     <aside class="dash-sidebar" id="dash-sidebar" aria-label="Navegación principal">
       <div class="dash-sidebar__brand">
+        <button
+          type="button"
+          class="dash-sidebar__menu-btn"
+          id="btn-sidebar-menu"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="dash-sidebar-nav"
+        >
+          <span class="dash-nav__ico" data-icon="menu"></span>
+        </button>
         <div class="dash-logo" aria-hidden="true">
           <svg viewBox="0 0 32 32" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -29,7 +39,7 @@
         </div>
         <span class="dash-sidebar__brand-text">GIS</span>
       </div>
-      <nav class="dash-nav" aria-label="Secciones">
+      <nav class="dash-nav" id="dash-sidebar-nav" aria-label="Secciones">
         <a class="dash-nav__link dash-nav__link--active" href="#" data-section="dashboard">
           <span class="dash-nav__ico" data-icon="layout"></span>
           <span class="dash-nav__label">Dashboard</span>
@@ -225,6 +235,6 @@
       </main>
     </div>
   </div>
-  <script type="module" src="./app.js?v=20260422mobile2"></script>
+  <script type="module" src="./app.js?v=20260422menu1"></script>
 </body>
 </html>
