@@ -1,25 +1,25 @@
 /**
- * PWA deshabilitada temporalmente:
- * - desregistra service workers existentes
- * - limpia caches creadas por SW
+ * Registro PWA (service worker) con activación inmediata.
+ * No altera la lógica de la app; solo habilita caché/offline controlado.
  */
-(function disablePwa() {
+(function registerPwa() {
   if (!('serviceWorker' in navigator)) return;
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.getRegistrations().then((regs) => {
-      regs.forEach((reg) => {
-        reg.unregister().catch(() => {});
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      reg.update().catch(() => {});
+      reg.addEventListener('updatefound', () => {
+        const installing = reg.installing;
+        if (!installing) return;
+        installing.addEventListener('statechange', () => {
+          if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+            // La nueva versión queda lista; no forzamos recarga para no interrumpir flujos.
+            console.info('[PWA] Nueva versión disponible.');
+          }
+        });
       });
-    }).catch(() => {});
-
-    if ('caches' in window) {
-      caches.keys().then((keys) => {
-        keys
-          .filter((key) => key.startsWith('ftth-gis-pwa-'))
-          .forEach((key) => {
-            caches.delete(key).catch(() => {});
-          });
-      }).catch(() => {});
+    } catch (err) {
+      console.warn('[PWA] No se pudo registrar service worker:', err);
     }
   });
 })();
