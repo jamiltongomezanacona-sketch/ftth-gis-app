@@ -50,24 +50,6 @@ export function createCableSearchBar(mapWrap, opts) {
         <div class="cable-search-toolbar">
           <div class="cable-search ${netClass}" role="search" title="${searchHint.replace(/"/g, '&quot;')}">
             <div class="cable-search-row">
-              <span class="cable-search-ico" aria-hidden="true" title="Tendido / catálogo">
-                <svg class="cable-search-mag" viewBox="0 0 24 24" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path
-                    d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"
-                    stroke="currentColor"
-                    stroke-width="1.35"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <path
-                    d="m21 21-4.35-4.35"
-                    stroke="currentColor"
-                    stroke-width="1.35"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </span>
               <input
                 id="cable-search-input"
                 class="cable-search-input"
