@@ -2,7 +2,7 @@
  * Service worker — PWA (caché ligera del shell; APIs siempre en red).
  * Bumpear SW_CACHE al cambiar la lista de precache.
  */
-const SW_CACHE = 'ftth-gis-pwa-v1';
+const SW_CACHE = 'ftth-gis-pwa-v2';
 
 const PRECACHE_URLS = [
   '/',
@@ -77,6 +77,9 @@ self.addEventListener('fetch', (event) => {
           /* */
         }
         return response;
+      }).catch(() => {
+        /* Evita promesa rechazada en consola cuando la red falla. */
+        return new Response('', { status: 503, statusText: 'Offline' });
       });
     })
   );
