@@ -895,6 +895,14 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
   document.getElementById('map-field-btn-reporte')?.addEventListener('click', () => {
     document.getElementById('btn-open-panel-reporte')?.click();
   });
+
+  document.getElementById('btn-open-panel-gps')?.addEventListener('click', () => {
+    document.getElementById('map-field-btn-gps')?.click();
+  });
+
+  document.getElementById('btn-open-panel-measure')?.addEventListener('click', () => {
+    document.getElementById('map-field-btn-measure')?.click();
+  });
 }
 
 function waitForNetworkChoice() {

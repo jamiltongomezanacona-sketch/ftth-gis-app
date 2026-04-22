@@ -12,7 +12,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260422mobileseo1" />
+  <link rel="stylesheet" href="/css/app.css?v=20260422imgresp1" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -68,7 +68,6 @@
         aria-controls="sidebar-body"
         aria-label="Mostrar panel de herramientas"
         title="Mostrar herramientas"
-        hidden
       >
         <span class="editor-chrome-burger" aria-hidden="true">
           <span class="editor-chrome-burger-line"></span>
@@ -134,6 +133,30 @@
                 <img src="/icons/ftth/eventos-x-pin.png" width="20" height="20" alt="" decoding="async" />
               </span>
               <span class="sidebar-tool-btn__lbl">Reporte evento</span>
+            </button>
+            <button
+              type="button"
+              id="btn-open-panel-gps"
+              class="sidebar-tool-btn sidebar-tool-btn--fab"
+              title="Mi ubicación"
+              aria-label="Centrar mapa en mi ubicación"
+            >
+              <span class="sidebar-tool-btn__ico" aria-hidden="true">
+                <img src="/icons/ftth/gps.svg" width="20" height="20" alt="" decoding="async" />
+              </span>
+              <span class="sidebar-tool-btn__lbl">Mi ubicación</span>
+            </button>
+            <button
+              type="button"
+              id="btn-open-panel-measure"
+              class="sidebar-tool-btn sidebar-tool-btn--fab"
+              title="Medir"
+              aria-label="Activar medición"
+            >
+              <span class="sidebar-tool-btn__ico" aria-hidden="true">
+                <img src="/icons/ui/ruler.svg" width="20" height="20" alt="" decoding="async" />
+              </span>
+              <span class="sidebar-tool-btn__lbl">Medir</span>
             </button>
           </div>
         </div>
@@ -572,6 +595,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260420navlongpress2s"></script>
+  <script type="module" src="/js/app.js?v=20260422editorhamb1"></script>
 </body>
 </html>
