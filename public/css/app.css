@@ -3302,27 +3302,33 @@ body.editor-body #map .mapboxgl-ctrl-bottom-right {
   overflow: visible;
 }
 
-/* Contenedor menú hamburguesa: ancho al texto, tarjeta compacta tipo 2025. */
+/* Menú hamburguesa: cristal gris elegante (vidrio difuminado). */
 #sidebar.sidebar--fab-stack .sidebar-tool-table,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   width: max-content;
   max-width: min(calc(100vw - 24px), 320px);
   min-width: 0;
-  padding: 6px;
-  border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: linear-gradient(165deg, rgba(22, 30, 50, 0.92), rgba(12, 18, 32, 0.96));
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  padding: 7px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(
+    165deg,
+    rgba(100, 116, 139, 0.38) 0%,
+    rgba(71, 85, 105, 0.32) 45%,
+    rgba(51, 65, 85, 0.36) 100%
+  );
+  backdrop-filter: blur(26px) saturate(0.88);
+  -webkit-backdrop-filter: blur(26px) saturate(0.88);
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 10px 40px rgba(15, 23, 42, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
-/* Filas: icono fijo + texto al ancho natural (sin columna fantasma). */
+/* Filas: tonos grises suaves, sin acentos fríos fuertes. */
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row {
   display: grid;
@@ -3331,27 +3337,28 @@ body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-b
   column-gap: 8px;
   width: 100%;
   min-height: 42px;
-  padding: 6px 8px 6px 6px;
+  padding: 6px 10px 6px 6px;
   text-align: left;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   box-shadow: none;
   font-size: 0.8125rem;
   font-weight: 500;
-  letter-spacing: -0.01em;
-  color: #f1f5f9;
+  letter-spacing: 0.01em;
+  color: rgba(241, 245, 249, 0.92);
   transition:
-    background 0.16s ease,
-    border-color 0.16s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
     transform 0.12s ease;
 }
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row:hover,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(56, 189, 248, 0.18);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
 }
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row:active,
@@ -3370,9 +3377,11 @@ body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-b
   height: 32px;
   margin: 0;
   justify-self: center;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background: rgba(15, 23, 42, 0.45);
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico img,
@@ -3380,21 +3389,21 @@ body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-b
   width: 20px;
   height: 20px;
   filter: none;
-  opacity: 0.95;
+  opacity: 0.92;
 }
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico {
-  border-color: rgba(251, 146, 60, 0.22);
-  background: rgba(120, 53, 15, 0.2);
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(148, 163, 184, 0.14);
 }
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico img,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico img {
   width: 22px;
   height: 22px;
-  filter: none;
-  opacity: 1;
+  filter: saturate(0.82) brightness(1.05);
+  opacity: 0.94;
 }
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__lbl,
@@ -3415,26 +3424,26 @@ body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-b
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte:hover,
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte:hover {
-  border-color: rgba(251, 146, 60, 0.22);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row[aria-expanded='true'],
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row[aria-expanded='true'] {
-  background: rgba(56, 189, 248, 0.12);
-  border-color: rgba(56, 189, 248, 0.28);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.12);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte.sidebar-tool-table__row[aria-expanded='true'],
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte.sidebar-tool-table__row[aria-expanded='true'] {
-  background: rgba(251, 146, 60, 0.1);
-  border-color: rgba(251, 146, 60, 0.32);
-  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.12);
+  background: rgba(226, 232, 240, 0.12);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 0 2px rgba(226, 232, 240, 0.45);
 }
 
 @media (pointer: coarse) {
@@ -4467,10 +4476,10 @@ body.editor-body .editor-map-gps-fab__btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   padding: 0;
-  border-radius: 10px;
+  border-radius: 7px;
   border: 1px solid rgba(74, 222, 128, 0.22);
   background:
     radial-gradient(circle at 50% 30%, rgba(74, 222, 128, 0.2) 0%, transparent 58%),
@@ -4511,21 +4520,21 @@ body.editor-body .editor-map-gps-fab__btn:focus-visible {
 body.editor-body .editor-map-gps-fab__svg {
   display: block;
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
 
 @media (pointer: coarse) {
   body.editor-body .editor-map-gps-fab__btn {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
     touch-action: manipulation;
   }
 
   body.editor-body .editor-map-gps-fab__svg {
-    width: 20px;
-    height: 20px;
+    width: 15px;
+    height: 15px;
   }
 }
 
