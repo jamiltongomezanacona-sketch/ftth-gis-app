@@ -724,11 +724,6 @@ function initStatusBar(mapInstance) {
   /** Cambia el indicador de red activa (FTTH / Corporativa) en la status bar. */
   function setNet(/** @type {string} */ label) {
     if (netEl) netEl.textContent = label;
-    const fieldPill = document.getElementById('map-field-net-pill');
-    if (fieldPill) {
-      fieldPill.textContent = label === 'CORP' ? 'Corporativa' : 'FTTH';
-      fieldPill.classList.toggle('map-field-sidebar__net--corp', label === 'CORP');
-    }
   }
 
   /**
@@ -763,24 +758,13 @@ function initStatusBar(mapInstance) {
   return { setNet, setSave };
 }
 
-/** v3: script en editor.html aplica estado antes del pintado; v2 ya no se lee. */
-const FIELD_SIDEBAR_COLLAPSED_KEY = 'ftth-gis-field-sidebar-collapsed-v3';
-
 /**
- * Panel lateral «Campo» sobre el mapa: GPS, medición, Trazar/Reporte (toques grandes).
+ * Acciones de campo (GPS / medir / paneles) desde el rail vertical del editor.
  * @param {{ resize: () => void }} mapInstance
  * @param {{ trigger: () => void }} geolocateCtl
  */
 function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
-  const root = document.getElementById('map-field-sidebar');
-  const toggle = document.getElementById('map-field-sidebar-toggle');
-  if (!root || !toggle) return;
   const editorBody = document.body;
-  const mobileMq = window.matchMedia('(max-width: 900px)');
-
-  function isMobileViewport() {
-    return mobileMq.matches;
-  }
 
   function requestMapResize() {
     if (typeof scheduleMapResize === 'function') {
@@ -796,87 +780,22 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
     });
   }
 
-  function syncMobileSheetLayout() {
+  function clearBottomSheetSpacer() {
     if (!editorBody) return;
-    if (!isMobileViewport()) {
-      editorBody.style.setProperty('--editor-op-visible-height', '0px');
-      return;
-    }
-    const rect = root.getBoundingClientRect();
-    const visibleHeight = Math.max(0, Math.ceil(rect.height));
-    editorBody.style.setProperty('--editor-op-visible-height', `${visibleHeight}px`);
+    editorBody.style.setProperty('--editor-op-visible-height', '0px');
   }
 
-  function readCollapsed() {
-    if (isMobileViewport()) return true;
-    try {
-      return localStorage.getItem(FIELD_SIDEBAR_COLLAPSED_KEY) === '1';
-    } catch {
-      return false;
-    }
-  }
-
-  function setCollapsed(/** @type {boolean} */ c, /** @type {{ persist?: boolean }} */ opts = {}) {
-    const persist = opts.persist !== false;
-    root.classList.toggle('map-field-sidebar--collapsed', c);
-    toggle.setAttribute('aria-expanded', c ? 'false' : 'true');
-    if (persist && !isMobileViewport()) {
-      try {
-        localStorage.setItem(FIELD_SIDEBAR_COLLAPSED_KEY, c ? '1' : '0');
-      } catch {
-        /* */
-      }
-    }
-    window.requestAnimationFrame(() => {
-      syncMobileSheetLayout();
-      requestMapResize();
-    });
-  }
-
-  setCollapsed(readCollapsed(), { persist: false });
-
-  const syncForViewport = () => {
-    setCollapsed(isMobileViewport() ? false : readCollapsed(), { persist: false });
-  };
-
-  if (typeof mobileMq.addEventListener === 'function') {
-    mobileMq.addEventListener('change', syncForViewport);
-  } else if (typeof mobileMq.addListener === 'function') {
-    mobileMq.addListener(syncForViewport);
-  }
-
-  if (typeof ResizeObserver === 'function') {
-    const ro = new ResizeObserver(() => {
-      syncMobileSheetLayout();
-      requestMapResize();
-    });
-    ro.observe(root);
-  } else {
-    window.addEventListener('resize', () => {
-      syncMobileSheetLayout();
-      requestMapResize();
-    });
-  }
-
-  /** Re-sincroniza tras el primer pintado y cuando el viewport móvil termina de estabilizarse (barra URL, etc.). */
-  function kickMobileLayoutSync() {
-    syncMobileSheetLayout();
-    requestMapResize();
-  }
-  kickMobileLayoutSync();
+  clearBottomSheetSpacer();
   window.requestAnimationFrame(() => {
-    kickMobileLayoutSync();
-    window.requestAnimationFrame(kickMobileLayoutSync);
+    clearBottomSheetSpacer();
+    requestMapResize();
   });
-  [120, 380, 900].forEach((ms) => {
-    window.setTimeout(kickMobileLayoutSync, ms);
-  });
-
-  toggle.addEventListener('click', () => {
-    setCollapsed(!root.classList.contains('map-field-sidebar--collapsed'));
+  window.addEventListener('resize', () => {
+    clearBottomSheetSpacer();
+    requestMapResize();
   });
 
-  document.getElementById('map-field-btn-gps')?.addEventListener('click', () => {
+  document.getElementById('btn-open-panel-gps')?.addEventListener('click', () => {
     try {
       geolocateCtl.trigger();
     } catch {
@@ -884,24 +803,8 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
     }
   });
 
-  document.getElementById('map-field-btn-measure')?.addEventListener('click', () => {
-    document.getElementById('measure-fab')?.click();
-  });
-
-  document.getElementById('map-field-btn-trazar')?.addEventListener('click', () => {
-    document.getElementById('btn-open-panel-trazar')?.click();
-  });
-
-  document.getElementById('map-field-btn-reporte')?.addEventListener('click', () => {
-    document.getElementById('btn-open-panel-reporte')?.click();
-  });
-
-  document.getElementById('btn-open-panel-gps')?.addEventListener('click', () => {
-    document.getElementById('map-field-btn-gps')?.click();
-  });
-
   document.getElementById('btn-open-panel-measure')?.addEventListener('click', () => {
-    document.getElementById('map-field-btn-measure')?.click();
+    document.getElementById('measure-fab')?.click();
   });
 }
 

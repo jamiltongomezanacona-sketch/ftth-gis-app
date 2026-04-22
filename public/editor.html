@@ -164,67 +164,6 @@
     </aside>
   </div>
 
-  <!-- Bottom sheet estilo Waze: anclado abajo, asa + vista reducida / expandida -->
-  <aside
-    class="map-field-sidebar map-field-sidebar--waze"
-    id="map-field-sidebar"
-    aria-label="Panel de operación en mapa"
-  >
-    <button
-      type="button"
-      class="map-field-sidebar__waze-head"
-      id="map-field-sidebar-toggle"
-      aria-expanded="true"
-      aria-controls="map-field-sidebar-panel"
-      title="Contraer o expandir panel"
-    >
-      <span class="map-field-sidebar__handle-bar" aria-hidden="true"></span>
-      <span class="map-field-sidebar__waze-head-row">
-        <span class="map-field-sidebar__waze-title">Operación</span>
-        <span class="map-field-sidebar__net" id="map-field-net-pill">FTTH</span>
-        <svg class="map-field-sidebar__chev" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </span>
-    </button>
-    <!-- Estado colapsado antes del primer pintado: evita «se abre y luego se cierra». -->
-    <script>
-      (function () {
-        try {
-          var k = 'ftth-gis-field-sidebar-collapsed-v3';
-          if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) return;
-          if (localStorage.getItem(k) !== '1') return;
-          var root = document.getElementById('map-field-sidebar');
-          var toggle = document.getElementById('map-field-sidebar-toggle');
-          if (root) root.classList.add('map-field-sidebar--collapsed');
-          if (toggle) toggle.setAttribute('aria-expanded', 'false');
-        } catch (e) {}
-      })();
-    </script>
-    <div class="map-field-sidebar__panel" id="map-field-sidebar-panel">
-      <p class="map-field-sidebar__hint">Esc cancela medición o dibujo activo.</p>
-      <div class="map-field-sidebar__actions">
-        <button type="button" class="map-field-sidebar__btn" id="map-field-btn-trazar">
-          <span class="map-field-sidebar__btn-label">Trazar</span>
-          <span class="map-field-sidebar__btn-sub">Panel de trazado</span>
-        </button>
-        <button type="button" class="map-field-sidebar__btn map-field-sidebar__btn--warn" id="map-field-btn-reporte">
-          <span class="map-field-sidebar__btn-label">Reporte evento</span>
-          <span class="map-field-sidebar__btn-sub">Incidencias en tendido</span>
-        </button>
-        <button type="button" class="map-field-sidebar__btn" id="map-field-btn-gps">
-          <span class="map-field-sidebar__btn-label">Mi ubicación</span>
-          <span class="map-field-sidebar__btn-sub">Centrar mapa en GPS</span>
-        </button>
-        <button type="button" class="map-field-sidebar__btn" id="map-field-btn-measure">
-          <span class="map-field-sidebar__btn-label">Medir</span>
-          <span class="map-field-sidebar__btn-sub">Distancia y reserva fibra</span>
-        </button>
-      </div>
-      <a class="map-field-sidebar__link" href="/">← Panel principal</a>
-    </div>
-  </aside>
-
   <div id="editor-float-backdrop" class="editor-float-backdrop" hidden aria-hidden="true"></div>
 
   <div
@@ -595,6 +534,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260422editorhamb1"></script>
+  <script type="module" src="/js/app.js?v=20260422nobottom1"></script>
 </body>
 </html>
