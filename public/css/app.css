@@ -8766,3 +8766,68 @@ body.editor-body .mapboxgl-ctrl-bottom-right {
 body.editor-body:has(#measure-polyline-dock:not([hidden])) .mapboxgl-ctrl-bottom-right {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 86px) !important;
 }
+
+/* =============================================================================
+   Mobile accessibility hardening (SEO + UX)
+   - mejora legibilidad en 360/390
+   - aumenta objetivos táctiles
+   - reduce riesgo de overflow horizontal
+   ============================================================================= */
+@media (max-width: 900px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .home-kicker {
+    font-size: 0.76rem;
+    padding: 7px 12px;
+  }
+
+  .home-chip {
+    font-size: 0.84rem;
+    min-height: 36px;
+    padding: 7px 12px;
+  }
+
+  .home-card-title {
+    font-size: clamp(1.02rem, 3.4vw, 1.16rem);
+  }
+
+  .home-foot-links a,
+  .home-foot .auth-logout-btn,
+  .home-link-btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .analitica-topbar-title {
+    font-size: clamp(1.08rem, 4.8vw, 1.24rem);
+  }
+
+  .analitica-topbar-sub {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .analitica-bar-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+  }
+}
+
+@media (max-width: 520px) {
+  .analitica-bar-row {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .analitica-bar-num {
+    text-align: left;
+  }
+
+  .analitica-sidebar-inner {
+    padding: 14px 14px 16px;
+  }
+}
