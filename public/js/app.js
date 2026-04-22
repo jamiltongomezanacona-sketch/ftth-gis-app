@@ -808,7 +808,7 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
   }
 
   function readCollapsed() {
-    if (isMobileViewport()) return false;
+    if (isMobileViewport()) return true;
     try {
       return localStorage.getItem(FIELD_SIDEBAR_COLLAPSED_KEY) === '1';
     } catch {
@@ -1184,6 +1184,8 @@ export async function boot() {
   });
 
   let mapResizeTimer = 0;
+  let viewportSyncTimer = 0;
+  let viewportRafPending = false;
   let lastViewportWidth = 0;
   let lastViewportHeight = 0;
   function scheduleMapResize(delay = 90) {
@@ -1200,6 +1202,25 @@ export async function boot() {
     }, delay);
   }
 
+  /** Unifica eventos de viewport para evitar tormenta de resize/reflow en Android. */
+  function queueViewportSync(delay = 80) {
+    window.clearTimeout(viewportSyncTimer);
+    viewportSyncTimer = window.setTimeout(() => {
+      if (viewportRafPending) return;
+      viewportRafPending = true;
+      window.requestAnimationFrame(() => {
+        viewportRafPending = false;
+        const vv = window.visualViewport;
+        const width = Math.round(vv?.width ?? window.innerWidth);
+        const height = Math.round(vv?.height ?? window.innerHeight);
+        if (width === lastViewportWidth && height === lastViewportHeight) return;
+        lastViewportWidth = width;
+        lastViewportHeight = height;
+        scheduleMapResize(0);
+      });
+    }, delay);
+  }
+
   scheduleMapResize(0);
 
   /** Móvil: el lienzo debe coincidir con el tamaño real de #map-wrap (padding, barra URL, teclado). */
@@ -1211,13 +1232,14 @@ export async function boot() {
     mapWrapRo.observe(mapWrapEl);
   }
 
-  /** Android/Chrome: barra URL y teclado cambian el viewport visual sin redimensionar window. */
+  /** Android/Chrome: una sola suscripción para barra URL/teclado/orientación. */
   if (window.visualViewport) {
-    const onVisualViewport = () => scheduleMapResize(60);
-    window.visualViewport.addEventListener('resize', onVisualViewport);
-    window.visualViewport.addEventListener('scroll', onVisualViewport);
+    window.visualViewport.addEventListener('resize', () => queueViewportSync(80));
+    window.visualViewport.addEventListener('scroll', () => queueViewportSync(80));
   }
-  window.addEventListener('orientationchange', () => scheduleMapResize(220));
+  window.addEventListener('resize', () => queueViewportSync(90));
+  window.addEventListener('orientationchange', () => queueViewportSync(240));
+  queueViewportSync(0);
 
   const routesLayer = new RoutesLayer(map);
   const moleculeOverlayLayer = new MoleculeOverlayLayer(map);
@@ -1668,27 +1690,6 @@ export async function boot() {
     ensureGeolocateBottomRight();
     setStatus('GPS: posición actualizada en el mapa.');
   });
-
-  {
-    const vv = window.visualViewport;
-    if (vv) {
-      let vvTimer = 0;
-      const bump = () => {
-        const width = Math.round(vv.width);
-        const height = Math.round(vv.height);
-        if (width === lastViewportWidth && height === lastViewportHeight) return;
-        lastViewportWidth = width;
-        lastViewportHeight = height;
-        window.clearTimeout(vvTimer);
-        vvTimer = window.setTimeout(() => {
-          scheduleMapResize(0);
-        }, 120);
-      };
-      vv.addEventListener('resize', bump);
-      vv.addEventListener('scroll', bump);
-      bump();
-    }
-  }
 
   const reporteCtl = initReporteEventoSidebar({
     api,

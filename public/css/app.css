@@ -153,15 +153,16 @@ body.editor-body {
 @media (max-width: 900px) {
   body.editor-body {
     overflow-x: clip;
-    /* `--editor-vv-height` (px) lo fija app.js desde visualViewport: evita desfase vs 100dvh en Android. */
-    height: var(--editor-vv-height, 100dvh);
-    min-height: var(--editor-vv-height, 100dvh);
-    max-height: var(--editor-vv-height, 100dvh);
-    --editor-op-sheet-expanded-max: clamp(220px, 34svh, 300px);
-    --editor-op-sheet-peek-max: 80px;
+    /* Altura móvil única para todo el editor (JS actualiza --editor-vv-height). */
+    --editor-mobile-vh: var(--editor-vv-height, 100dvh);
+    height: var(--editor-mobile-vh);
+    min-height: var(--editor-mobile-vh);
+    max-height: var(--editor-mobile-vh);
+    --editor-op-sheet-expanded-max: clamp(170px, 25svh, 220px);
+    --editor-op-sheet-peek-max: 62px;
   }
 
-  html:has(body.editor-body) {
+  html {
     height: var(--editor-vv-height, 100dvh);
     min-height: var(--editor-vv-height, 100dvh);
   }
@@ -169,8 +170,8 @@ body.editor-body {
 
 @media (max-width: 520px) {
   body.editor-body {
-    --editor-op-sheet-expanded-max: clamp(200px, 30svh, 260px);
-    --editor-op-sheet-peek-max: 74px;
+    --editor-op-sheet-expanded-max: clamp(152px, 23svh, 198px);
+    --editor-op-sheet-peek-max: 56px;
   }
 }
 
@@ -3671,7 +3672,7 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__panel {
-    padding: 0 12px max(8px, calc(8px + env(safe-area-inset-bottom, 0px)));
+    padding: 0 10px max(6px, calc(6px + env(safe-area-inset-bottom, 0px)));
     -webkit-overflow-scrolling: touch;
     overflow-x: hidden;
     box-sizing: border-box;
@@ -3682,49 +3683,41 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__hint {
-    font-size: 0.62rem;
-    margin-bottom: 6px;
-    line-height: 1.35;
+    font-size: 0.58rem;
+    margin-bottom: 4px;
+    line-height: 1.2;
     padding: 0 2px;
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__actions {
-    grid-template-columns: 1fr;
-    gap: 6px;
-    margin-bottom: 4px;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 3px;
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
     justify-content: center;
-    gap: 2px;
-    min-height: auto;
-    padding: 8px 10px;
-    text-align: left;
+    gap: 0;
+    min-height: 34px;
+    padding: 6px 8px;
+    text-align: center;
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn-label {
-    font-size: 0.86rem;
+    font-size: 0.78rem;
     width: 100%;
+    text-align: center;
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn-sub {
-    display: block;
-    width: 100%;
-    font-size: 0.6rem;
-    line-height: 1.2;
-    text-align: left;
-    opacity: 0.92;
-    white-space: normal;
-    overflow: visible;
-    -webkit-line-clamp: unset;
-    -webkit-box-orient: unset;
+    display: none;
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__link {
-    padding: 8px 4px 4px;
-    font-size: 0.72rem;
+    padding: 6px 4px 3px;
+    font-size: 0.68rem;
   }
 }
 
@@ -3739,8 +3732,8 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   }
 
   body.editor-body .map-field-sidebar.map-field-sidebar--waze .map-field-sidebar__btn {
-    padding: 9px 10px;
-    min-height: 40px;
+    padding: 7px 8px;
+    min-height: 32px;
     flex-direction: row;
     align-items: center;
     justify-content: center;
@@ -4331,9 +4324,9 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
-    height: 100%;
-    min-height: 0;
-    max-height: 100%;
+    height: var(--editor-mobile-vh, 100dvh);
+    min-height: var(--editor-mobile-vh, 100dvh);
+    max-height: var(--editor-mobile-vh, 100dvh);
     position: relative;
   }
 
@@ -4353,8 +4346,8 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     max-height: none;
     /* Una sola reserva al sheet: padding-bottom + border-box (no restar también en max-height). */
     box-sizing: border-box;
-    min-height: var(--editor-vv-height, 100dvh);
-    max-height: var(--editor-vv-height, 100dvh);
+    min-height: var(--editor-mobile-vh, 100dvh);
+    max-height: var(--editor-mobile-vh, 100dvh);
     z-index: 0;
     padding-bottom: var(--editor-op-visible-height, 0px);
   }
@@ -4437,18 +4430,6 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   min-height: 45dvh;
   overflow: hidden;
   background: #0a0e12;
-}
-
-/* Refuerzo explícito: editor móvil siempre comparte fila única con chrome superpuesto. */
-@media (max-width: 900px) {
-  body.editor-body #layout > #map-wrap {
-    grid-column: 1;
-    grid-row: 1;
-    box-sizing: border-box;
-    min-height: var(--editor-vv-height, 100dvh);
-    max-height: var(--editor-vv-height, 100dvh);
-    height: 100%;
-  }
 }
 
 /* WebKit/Android: el lienzo flex a veces no estira; height:0 + flex fuerza el reparto correcto. */
