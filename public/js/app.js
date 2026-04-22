@@ -1565,7 +1565,7 @@ export async function boot() {
     }
   }
 
-  /** GPS del navegador (Geolocation API). Control Mapbox oculto en esquina; el técnico usa el FAB `#btn-map-gps`. */
+  /** GPS del navegador (Geolocation API). Control Mapbox oculto; el técnico usa el FAB `#btn-map-gps` (inferior derecha del lienzo). */
   const geolocate = new mapboxgl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
     trackUserLocation: true,

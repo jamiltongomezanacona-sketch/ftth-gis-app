@@ -4462,13 +4462,20 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   }
 }
 
-/* Editor: GPS flotante (esquina superior derecha del lienzo, sobre el mapa). */
+/* Editor: GPS flotante (esquina inferior derecha del lienzo, sobre el mapa). */
 body.editor-body .editor-map-gps-fab {
   position: absolute;
   z-index: 520;
-  top: calc(var(--editor-chrome-stack, 80px) + 10px);
+  top: auto;
+  left: auto;
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
   right: max(12px, env(safe-area-inset-right, 0px));
   pointer-events: none;
+}
+
+/* Dock de medición inferior derecha: subir el GPS para no tapar la tarjeta. */
+body.editor-body:has(#measure-polyline-dock:not([hidden])) .editor-map-gps-fab {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
 }
 
 body.editor-body .editor-map-gps-fab__btn {
