@@ -1,34 +1,25 @@
 /**
- * Registra el service worker para instalación PWA (Chrome, Edge, Android).
+ * PWA deshabilitada temporalmente:
+ * - desregistra service workers existentes
+ * - limpia caches creadas por SW
  */
-(function registerPwa() {
+(function disablePwa() {
   if (!('serviceWorker' in navigator)) return;
   window.addEventListener('load', () => {
-    let didRefresh = false;
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).then((reg) => {
-      reg.update().catch(() => {});
-      reg.addEventListener('updatefound', () => {
-        const installing = reg.installing;
-        if (!installing) return;
-        installing.addEventListener('statechange', () => {
-          if (installing.state === 'installed' && navigator.serviceWorker.controller) {
-            // Hay SW nuevo controlando assets: recarga una vez para tomar CSS/JS recientes.
-            if (!didRefresh) {
-              didRefresh = true;
-              window.location.reload();
-            }
-          }
-        });
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((reg) => {
+        reg.unregister().catch(() => {});
       });
-    }).catch(() => {
-      /* sin SW la app sigue funcionando; solo no será instalable como PWA */
-    });
+    }).catch(() => {});
 
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!didRefresh) {
-        didRefresh = true;
-        window.location.reload();
-      }
-    });
+    if ('caches' in window) {
+      caches.keys().then((keys) => {
+        keys
+          .filter((key) => key.startsWith('ftth-gis-pwa-'))
+          .forEach((key) => {
+            caches.delete(key).catch(() => {});
+          });
+      }).catch(() => {});
+    }
   });
 })();
