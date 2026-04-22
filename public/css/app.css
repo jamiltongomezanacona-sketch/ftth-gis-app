@@ -4344,12 +4344,12 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     min-height: 0;
     height: 100%;
     max-height: none;
-    /* Una sola reserva al sheet: padding-bottom + border-box (no restar también en max-height). */
+    /* Móvil: el sheet flota sobre el mapa; no reservar alto interno (evita franja negra). */
     box-sizing: border-box;
     min-height: var(--editor-mobile-vh, 100dvh);
     max-height: var(--editor-mobile-vh, 100dvh);
     z-index: 0;
-    padding-bottom: var(--editor-op-visible-height, 0px);
+    padding-bottom: 0;
   }
 
   #layout:not(.sidebar-collapsed) #sidebar {
