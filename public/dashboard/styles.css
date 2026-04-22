@@ -1083,9 +1083,29 @@ body.dash {
 }
 
 @media (max-width: 900px) {
+  html,
+  body.dash {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   .dash-app {
     flex-direction: column;
     min-height: 100dvh;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .dash-main-wrap,
+  .dash-main,
+  .dash-header,
+  .dash-header__left,
+  .dash-header__right,
+  .dash-workspace,
+  .dash-map-panel,
+  .dash-detail-panel,
+  .dash-chart-card {
+    min-width: 0;
   }
 
   .dash-sidebar {
@@ -1157,6 +1177,7 @@ body.dash {
     width: 100%;
     justify-content: space-between;
     gap: 10px;
+    flex-wrap: wrap;
   }
 
   .dash-user {
@@ -1187,6 +1208,7 @@ body.dash {
     width: 100%;
     overflow-x: auto;
     padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .dash-tool-btn {
@@ -1200,6 +1222,7 @@ body.dash {
 
   .dash-detail-tabs {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -1214,6 +1237,11 @@ body.dash {
 
   .dash-user__meta {
     display: none;
+  }
+
+  .dash-api-status {
+    padding: 7px 10px;
+    font-size: 0.72rem;
   }
 
   .dash-kpi {
