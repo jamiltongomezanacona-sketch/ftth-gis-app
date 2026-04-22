@@ -4414,10 +4414,14 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   }
 }
 
+/*
+ * #map-wrap: no fijar grid-row/column aquí. Un bloque posterior sin @media pisaba
+ * `grid-row: 1` del móvil (misma especificidad) y dejaba fila 1fr vacía + franja #0a0e12.
+ * En ≤900px el mapa va en fila 1 vía @media arriba; en escritorio #layout es block
+ * y el posicionamiento viene de @media (min-width: 901px).
+ */
 #map-wrap {
   position: relative;
-  grid-column: 1;
-  grid-row: 3;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -4426,10 +4430,7 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   background: #0a0e12;
 }
 
-/*
- * Móvil: este bloque va *después* del @media ≤900px en el archivo; sin anularlo, grid-row:3
- * gana en cascada y el mapa queda en una fila implícita inferior con la fila 1fr vacía (franja oscura).
- */
+/* Refuerzo explícito: editor móvil siempre comparte fila única con chrome superpuesto. */
 @media (max-width: 900px) {
   body.editor-body #layout > #map-wrap {
     grid-column: 1;
@@ -4437,7 +4438,6 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     box-sizing: border-box;
     min-height: 100svh;
     min-height: 100dvh;
-    /* Misma regla: el alto del sheet va solo en padding-bottom + border-box arriba. */
     max-height: 100svh;
     max-height: 100dvh;
     height: 100%;

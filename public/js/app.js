@@ -1182,6 +1182,13 @@ export async function boot() {
     mapWrapRo.observe(mapWrapEl);
   }
 
+  /** Android/Chrome: barra URL y teclado cambian el viewport visual sin redimensionar window. */
+  if (window.visualViewport) {
+    const onVisualViewport = () => scheduleMapResize(60);
+    window.visualViewport.addEventListener('resize', onVisualViewport);
+    window.visualViewport.addEventListener('scroll', onVisualViewport);
+  }
+
   const routesLayer = new RoutesLayer(map);
   const moleculeOverlayLayer = new MoleculeOverlayLayer(map);
   const centralesLayer = new CentralesEtBLayer(map);
