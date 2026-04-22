@@ -12,7 +12,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260422gpssmall1" />
+  <link rel="stylesheet" href="/css/app.css?v=20260422gpsstyle1" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -100,22 +100,44 @@
             focusable="false"
           >
             <defs>
-              <linearGradient id="editorGpsFabPin" x1="12" y1="2.5" x2="12" y2="21" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#7dd3fc" />
-                <stop offset="0.55" stop-color="#38bdf8" />
+              <linearGradient id="editorGpsFabCore" x1="9" y1="7" x2="15" y2="15" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#cffafe" />
+                <stop offset="0.35" stop-color="#22d3ee" />
                 <stop offset="1" stop-color="#0369a1" />
               </linearGradient>
+              <linearGradient id="editorGpsFabArc" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#67e8f9" stop-opacity="0.95" />
+                <stop offset="1" stop-color="#38bdf8" stop-opacity="0.35" />
+              </linearGradient>
             </defs>
-            <circle cx="12" cy="8.75" r="7.75" fill="none" stroke="rgba(125,211,252,0.35)" stroke-width="1.2" />
+            <!-- Anillo «precisión» + arcos (señal / ondas) -->
+            <circle cx="12" cy="11" r="9.25" fill="none" stroke="rgba(125,211,252,0.18)" stroke-width="1" />
             <path
-              fill="url(#editorGpsFabPin)"
-              stroke="rgba(240,249,255,0.45)"
-              stroke-width="0.35"
-              stroke-linejoin="round"
-              d="M12 2.35c-3.52 0-6.38 2.86-6.38 6.38 0 4.72 5.7 11.45 6.38 12.42.68-.97 6.38-7.7 6.38-12.42 0-3.52-2.86-6.38-6.38-6.38z"
+              fill="none"
+              stroke="url(#editorGpsFabArc)"
+              stroke-width="1.35"
+              stroke-linecap="round"
+              d="M 5.5 15.25 A 6.5 9 0 0 0 18.5 15.25"
             />
-            <circle cx="12" cy="8.85" r="2.05" fill="#0c4a6e" opacity="0.22" />
-            <circle cx="12" cy="8.75" r="1.2" fill="#f8fafc" />
+            <path
+              fill="none"
+              stroke="url(#editorGpsFabArc)"
+              stroke-width="1.15"
+              stroke-linecap="round"
+              opacity="0.72"
+              d="M 6.75 16.6 A 5.25 7.5 0 0 0 17.25 16.6"
+            />
+            <path
+              fill="none"
+              stroke="rgba(165,243,252,0.55)"
+              stroke-width="1"
+              stroke-linecap="round"
+              d="M 8.25 17.65 A 3.75 5.5 0 0 0 15.75 17.65"
+            />
+            <!-- Núcleo: punto vivo -->
+            <circle cx="12" cy="11" r="3.85" fill="url(#editorGpsFabCore)" />
+            <circle cx="12" cy="11" r="2.35" fill="#0e7490" opacity="0.35" />
+            <circle cx="10.85" cy="9.95" r="0.95" fill="#fff" opacity="0.9" />
           </svg>
         </button>
       </div>
