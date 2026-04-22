@@ -759,7 +759,7 @@ function initStatusBar(mapInstance) {
 }
 
 /**
- * Acciones de campo (GPS / medir / paneles) desde el rail vertical del editor.
+ * Acciones de campo: FAB GPS en mapa, medir y paneles desde el menú lateral.
  * @param {{ resize: () => void }} mapInstance
  * @param {{ trigger: () => void }} geolocateCtl
  */
@@ -795,7 +795,7 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize) {
     requestMapResize();
   });
 
-  document.getElementById('btn-open-panel-gps')?.addEventListener('click', () => {
+  document.getElementById('btn-map-gps')?.addEventListener('click', () => {
     try {
       geolocateCtl.trigger();
     } catch {
@@ -1565,7 +1565,7 @@ export async function boot() {
     }
   }
 
-  /** GPS del navegador (Geolocation API). Esquina inferior derecha; icono en CSS (`/icons/editor/geolocate.svg`). */
+  /** GPS del navegador (Geolocation API). Control Mapbox oculto en esquina; el técnico usa el FAB `#btn-map-gps`. */
   const geolocate = new mapboxgl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
     trackUserLocation: true,
