@@ -41,6 +41,7 @@ const ACTIONS_BY_TYPE = {
  *   onArmingChanged?: (armed: boolean) => void,
  *   onEventoGuardado?: () => void,
  *   closeReportePanelUi?: () => void,
+ *   canMountEvento?: () => boolean,
  *   findNearestRouteForLngLat?: (lng: number, lat: number, maxM: number) => null | {
  *     feature: import('geojson').Feature<import('geojson').LineString>,
  *     snapped: [number, number],
@@ -61,6 +62,7 @@ export function initReporteEventoSidebar(opts) {
     onArmingChanged,
     onEventoGuardado,
     closeReportePanelUi,
+    canMountEvento,
     findNearestRouteForLngLat
   } = opts;
 
@@ -109,6 +111,23 @@ export function initReporteEventoSidebar(opts) {
 
   function isReportePanelOpen() {
     return details.classList.contains(FLOAT_OPEN);
+  }
+
+  function hasMoleculeSelected() {
+    try {
+      if (typeof canMountEvento === 'function') return !!canMountEvento();
+    } catch {
+      /* */
+    }
+    return true;
+  }
+
+  function ensureMoleculeSelected(showMessage = true) {
+    const ok = hasMoleculeSelected();
+    if (!ok && showMessage) {
+      setStatus('Primero selecciona una molécula en el buscador para montar un evento.');
+    }
+    return ok;
   }
 
   let awaitingMapPick = false;
@@ -189,6 +208,15 @@ export function initReporteEventoSidebar(opts) {
   }
 
   function startAwaitingMapPick() {
+    if (!ensureMoleculeSelected(true)) {
+      awaitingMapPick = false;
+      details.classList.remove('reporte-ev--armed');
+      onArmingChanged?.(false);
+      if (phaseForm) phaseForm.hidden = true;
+      if (phaseWait) phaseWait.hidden = false;
+      updatePinCard();
+      return;
+    }
     awaitingMapPick = true;
     details.classList.add('reporte-ev--armed');
     disarmOtdrPick();
@@ -237,6 +265,7 @@ export function initReporteEventoSidebar(opts) {
    * @returns {boolean}
    */
   function handleRouteLinePick(e, f) {
+    if (!ensureMoleculeSelected(true)) return false;
     if (!awaitingMapPick) return false;
     const geomEarly = /** @type {any} */ (f.geometry);
     if (geomEarly?.type !== 'LineString' || !Array.isArray(geomEarly.coordinates) || geomEarly.coordinates.length < 2) {
@@ -281,6 +310,7 @@ export function initReporteEventoSidebar(opts) {
    * @returns {boolean}
    */
   function handleMapTapPick(e, meta = {}) {
+    if (!ensureMoleculeSelected(true)) return false;
     if (!awaitingMapPick) return false;
     if (meta.hasRouteHit) return false;
     const lng = Number(e?.lngLat?.lng);
@@ -339,6 +369,7 @@ export function initReporteEventoSidebar(opts) {
    * @param {{ silent?: boolean }} [opts]
    */
   function handleGpsPick(opts = {}) {
+    if (!ensureMoleculeSelected(true)) return Promise.resolve(false);
     if (!('geolocation' in navigator)) {
       setGpsStatus('Tu dispositivo no permite ubicación GPS.', 'error');
       return Promise.resolve(false);
@@ -720,6 +751,7 @@ export function initReporteEventoSidebar(opts) {
   }
 
   async function submit() {
+    if (!ensureMoleculeSelected(true)) return;
     if (!pinnedLngLat) {
       setStatus('Reporte evento: primero indica el punto (usa GPS o toca el cable en el mapa).');
       return;
@@ -838,6 +870,7 @@ export function initReporteEventoSidebar(opts) {
   btnUseGps?.addEventListener('click', () => handleGpsPick());
   btnImproveGps?.addEventListener('click', () => handleGpsPick({ silent: false }));
   btnRapido?.addEventListener('click', async () => {
+    if (!ensureMoleculeSelected(true)) return;
     if (btnRapido.disabled) return;
     btnRapido.disabled = true;
     try {

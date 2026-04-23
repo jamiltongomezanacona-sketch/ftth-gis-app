@@ -1742,6 +1742,10 @@ export async function boot() {
         return null;
       }
     },
+    canMountEvento: () => {
+      if (appNetwork !== 'ftth') return false;
+      return !!getMoleculeFilterForEventosApi();
+    },
     /**
      * Resuelve la ruta más cercana a una coordenada (p. ej. GPS del técnico).
      * Escanea todas las features del source de rutas (estén o no en pantalla)
