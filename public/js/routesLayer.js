@@ -21,14 +21,14 @@ const PAINT_COLOR_WITH_SELECTION = [
 const PAINT_WIDTH_WITH_SELECTION = [
   'case',
   ['boolean', ['feature-state', 'selected'], false],
-  8,
-  5
+  5,
+  3
 ];
 
 /** Misma apariencia para todos los tendidos (p. ej. varios cables de una molécula). */
 const PAINT_COLOR_UNIFORM = FTTH_LINE_COLOR;
 
-const PAINT_WIDTH_UNIFORM = 5;
+const PAINT_WIDTH_UNIFORM = 3;
 
 export class RoutesLayer {
   /**

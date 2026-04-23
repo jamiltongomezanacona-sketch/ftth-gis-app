@@ -155,7 +155,7 @@ function initMap(token) {
       filter: ['==', ['geometry-type'], 'LineString'],
       paint: {
         'line-color': '#1e40af',
-        'line-width': 2.2,
+        'line-width': 1.8,
         'line-opacity': 0.85
       }
     });
