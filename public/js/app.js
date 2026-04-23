@@ -1821,8 +1821,8 @@ export async function boot() {
       } catch {
         /* */
       }
-      /* Encoge el panel a píldora flotante para que el mapa quede 100% libre. */
-      setEditorFloatPickMode('reporte', !!armed);
+      /* Mantener panel visible: no colapsar a píldora al armar reporte. */
+      setEditorFloatPickMode('reporte', false);
     },
     onEventoGuardado: () => {
       void refreshEventosReporteDisplay();
@@ -3482,7 +3482,11 @@ export async function boot() {
     map.on('click', (e) => {
       if (editing) return;
       try {
-        if (reporteCtl.handleMapTapPick?.(e)) return;
+        const hasRouteHit =
+          map.getLayer(ROUTES_LAYER_ID) != null
+            ? map.queryRenderedFeatures(e.point, { layers: [ROUTES_LAYER_ID] }).length > 0
+            : false;
+        if (reporteCtl.handleMapTapPick?.(e, { hasRouteHit })) return;
       } catch {
         /* */
       }

@@ -95,6 +95,7 @@ export function initReporteEventoSidebar(opts) {
   if (!tipoEl || !estadoEl || !accionEl || !descEl || !btnGuardar || !details) {
     return {
       handleRouteLinePick: () => false,
+      handleMapTapPick: () => false,
       cancelMapPickMode: () => {},
       resetForCableCleared: () => {},
       isAwaitingRoutePick: () => false,
@@ -190,7 +191,7 @@ export function initReporteEventoSidebar(opts) {
     awaitingMapPick = true;
     details.classList.add('reporte-ev--armed');
     disarmOtdrPick();
-    setStatus('Reporte evento: toca el tendido o usa GPS para fijar el punto del incidente.');
+    setStatus('Reporte evento: toca cualquier punto del mapa (o el tendido) o usa GPS.');
     onArmingChanged?.(true);
     updatePhaseDom();
   }
@@ -263,6 +264,67 @@ export function initReporteEventoSidebar(opts) {
     setStatus(
       `Reporte evento: punto fijado en «${pinnedRouteLabel || f.id}». Completa el formulario y guarda.`
     );
+    try {
+      tipoEl.focus();
+    } catch {
+      /* */
+    }
+    return true;
+  }
+
+  /**
+   * Permite fijar evento con tap libre en mapa (no solo sobre cable).
+   * Si hay un tendido cercano, asocia y ajusta el punto al tramo.
+   * @param {import('mapbox-gl').MapMouseEvent & import('mapbox-gl').EventData} e
+   * @param {{ hasRouteHit?: boolean }} [meta]
+   * @returns {boolean}
+   */
+  function handleMapTapPick(e, meta = {}) {
+    if (!awaitingMapPick) return false;
+    if (meta.hasRouteHit) return false;
+    const lng = Number(e?.lngLat?.lng);
+    const lat = Number(e?.lngLat?.lat);
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return false;
+
+    let finalLng = lng;
+    let finalLat = lat;
+    let msgExtra = 'Punto libre del mapa.';
+    pinnedRouteLabel = null;
+
+    const nearest = findNearestRouteForLngLat?.(lng, lat, GPS_ROUTE_SNAP_RADIUS_M) || null;
+    if (nearest?.feature && Array.isArray(nearest.snapped) && nearest.snapped.length === 2) {
+      finalLng = Number(nearest.snapped[0]);
+      finalLat = Number(nearest.snapped[1]);
+      pinnedRouteLabel =
+        String(nearest.feature.properties?.nombre ?? nearest.feature.id ?? '').trim() || null;
+      try {
+        applyReportePickedRoute(
+          nearest.feature,
+          /** @type {any} */ ({ lngLat: { lng: finalLng, lat: finalLat } })
+        );
+      } catch {
+        /* */
+      }
+      const geomSel = /** @type {any} */ (nearest.feature.geometry);
+      if (geomSel?.type === 'LineString' && geomSel.coordinates?.length >= 2) {
+        setDistOdfFromRoute(geomSel);
+      }
+      msgExtra = `Ajustado al tendido «${pinnedRouteLabel ?? '—'}» (${Math.round(nearest.meters)} m).`;
+    } else {
+      autoComputedDistOdf = null;
+      if (distAutoTag) distAutoTag.hidden = true;
+    }
+
+    pinnedLngLat = { lng: finalLng, lat: finalLat };
+    lastGpsAccuracy = null;
+    setReportePin([finalLng, finalLat]);
+    setGpsStatus('', '');
+    awaitingMapPick = false;
+    details.classList.remove('reporte-ev--armed');
+    onArmingChanged?.(false);
+    updatePhaseDom();
+    refreshFechaText();
+    setStatus(`Reporte evento: punto fijado. ${msgExtra} Completa y guarda.`);
     try {
       tipoEl.focus();
     } catch {
@@ -826,6 +888,7 @@ export function initReporteEventoSidebar(opts) {
 
   return {
     handleRouteLinePick,
+    handleMapTapPick,
     cancelMapPickMode,
     resetForCableCleared,
     isAwaitingRoutePick: () => awaitingMapPick,
