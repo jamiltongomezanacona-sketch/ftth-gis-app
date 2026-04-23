@@ -29,6 +29,10 @@ const MAX_CIERRE_ROWS = 10;
  * }} opts
  */
 export function createCableSearchBar(mapWrap, opts) {
+  const perfNow = () =>
+    typeof performance !== 'undefined' && typeof performance.now === 'function'
+      ? performance.now()
+      : Date.now();
   const mount = document.createElement('div');
   mount.className = 'cable-search-mount';
   if (opts.networkRed !== 'ftth' && opts.networkRed !== 'corporativa') {
@@ -120,6 +124,7 @@ export function createCableSearchBar(mapWrap, opts) {
   let activeRows = [];
   let activeIndex = -1;
   let cableShown = false;
+  let searchSeq = 0;
 
   function setExpanded(open) {
     input.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -230,8 +235,6 @@ export function createCableSearchBar(mapWrap, opts) {
           labelEl.textContent = `${String(f.properties?.nombre ?? 'Sin nombre')} · #${id}`;
         }
       }
-      opt.addEventListener('mousedown', (ev) => ev.preventDefault());
-      opt.addEventListener('click', () => pickIndex(i));
       listbox.appendChild(opt);
     });
     listbox.hidden = false;
@@ -277,6 +280,8 @@ export function createCableSearchBar(mapWrap, opts) {
 
   async function runSearch() {
     if (opts.isInteractionLocked()) return;
+    const t0 = perfNow();
+    const currentSeq = ++searchSeq;
     const q = input.value;
     const trimmed = q.trim();
     const fc = opts.getRouteCollection();
@@ -299,6 +304,7 @@ export function createCableSearchBar(mapWrap, opts) {
         cierreHits = [];
       }
     }
+    if (currentSeq !== searchSeq) return;
     const cierreSlice = cierreHits.slice(0, MAX_CIERRE_ROWS);
     const used = molHits.length + cierreSlice.length + (coordHit ? 1 : 0);
     const routeLimit = Math.max(0, MAX_RESULTS - used);
@@ -318,9 +324,25 @@ export function createCableSearchBar(mapWrap, opts) {
       listbox.appendChild(empty);
       listbox.hidden = false;
       setExpanded(true);
+      const perfPush = /** @type {any} */ (window).__FTTH_PERF_PUSH__;
+      if (typeof perfPush === 'function') {
+        perfPush('search.routes', perfNow() - t0, {
+          red: opts.networkRed,
+          qLen: trimmed.length,
+          total: 0
+        });
+      }
       return;
     }
     renderCombinedList(molHits, cierreHits, routeHits, coordHit);
+    const perfPush = /** @type {any} */ (window).__FTTH_PERF_PUSH__;
+    if (typeof perfPush === 'function') {
+      perfPush('search.routes', perfNow() - t0, {
+        red: opts.networkRed,
+        qLen: trimmed.length,
+        total: activeRows.length
+      });
+    }
   }
 
   function scheduleSearch() {
@@ -346,6 +368,20 @@ export function createCableSearchBar(mapWrap, opts) {
   input.addEventListener('focus', () => {
     if (opts.isInteractionLocked()) return;
     scheduleSearch();
+  });
+
+  listbox.addEventListener('mousedown', (ev) => {
+    const item = ev.target instanceof Element ? ev.target.closest('.cable-search-item') : null;
+    if (!item || !listbox.contains(item)) return;
+    ev.preventDefault();
+  });
+
+  listbox.addEventListener('click', (ev) => {
+    const item = ev.target instanceof Element ? ev.target.closest('.cable-search-item') : null;
+    if (!item || !listbox.contains(item)) return;
+    const idx = Number(item.dataset.index);
+    if (!Number.isInteger(idx)) return;
+    pickIndex(idx);
   });
 
   clearBtn.addEventListener('click', () => clearCableUi());
@@ -408,6 +444,12 @@ export function createCableSearchBar(mapWrap, opts) {
     dispose() {
       window.clearTimeout(debounceTimer);
       document.removeEventListener('mousedown', onDocDown);
+      searchSeq += 1;
+      if (typeof mqCompact.removeEventListener === 'function') {
+        mqCompact.removeEventListener('change', syncSearchPlaceholder);
+      } else if (typeof mqCompact.removeListener === 'function') {
+        mqCompact.removeListener(syncSearchPlaceholder);
+      }
       mount.remove();
     }
   };

@@ -42,6 +42,12 @@ export function filterRoutesByNetwork(fc, redTipo) {
 
 /** Catálogos con hasta este tamaño muestran lista al enfocar sin escribir (p. ej. red corporativa). */
 const MAX_CATALOG_EMPTY_QUERY = 80;
+/**
+ * Cache en memoria por colección para evitar normalizaciones repetidas
+ * durante búsquedas sucesivas.
+ * @type {WeakMap<GeoJSON.FeatureCollection, { ftth: ReturnType<typeof buildSearchIndex>|null, corporativa: ReturnType<typeof buildSearchIndex>|null }>}
+ */
+const SEARCH_INDEX_CACHE = new WeakMap();
 
 /**
  * Asegura `properties` como objeto (algunos proxies devuelven JSON como string).
@@ -69,6 +75,46 @@ export function normalizeRouteFeatureProperties(fc) {
 }
 
 /**
+ * @param {GeoJSON.Feature[]} feats
+ */
+function buildSearchIndex(feats) {
+  const entries = [];
+  for (const f of feats) {
+    if (!f || f.type !== 'Feature') continue;
+    const nombreRaw = String(f.properties?.nombre ?? '');
+    const idRaw = String(f.id ?? '').trim();
+    entries.push({
+      f,
+      nombreRaw,
+      nombreNorm: normalizeSearchText(nombreRaw),
+      idRaw,
+      idNorm: normalizeSearchText(idRaw)
+    });
+  }
+  const emptyQuerySorted = [...entries]
+    .sort((a, b) => a.nombreRaw.localeCompare(b.nombreRaw, 'es', { sensitivity: 'base' }))
+    .map((entry) => entry.f);
+  return { entries, emptyQuerySorted };
+}
+
+/**
+ * @param {GeoJSON.FeatureCollection} fc
+ * @param {'ftth'|'corporativa'} networkRed
+ */
+function getOrCreateSearchIndex(fc, networkRed) {
+  let byNetwork = SEARCH_INDEX_CACHE.get(fc);
+  if (!byNetwork) {
+    byNetwork = { ftth: null, corporativa: null };
+    SEARCH_INDEX_CACHE.set(fc, byNetwork);
+  }
+  if (byNetwork[networkRed]) return byNetwork[networkRed];
+  const fcSoloRed = filterRoutesByNetwork(fc, networkRed);
+  const index = buildSearchIndex(fcSoloRed.features || []);
+  byNetwork[networkRed] = index;
+  return index;
+}
+
+/**
  * @param {GeoJSON.FeatureCollection} fc
  * @param {string} rawQuery
  * @param {number} limit
@@ -79,22 +125,14 @@ export function searchRouteFeatures(fc, rawQuery, limit = 20, networkRed) {
   if (networkRed !== 'ftth' && networkRed !== 'corporativa') {
     return [];
   }
-  const fcSoloRed = filterRoutesByNetwork(fc, networkRed);
-  const feats = fcSoloRed.features || [];
-  if (!feats.length) return [];
+  const index = getOrCreateSearchIndex(fc, networkRed);
+  const entries = index.entries;
+  if (!entries.length) return [];
 
   const q = normalizeSearchText(rawQuery);
   if (!q) {
-    if (feats.length <= MAX_CATALOG_EMPTY_QUERY) {
-      return [...feats]
-        .sort((a, b) =>
-          String(a.properties?.nombre ?? '').localeCompare(
-            String(b.properties?.nombre ?? ''),
-            'es',
-            { sensitivity: 'base' }
-          )
-        )
-        .slice(0, limit);
+    if (entries.length <= MAX_CATALOG_EMPTY_QUERY) {
+      return index.emptyQuerySorted.slice(0, limit);
     }
     return [];
   }
@@ -102,11 +140,8 @@ export function searchRouteFeatures(fc, rawQuery, limit = 20, networkRed) {
   const words = q.split(' ').filter((w) => w.length > 0);
   const ranked = [];
 
-  for (const f of feats) {
-    if (!f || f.type !== 'Feature') continue;
-    const nombre = normalizeSearchText(f.properties?.nombre ?? '');
-    const idRaw = String(f.id ?? '').trim();
-    const idNorm = normalizeSearchText(idRaw);
+  for (const entry of entries) {
+    const { f, nombreNorm: nombre, idRaw, idNorm } = entry;
 
     let score = 0;
 

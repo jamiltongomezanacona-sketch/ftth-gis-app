@@ -89,6 +89,78 @@ function formatEventoFechaEs(iso) {
   }
 }
 
+const PERF_DEBUG_KEY = 'ftth-perf-debug';
+const PERF_DEBUG_PARAM = 'perf';
+const PERF_STORE_MAX = 180;
+
+function perfNowMs() {
+  return typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+}
+
+function isPerfDebugEnabled() {
+  try {
+    const qs = new URLSearchParams(window.location.search || '');
+    if (qs.get(PERF_DEBUG_PARAM) === '1') return true;
+  } catch {
+    /* */
+  }
+  try {
+    return localStorage.getItem(PERF_DEBUG_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Registra una métrica liviana en memoria y consola (solo si debug está activo).
+ * @param {string} metric
+ * @param {number} ms
+ * @param {Record<string, unknown>} [meta]
+ */
+function pushPerfMetric(metric, ms, meta = {}) {
+  if (!isPerfDebugEnabled()) return;
+  const w = /** @type {any} */ (window);
+  const store = Array.isArray(w.__FTTH_PERF_METRICS__) ? w.__FTTH_PERF_METRICS__ : [];
+  store.push({
+    ts: new Date().toISOString(),
+    metric,
+    ms: Number.isFinite(ms) ? Number(ms.toFixed(1)) : ms,
+    ...meta
+  });
+  while (store.length > PERF_STORE_MAX) store.shift();
+  w.__FTTH_PERF_METRICS__ = store;
+  w.__FTTH_PERF_PUSH__ = pushPerfMetric;
+  w.__FTTH_PERF_SUMMARY__ = () => {
+    /** @type {Record<string, { n: number, total: number, max: number }>} */
+    const acc = {};
+    for (const row of store) {
+      const name = String(row?.metric ?? 'unknown');
+      const val = Number(row?.ms);
+      if (!Number.isFinite(val)) continue;
+      if (!acc[name]) acc[name] = { n: 0, total: 0, max: 0 };
+      acc[name].n += 1;
+      acc[name].total += val;
+      acc[name].max = Math.max(acc[name].max, val);
+    }
+    return Object.entries(acc).map(([name, a]) => ({
+      metric: name,
+      n: a.n,
+      avgMs: Number((a.total / Math.max(1, a.n)).toFixed(1)),
+      maxMs: Number(a.max.toFixed(1))
+    }));
+  };
+  console.debug(`[perf] ${metric}: ${Number(ms).toFixed(1)}ms`, meta);
+}
+
+try {
+  const w = /** @type {any} */ (window);
+  w.__FTTH_PERF_PUSH__ = pushPerfMetric;
+} catch {
+  /* */
+}
+
 /**
  * Contenido HTML escapado para el popup de un evento en el mapa (propiedades GeoJSON).
  * @param {Record<string, unknown>} p
@@ -794,7 +866,6 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize, onToggle
   });
   window.addEventListener('resize', () => {
     clearBottomSheetSpacer();
-    requestMapResize();
   });
 
   document.getElementById('btn-map-gps')?.addEventListener('click', () => {
@@ -1101,14 +1172,25 @@ export async function boot() {
   });
 
   let mapResizeTimer = 0;
+  let mapResizeRafPending = false;
+  let mapResizeDueAt = 0;
   let viewportSyncTimer = 0;
   let viewportRafPending = false;
   let lastViewportWidth = 0;
   let lastViewportHeight = 0;
   function scheduleMapResize(delay = 90) {
-    window.clearTimeout(mapResizeTimer);
-    mapResizeTimer = window.setTimeout(() => {
+    const safeDelay = Math.max(0, Number(delay) || 0);
+    const now =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    const dueAt = now + safeDelay;
+    const runResize = () => {
+      mapResizeTimer = 0;
+      if (mapResizeRafPending) return;
+      mapResizeRafPending = true;
       window.requestAnimationFrame(() => {
+        mapResizeRafPending = false;
         syncEditorVisualViewportHeight();
         try {
           map.resize();
@@ -1116,7 +1198,17 @@ export async function boot() {
           /* */
         }
       });
-    }, delay);
+    };
+    if (!mapResizeTimer) {
+      mapResizeDueAt = dueAt;
+      mapResizeTimer = window.setTimeout(runResize, safeDelay);
+      return;
+    }
+    if (dueAt + 1 < mapResizeDueAt) {
+      mapResizeDueAt = dueAt;
+      window.clearTimeout(mapResizeTimer);
+      mapResizeTimer = window.setTimeout(runResize, safeDelay);
+    }
   }
 
   /** Unifica eventos de viewport para evitar tormenta de resize/reflow en Android. */
@@ -1175,6 +1267,10 @@ export async function boot() {
     list: null,
     map: null
   });
+  /** @type {AbortController | null} */
+  let eventosDisplayAbortCtrl = null;
+  /** @type {AbortController | null} */
+  let refreshCatalogAbortCtrl = null;
 
   /**
    * FTTH: molécula asociada al contexto actual (tendido o vista «Ver molécula …» / cierre).
@@ -1317,10 +1413,17 @@ export async function boot() {
    * @param {{ suppressMapPins?: boolean }} [opts] Si `suppressMapPins`, la lista se rellena pero la capa de pins queda oculta (arranque limpio).
    */
   async function refreshEventosReporteDisplay(opts) {
+    eventosDisplayAbortCtrl?.abort();
+    const abortCtrl = new AbortController();
+    eventosDisplayAbortCtrl = abortCtrl;
+    const t0 = perfNowMs();
     try {
       closeEventoMapPopup();
       closeCierreMapPopup();
-      const res = await api.listEventosReporte(getMoleculeFilterForEventosApi());
+      const res = await api.listEventosReporte(getMoleculeFilterForEventosApi(), {
+        signal: abortCtrl.signal
+      });
+      if (abortCtrl.signal.aborted || eventosDisplayAbortCtrl !== abortCtrl) return;
       const fc = res?.featureCollection;
       const items = Array.isArray(res?.items) ? res.items : [];
       const fcBase =
@@ -1423,19 +1526,27 @@ export async function boot() {
       }
       map.once('idle', () => {
         try {
-          eventosReporteLayer.bringToFront();
-          bumpLayersAfterPolylineMeasure();
+          scheduleOperationalLayersBump([0, 80, 220]);
         } catch {
           /* */
         }
       });
       syncEditorChromeBarMeta();
     } catch (e) {
+      if (e?.name === 'AbortError') return;
       let msg = e instanceof Error ? e.message : String(e);
       if (/^503:/.test(msg) || msg.includes('eventos_reporte')) {
         msg += ' · En el proyecto: npm run db:apply-eventos (o sql/06_eventos_reporte.sql).';
       }
       setStatus(`Eventos: ${msg}`);
+    } finally {
+      if (!abortCtrl.signal.aborted) {
+        pushPerfMetric('eventos.refresh', perfNowMs() - t0, {
+          red: appNetwork,
+          suppressMapPins: !!opts?.suppressMapPins
+        });
+      }
+      if (eventosDisplayAbortCtrl === abortCtrl) eventosDisplayAbortCtrl = null;
     }
   }
 
@@ -2047,6 +2158,43 @@ export async function boot() {
     otdrCutLayer.bringToFront();
   }
 
+  /** Mantiene el orden visual estable de capas operativas tras cambios de datos/estilo. */
+  function bringOperationalLayersToFront() {
+    centralesLayer.bringToFront();
+    moleculeOverlayLayer.bringToFront();
+    bumpLayersAfterPolylineMeasure();
+  }
+
+  /** @type {number[]} */
+  let overlayBumpTimers = [];
+  let overlayBumpTicket = 0;
+  /**
+   * Evita duplicar ráfagas de reordenamiento: conserva solo la secuencia más reciente.
+   * @param {number[]} [delaysMs]
+   */
+  function scheduleOperationalLayersBump(delaysMs = [0, 100, 300]) {
+    overlayBumpTicket += 1;
+    const ticket = overlayBumpTicket;
+    for (const t of overlayBumpTimers) window.clearTimeout(t);
+    overlayBumpTimers = [];
+    const runIfCurrent = () => {
+      if (ticket !== overlayBumpTicket) return;
+      bringOperationalLayersToFront();
+    };
+    try {
+      map.once('idle', runIfCurrent);
+    } catch {
+      /* */
+    }
+    for (const ms of delaysMs) {
+      overlayBumpTimers.push(
+        window.setTimeout(() => {
+          runIfCurrent();
+        }, Math.max(0, Number(ms) || 0))
+      );
+    }
+  }
+
   function syncMeasurePolylinePanel() {
     if (!measurePolylineActive) {
       measurePolyUndo.disabled = true;
@@ -2160,11 +2308,15 @@ export async function boot() {
     clearMeasureClickModes();
   }
 
-  async function loadCentralesFeatureCollection() {
+  /**
+   * @param {AbortSignal} [signal]
+   */
+  async function loadCentralesFeatureCollection(signal) {
     let fcCent = { type: 'FeatureCollection', features: [] };
     try {
-      fcCent = await api.listCentralesEtB();
+      fcCent = await api.listCentralesEtB(signal ? { signal } : undefined);
     } catch (e) {
+      if (e?.name === 'AbortError') throw e;
       console.warn('Puntos de red (API centrales):', e.message);
     }
     if (!fcCent?.features?.length && appNetwork === 'ftth') {
@@ -2324,13 +2476,7 @@ export async function boot() {
     setStatus(
       `Molécula «${molecula}» (${label}): ${linesFc.features?.length ?? 0} tendido(s) en mapa · ${pts.length} punto(s) cierre/NAP (GeoJSON + BD). × limpia el mapa.`
     );
-    const bump = () => {
-      centralesLayer.bringToFront();
-      moleculeOverlayLayer.bringToFront();
-      eventosReporteLayer.bringToFront();
-    };
-    map.once('idle', bump);
-    [0, 100, 300].forEach((ms) => setTimeout(bump, ms));
+    scheduleOperationalLayersBump([0, 100, 300]);
     syncButtons();
     void refreshEventosReporteDisplay();
   }
@@ -2433,13 +2579,7 @@ export async function boot() {
     setStatus(
       `Cierre «${nom}» (${String(props.tipo ?? '—')}) · ${String(props.molecula_codigo ?? '')}. ${linesFc.features?.length ?? 0} tendido(s), ${pts.length} punto(s). × limpia.`
     );
-    const bump = () => {
-      centralesLayer.bringToFront();
-      moleculeOverlayLayer.bringToFront();
-      eventosReporteLayer.bringToFront();
-    };
-    map.once('idle', bump);
-    [0, 100, 300].forEach((ms) => setTimeout(bump, ms));
+    scheduleOperationalLayersBump([0, 100, 300]);
     syncButtons();
     void refreshEventosReporteDisplay();
   }
@@ -2464,16 +2604,22 @@ export async function boot() {
    */
   async function refreshEditorChromeFromApi() {
     const btn = document.getElementById('btn-refresh-editor-catalog');
+    refreshCatalogAbortCtrl?.abort();
+    const abortCtrl = new AbortController();
+    refreshCatalogAbortCtrl = abortCtrl;
+    const t0 = perfNowMs();
     try {
       if (btn instanceof HTMLButtonElement) btn.disabled = true;
-      const fcRaw = await api.listRutas();
+      const fcRaw = await api.listRutas({ signal: abortCtrl.signal });
+      if (abortCtrl.signal.aborted || refreshCatalogAbortCtrl !== abortCtrl) return;
       const fcParsed =
         fcRaw && fcRaw.type === 'FeatureCollection'
           ? fcRaw
           : { type: 'FeatureCollection', features: [] };
       const fcBase = normalizeRouteFeatureProperties(fcParsed);
       allRoutesFc = filterRoutesByNetwork(fcBase, appNetwork);
-      const fcCent = await loadCentralesFeatureCollection();
+      const fcCent = await loadCentralesFeatureCollection(abortCtrl.signal);
+      if (abortCtrl.signal.aborted || refreshCatalogAbortCtrl !== abortCtrl) return;
       lastCentralesFc = fcCent;
       centralesLayer.ensureLayer();
       centralesLayer.setData(fcCent);
@@ -2482,18 +2628,24 @@ export async function boot() {
       cableSearch?.refresh();
       setStatus('Datos actualizados desde el servidor (catálogo, centrales, incidencias, buscador).');
     } catch (e) {
+      if (e?.name === 'AbortError') return;
       const msg = e instanceof Error ? e.message : String(e);
       setStatus(`Error al actualizar catálogo (${msg}). Se mantienen datos en memoria.`);
       syncEditorChromeBarMeta();
       cableSearch?.refresh();
       void refreshEventosReporteDisplay();
     } finally {
+      if (!abortCtrl.signal.aborted) {
+        pushPerfMetric('catalog.refresh', perfNowMs() - t0, { red: appNetwork });
+      }
+      if (refreshCatalogAbortCtrl === abortCtrl) refreshCatalogAbortCtrl = null;
       if (btn instanceof HTMLButtonElement) btn.disabled = false;
     }
   }
 
   async function reloadRoutes() {
     const wasCleanBootstrap = cleanMapBootstrap;
+    const t0 = perfNowMs();
     try {
       editorMoleculeFilter = null;
       closeEventoMapPopup();
@@ -2584,6 +2736,10 @@ export async function boot() {
       if (wasCleanBootstrap) {
         cleanMapBootstrap = false;
       }
+      pushPerfMetric('routes.reload', perfNowMs() - t0, {
+        red: appNetwork,
+        cleanBootstrap: !!wasCleanBootstrap
+      });
     }
   }
 
@@ -2722,13 +2878,7 @@ export async function boot() {
                 console.error(e);
                 setStatus(`No se pudieron cargar cierres: ${e?.message ?? e}`);
               });
-            const bump = () => {
-              centralesLayer.bringToFront();
-              moleculeOverlayLayer.bringToFront();
-              eventosReporteLayer.bringToFront();
-            };
-            map.once('idle', bump);
-            [0, 100, 300].forEach((ms) => setTimeout(bump, ms));
+            scheduleOperationalLayersBump([0, 100, 300]);
             syncButtons();
             void refreshEventosReporteDisplay();
             return;
@@ -2768,13 +2918,7 @@ export async function boot() {
         void refreshEventosReporteDisplay();
         fitMapToRouteFeature(f);
         setStatus(`Cable «${f.properties?.nombre ?? f.id}» · usa el buscador (×) para volver a solo centrales.`);
-        const bump = () => {
-          centralesLayer.bringToFront();
-          moleculeOverlayLayer.bringToFront();
-          eventosReporteLayer.bringToFront();
-        };
-        map.once('idle', bump);
-        [0, 100, 300].forEach((ms) => setTimeout(bump, ms));
+        scheduleOperationalLayersBump([0, 100, 300]);
         syncButtons();
       },
       onSelectCoordinates: ({ lng, lat }) => {
@@ -3114,13 +3258,7 @@ export async function boot() {
     });
 
     /** Centrales encima de rutas; cierres/NAP encima; polilínea de medición; eventos y marcas OTDR por encima del trazo. */
-    const bumpCentrales = () => {
-      centralesLayer.bringToFront();
-      moleculeOverlayLayer.bringToFront();
-      bumpLayersAfterPolylineMeasure();
-    };
-    map.once('idle', bumpCentrales);
-    [0, 80, 250, 600].forEach((ms) => setTimeout(bumpCentrales, ms));
+    scheduleOperationalLayersBump([0, 80, 250, 600]);
 
     routesLayer.onLineClick((e) => {
       const polyBusy = measurePolylineActive && !measurePolylineConfirmed;

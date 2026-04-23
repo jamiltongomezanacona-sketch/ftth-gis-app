@@ -584,6 +584,27 @@ export function initReporteEventoSidebar(opts) {
     }
   }
 
+  function resetFormAfterSubmit() {
+    descEl.value = '';
+    clearDraft();
+    if (distEl) distEl.value = '';
+    if (distAutoTag) distAutoTag.hidden = true;
+    tipoEl.value = '';
+    estadoEl.value = '';
+    accionEl.value = '';
+    pinnedLngLat = null;
+    pinnedRouteLabel = null;
+    lastGpsAccuracy = null;
+    autoComputedDistOdf = null;
+    distOdfIsManual = false;
+    presetBtns.forEach((b) => b.classList.remove('is-active'));
+    setReportePin(null);
+    setGpsStatus('', '');
+    updatePinCard();
+    if (isReportePanelOpen()) startAwaitingMapPick();
+    refreshFechaText();
+  }
+
   async function submit() {
     if (!pinnedLngLat) {
       setStatus('Reporte evento: primero indica el punto (usa GPS o toca el cable en el mapa).');
@@ -633,26 +654,7 @@ export function initReporteEventoSidebar(opts) {
       showToast(`✓ Evento guardado${id != null ? ` (id ${id})` : ''}`, 'ok');
       vibrateOk();
       onEventoGuardado?.();
-      descEl.value = '';
-      clearDraft();
-      if (distEl) distEl.value = '';
-      if (distAutoTag) distAutoTag.hidden = true;
-      tipoEl.value = '';
-      estadoEl.value = '';
-      accionEl.value = '';
-      pinnedLngLat = null;
-      pinnedRouteLabel = null;
-      lastGpsAccuracy = null;
-      autoComputedDistOdf = null;
-      distOdfIsManual = false;
-      presetBtns.forEach((b) => b.classList.remove('is-active'));
-      setReportePin(null);
-      setGpsStatus('', '');
-      updatePinCard();
-      if (isReportePanelOpen()) {
-        startAwaitingMapPick();
-      }
-      refreshFechaText();
+      resetFormAfterSubmit();
     } catch (err) {
       if (isTransientError(err)) {
         const q = loadQueue();
@@ -662,24 +664,7 @@ export function initReporteEventoSidebar(opts) {
         showToast('Guardado en el dispositivo. Se enviará al volver la red.', 'warn');
         vibrateOk();
         setStatus('Sin conexión: evento guardado en el dispositivo. Se enviará cuando vuelva la red.');
-        descEl.value = '';
-        clearDraft();
-        if (distEl) distEl.value = '';
-        if (distAutoTag) distAutoTag.hidden = true;
-        tipoEl.value = '';
-        estadoEl.value = '';
-        accionEl.value = '';
-        pinnedLngLat = null;
-        pinnedRouteLabel = null;
-        lastGpsAccuracy = null;
-        autoComputedDistOdf = null;
-        distOdfIsManual = false;
-        presetBtns.forEach((b) => b.classList.remove('is-active'));
-        setReportePin(null);
-        setGpsStatus('', '');
-        updatePinCard();
-        if (isReportePanelOpen()) startAwaitingMapPick();
-        refreshFechaText();
+        resetFormAfterSubmit();
       } else {
         let msg = err instanceof Error ? err.message : String(err);
         if (/^503:/.test(msg) || msg.includes('eventos_reporte')) {

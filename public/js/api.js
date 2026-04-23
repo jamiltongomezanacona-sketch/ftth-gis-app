@@ -83,8 +83,8 @@ export function createRutasApi(apiBase, redTipo) {
     },
 
     /** @returns {Promise<object>} FeatureCollection */
-    listRutas() {
-      return getJson(`/api/rutas${redQs}`);
+    listRutas(options = {}) {
+      return getJson(`/api/rutas${redQs}`, options);
     },
 
     /** @returns {Promise<object>} Feature */
@@ -115,8 +115,8 @@ export function createRutasApi(apiBase, redTipo) {
     },
 
     /** @returns {Promise<object>} FeatureCollection de centrales (Point) */
-    listCentralesEtB() {
-      return getJson(`/api/centrales-etb${redQs}`);
+    listCentralesEtB(options = {}) {
+      return getJson(`/api/centrales-etb${redQs}`, options);
     },
 
     /**
@@ -140,7 +140,7 @@ export function createRutasApi(apiBase, redTipo) {
      * @param {string} query
      * @param {number} [limit]
      */
-    searchCierres(query) {
+    searchCierres(query, options = {}) {
       if (red !== 'ftth') {
         return Promise.resolve({ type: 'FeatureCollection', features: [] });
       }
@@ -149,7 +149,7 @@ export function createRutasApi(apiBase, redTipo) {
       qs.set('red', red);
       qs.set('buscar', q);
       qs.set('limit', '48');
-      return getJson(`/api/cierres?${qs.toString()}`);
+      return getJson(`/api/cierres?${qs.toString()}`, options);
     },
 
     /**
@@ -168,16 +168,16 @@ export function createRutasApi(apiBase, redTipo) {
      * En FTTH, opcionalmente filtra por molécula (`CENTRAL|MOL` vía `central` + `molecula`).
      * @param {{ central?: string, molecula?: string } | null | undefined} [molecule]
      */
-    listEventosReporte(molecule) {
+    listEventosReporte(molecule, options = {}) {
       const c = molecule?.central != null ? String(molecule.central).trim() : '';
       const m = molecule?.molecula != null ? String(molecule.molecula).trim() : '';
       if (!c || !m) {
-        return getJson(`/api/eventos-reporte${redQs}`);
+        return getJson(`/api/eventos-reporte${redQs}`, options);
       }
       const q = new URLSearchParams();
       q.set('central', c);
       q.set('molecula', m);
-      return getJson(`/api/eventos-reporte${redQs}&${q.toString()}`);
+      return getJson(`/api/eventos-reporte${redQs}&${q.toString()}`, options);
     },
 
     /**
