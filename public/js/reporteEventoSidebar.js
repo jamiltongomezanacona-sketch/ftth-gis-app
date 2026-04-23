@@ -81,6 +81,7 @@ export function initReporteEventoSidebar(opts) {
   const btnRepick = document.getElementById('btn-reporte-repick');
   const btnUseGps = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-use-gps'));
   const btnImproveGps = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-improve-gps'));
+  const presetSelect = /** @type {HTMLSelectElement | null} */ (document.getElementById('reporte-ev-preset-select'));
   const gpsStatusEl = document.getElementById('reporte-ev-gps-status');
   const offlineNoteEl = document.getElementById('reporte-ev-offline-note');
   const pinCardEl = document.getElementById('reporte-ev-pin-card');
@@ -863,6 +864,11 @@ export function initReporteEventoSidebar(opts) {
 
   presetBtns.forEach((b) => {
     b.addEventListener('click', () => applyPreset(b.dataset.preset || ''));
+  });
+  presetSelect?.addEventListener('change', () => {
+    const key = String(presetSelect.value || '').trim();
+    if (!key) return;
+    applyPreset(key);
   });
 
   tipoEl.addEventListener('change', () => {

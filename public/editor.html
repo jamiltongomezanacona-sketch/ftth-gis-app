@@ -439,23 +439,15 @@
                 <span class="reporte-ev-collapse__chev" aria-hidden="true"></span>
               </summary>
               <div class="reporte-ev-collapse__body">
-                <div class="reporte-ev-presets" role="group" aria-label="Plantillas rápidas">
-                  <button type="button" class="reporte-ev-preset" data-preset="corte-obras">
-                    <span class="reporte-ev-preset__title">Corte por obras</span>
-                    <span class="reporte-ev-preset__sub">Obras civiles · Crítico</span>
-                  </button>
-                  <button type="button" class="reporte-ev-preset" data-preset="vandalismo">
-                    <span class="reporte-ev-preset__title">Vandalismo</span>
-                    <span class="reporte-ev-preset__sub">Vandalismo · Crítico</span>
-                  </button>
-                  <button type="button" class="reporte-ev-preset" data-preset="terceros">
-                    <span class="reporte-ev-preset__title">Daño terceros</span>
-                    <span class="reporte-ev-preset__sub">Daño · Crítico</span>
-                  </button>
-                  <button type="button" class="reporte-ev-preset" data-preset="mantenimiento">
-                    <span class="reporte-ev-preset__title">Mantenimiento</span>
-                    <span class="reporte-ev-preset__sub">Mant. · En proceso</span>
-                  </button>
+                <div class="reporte-ev-field reporte-ev-field--preset">
+                  <label class="reporte-ev-label" for="reporte-ev-preset-select">Elegir plantilla</label>
+                  <select id="reporte-ev-preset-select" class="reporte-ev-select">
+                    <option value="">Selecciona una plantilla</option>
+                    <option value="corte-obras">Corte por obras · Obras civiles · Crítico</option>
+                    <option value="vandalismo">Vandalismo · Crítico</option>
+                    <option value="terceros">Daño terceros · Crítico</option>
+                    <option value="mantenimiento">Mantenimiento · En proceso</option>
+                  </select>
                 </div>
               </div>
             </details>
