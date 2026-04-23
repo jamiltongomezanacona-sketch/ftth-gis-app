@@ -2316,6 +2316,25 @@ body.editor-body #sidebar {
   background: #0f172a;
 }
 
+/* Plantillas rápidas: contraste reforzado del valor seleccionado. */
+#reporte-ev-preset-select {
+  color: #f8fafc !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+#reporte-ev-preset-select:invalid,
+#reporte-ev-preset-select[value=""] {
+  color: #cbd5e1 !important;
+  font-weight: 500;
+}
+
+#reporte-ev-preset-select option {
+  color: #f8fafc !important;
+  background-color: #0f172a !important;
+}
+
 .reporte-ev-fecha {
   margin: 4px 0 14px;
   font-size: 0.8rem;
@@ -8098,6 +8117,16 @@ body.editor-body .reporte-ev-textarea {
 body.editor-body .reporte-ev-select option {
   color: #f8fafc;
   background: #0f172a;
+}
+
+body.editor-body #reporte-ev-preset-select {
+  color: #f8fafc !important;
+  font-weight: 600;
+}
+
+body.editor-body #reporte-ev-preset-select option {
+  color: #f8fafc !important;
+  background-color: #0f172a !important;
 }
 
 body.editor-body .reporte-ev-input:focus,
