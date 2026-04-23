@@ -143,8 +143,8 @@ function initMap(token) {
       source: 'rutas-ftth',
       filter: ['==', ['geometry-type'], 'LineString'],
       paint: {
-        'line-color': '#38bdf8',
-        'line-width': 2.2,
+        'line-color': '#1e40af',
+        'line-width': 1.8,
         'line-opacity': 0.85
       }
     });
@@ -166,7 +166,7 @@ function initMap(token) {
       filter: ['==', ['geometry-type'], 'Point'],
       paint: {
         'circle-radius': 4.5,
-        'circle-color': '#22d3ee',
+        'circle-color': '#1e40af',
         'circle-stroke-width': 1.5,
         'circle-stroke-color': '#0f172a'
       }

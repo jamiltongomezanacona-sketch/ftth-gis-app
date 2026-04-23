@@ -7,10 +7,10 @@
   --text: #f1f5f9;
   --muted: #94a3b8;
   --muted2: #64748b;
-  --accent: #3b82f6;
-  --accent-dim: rgba(59, 130, 246, 0.18);
-  --accent2: #60a5fa;
-  --accent2-dim: rgba(96, 165, 250, 0.14);
+  --accent: #1e40af;
+  --accent-dim: rgba(30, 64, 175, 0.18);
+  --accent2: #22d3ee;
+  --accent2-dim: rgba(34, 211, 238, 0.14);
   --danger: #f87171;
   --danger-dim: rgba(248, 113, 113, 0.12);
   --border: rgba(148, 163, 184, 0.12);
@@ -64,8 +64,8 @@
   --app-text: #e2e8f0;
   --app-text-soft: #94a3b8;
   --app-text-strong: #f8fafc;
-  --app-accent: #38bdf8;
-  --app-accent-soft: rgba(56, 189, 248, 0.16);
+  --app-accent: #1e40af;
+  --app-accent-soft: rgba(30, 64, 175, 0.16);
   --app-warn: #fb923c;
   --app-warn-soft: rgba(251, 146, 60, 0.16);
   --app-radius-pill: 999px;
@@ -3094,7 +3094,7 @@ button:disabled {
 }
 
 button.primary {
-  background: linear-gradient(135deg, #0ea5e9 0%, var(--accent) 50%, #22d3ee 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, var(--accent) 50%, #1e40af 100%);
   border-color: transparent;
   color: #041016;
   font-weight: 600;
@@ -3103,7 +3103,7 @@ button.primary {
 
 button.primary:hover:not(:disabled) {
   border-color: transparent;
-  background: linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #22d3ee 100%);
   box-shadow: 0 6px 20px rgba(14, 165, 233, 0.45);
 }
 
@@ -7006,7 +7006,7 @@ body.analitica-body--dashboard {
 }
 
 .analitica-legend-swatch--ftth {
-  background: linear-gradient(90deg, #38bdf8, #22d3ee);
+  background: linear-gradient(90deg, #1e40af, #22d3ee);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
