@@ -2308,6 +2308,12 @@ body.editor-body #sidebar {
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
+  color: #f8fafc;
+}
+
+.reporte-ev-select option {
+  color: #f8fafc;
+  background: #0f172a;
 }
 
 .reporte-ev-fecha {
@@ -8087,6 +8093,11 @@ body.editor-body .reporte-ev-textarea {
   border-color: var(--hub-border-strong);
   background: rgba(15, 23, 42, 0.85);
   color: var(--hub-text);
+}
+
+body.editor-body .reporte-ev-select option {
+  color: #f8fafc;
+  background: #0f172a;
 }
 
 body.editor-body .reporte-ev-input:focus,
