@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/app.css?v=20260422imgresp1" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423home1" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="home-body auth-pending">
@@ -43,6 +43,7 @@
         <h1 class="home-title">
           <span class="home-title-grad">RED ÓPTICA</span> EN TIEMPO REAL
         </h1>
+        <p class="home-sub home-sub--hero">PostGIS · Mapbox · API dual red — operación y analítica en un solo entorno.</p>
         <div class="home-chips" role="list">
           <span class="home-chip" role="listitem"><span class="home-chip-ico home-chip-ico--postgis"></span>PostGIS</span>
           <span class="home-chip" role="listitem"><span class="home-chip-ico home-chip-ico--mapbox"></span>Mapbox</span>
@@ -52,44 +53,70 @@
       </div>
     </header>
 
-    <nav class="home-grid home-grid--compact" aria-label="Módulos principales">
-      <a class="home-card home-card--ftth" href="/editor.html?red=ftth">
-        <span class="home-card-ico home-card-ico--ftth" aria-hidden="true">
-          <img class="home-card-icon-img" src="/icons/ui/home.svg" width="28" height="28" alt="Icono de inicio para Red FTTH" decoding="async" />
-        </span>
-        <h2 class="home-card-title">Red FTTH</h2>
-      </a>
+    <div class="home-layout">
+      <aside class="home-aside" aria-label="Navegación principal">
+        <nav class="home-grid home-grid--compact home-grid--sidebar" aria-label="Módulos principales">
+          <a class="home-card home-card--ftth" href="/editor.html?red=ftth">
+            <span class="home-card-ico home-card-ico--ftth" aria-hidden="true">
+              <img class="home-card-icon-img" src="/icons/ui/home.svg" width="28" height="28" alt="" decoding="async" />
+            </span>
+            <h2 class="home-card-title">Red FTTH</h2>
+          </a>
 
-      <a class="home-card home-card--corp" href="/editor.html?red=corporativa">
-        <span class="home-card-ico home-card-ico--corp" aria-hidden="true">
-          <img class="home-card-icon-img" src="/icons/ui/building.svg" width="28" height="28" alt="Icono de edificio para Red corporativa" decoding="async" />
-        </span>
-        <h2 class="home-card-title">Red corporativa</h2>
-      </a>
+          <a class="home-card home-card--corp" href="/editor.html?red=corporativa">
+            <span class="home-card-ico home-card-ico--corp" aria-hidden="true">
+              <img class="home-card-icon-img" src="/icons/ui/building.svg" width="28" height="28" alt="" decoding="async" />
+            </span>
+            <h2 class="home-card-title">Red corporativa</h2>
+          </a>
 
-      <a class="home-card home-card--dashboard" href="/dashboard/">
-        <span class="home-card-ico home-card-ico--dashboard" aria-hidden="true">
-          <img class="home-card-icon-img" src="/icons/ui/layers.svg" width="28" height="28" alt="Icono de capas para Dashboard" decoding="async" />
-        </span>
-        <h2 class="home-card-title">Dashboard</h2>
-      </a>
+          <a class="home-card home-card--dashboard" href="/dashboard/">
+            <span class="home-card-ico home-card-ico--dashboard" aria-hidden="true">
+              <img class="home-card-icon-img" src="/icons/ui/layers.svg" width="28" height="28" alt="" decoding="async" />
+            </span>
+            <h2 class="home-card-title">Dashboard</h2>
+          </a>
 
-      <a class="home-card home-card--analytics" href="/analitica.html">
-        <span class="home-card-ico home-card-ico--analytics" aria-hidden="true">
-          <img class="home-card-icon-img" src="/icons/ui/chart.svg" width="28" height="28" alt="Icono de gráfico para Analítica" decoding="async" />
-        </span>
-        <h2 class="home-card-title">Analítica</h2>
-      </a>
-    </nav>
+          <a class="home-card home-card--analytics" href="/analitica.html">
+            <span class="home-card-ico home-card-ico--analytics" aria-hidden="true">
+              <img class="home-card-icon-img" src="/icons/ui/chart.svg" width="28" height="28" alt="" decoding="async" />
+            </span>
+            <h2 class="home-card-title">Analítica</h2>
+          </a>
+        </nav>
+      </aside>
+
+      <section class="home-stage" aria-labelledby="home-map-preview-title">
+        <div class="home-map-preview">
+          <div class="home-map-preview__grid" aria-hidden="true"></div>
+          <div class="home-map-preview__glow" aria-hidden="true"></div>
+          <div class="home-map-preview__lines" aria-hidden="true">
+            <span class="home-map-preview__fiber home-map-preview__fiber--a"></span>
+            <span class="home-map-preview__fiber home-map-preview__fiber--b"></span>
+            <span class="home-map-preview__fiber home-map-preview__fiber--c"></span>
+          </div>
+          <div class="home-map-preview__inner">
+            <h2 id="home-map-preview-title" class="home-map-preview__title">Mapa operativo</h2>
+            <p class="home-map-preview__text">El visor Mapbox con tendidos y nodos se abre al elegir una red. Usa las tarjetas de la izquierda o los accesos rápidos abajo.</p>
+            <div class="home-map-preview__actions">
+              <a class="home-map-preview__btn home-map-preview__btn--ftth" href="/editor.html?red=ftth">Abrir operación FTTH</a>
+              <a class="home-map-preview__btn home-map-preview__btn--corp" href="/editor.html?red=corporativa">Abrir corporativa</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <footer class="home-foot">
-      <div class="home-foot-links">
-        <span class="home-foot-label">Accesos directos</span>
-        <a href="/dashboard/">/dashboard/</a>
-        <a href="/ftth.html">/ftth.html</a>
-        <a href="/corporativa.html">/corporativa.html</a>
+      <div class="home-foot-row">
+        <div class="home-foot-links" aria-label="Accesos directos">
+          <span class="home-foot-label">Accesos directos</span>
+          <a href="/dashboard/">Mantenimiento (dashboard)</a>
+          <a href="/ftth.html">Atajo editor FTTH</a>
+          <a href="/corporativa.html">Atajo red corporativa</a>
+        </div>
+        <button type="button" class="auth-logout-btn" id="auth-logout">Cerrar sesión</button>
       </div>
-      <button type="button" class="auth-logout-btn" id="auth-logout">Cerrar sesión</button>
     </footer>
   </div>
   <script type="module">
