@@ -1880,6 +1880,17 @@ export async function boot() {
   document.getElementById('btn-open-panel-reporte')?.addEventListener('click', () => {
     toggleEditorFloatPanel('reporte', editorFloatHooks);
   });
+  document.getElementById('btn-open-panel-ruta')?.addEventListener('click', () => {
+    try {
+      btnNewRoute?.click();
+      toggleEditorFloatPanel('trazar', editorFloatHooks);
+    } catch {
+      setStatus('No se pudo iniciar el montaje de ruta.');
+    }
+  });
+  document.getElementById('btn-open-panel-cierre')?.addEventListener('click', () => {
+    setStatus('Montar cierre: función en preparación.');
+  });
 
   document.getElementById('editor-float-backdrop')?.addEventListener('click', () => {
     editorFloatHooks.onReporteClose();
