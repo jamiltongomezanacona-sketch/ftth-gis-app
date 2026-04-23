@@ -27,7 +27,7 @@
   <div id="auth-gate-root" class="auth-gate-root"></div>
   <div
     id="network-gate"
-    class="network-gate"
+    class="network-gate network-gate--dismissed"
     role="dialog"
     aria-modal="true"
     aria-labelledby="network-gate-title"
@@ -532,6 +532,9 @@
               </div>
             </details>
           <div class="reporte-ev-actions reporte-ev-actions--sticky">
+            <button type="button" id="btn-reporte-evento-rapido" class="reporte-ev-btn reporte-ev-btn--ghost-sm">
+              Evento rápido
+            </button>
             <button type="button" id="btn-reporte-evento-guardar" class="reporte-ev-btn reporte-ev-btn--guardar">
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" class="reporte-ev-save-ico">
                 <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M20 6 9 17l-5-5"/>

@@ -15,6 +15,15 @@ const QUICK_PRESETS = {
   mantenimiento: { tipo_evento: 'MANTENIMIENTO', estado: 'EN PROCESO', accion: 'INTERVENCIÓN TECNICA' }
 };
 
+/** Acciones sugeridas por tipo para evitar combinaciones inválidas al guardar. */
+const ACTIONS_BY_TYPE = {
+  VANDALISMO: ['REEMPLAZO DE FIBRA', 'INTERVENCIÓN TECNICA'],
+  'OBRAS CIVILES': ['INTERVENCIÓN TECNICA', 'REEMPLAZO DE FIBRA', 'SE INSTALA CIERRE'],
+  DETERIORO: ['INTERVENCIÓN TECNICA', 'REEMPLAZO DE FIBRA'],
+  MANTENIMIENTO: ['INTERVENCIÓN TECNICA', 'SE INSTALA CIERRE'],
+  'DAÑO POR TERCEROS': ['REEMPLAZO DE FIBRA', 'INTERVENCIÓN TECNICA']
+};
+
 /**
  * Sidebar «REPORTE EVENTO»: flujo para técnico en campo (GPS + tap cable + cola offline).
  * @param {{
@@ -67,6 +76,7 @@ export function initReporteEventoSidebar(opts) {
   const descEl = /** @type {HTMLTextAreaElement | null} */ (document.getElementById('reporte-ev-descripcion'));
   const descDraftTag = document.getElementById('reporte-ev-desc-draft');
   const btnGuardar = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-evento-guardar'));
+  const btnRapido = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-evento-rapido'));
   const btnCancelWait = document.getElementById('btn-reporte-cancel-wait');
   const btnRepick = document.getElementById('btn-reporte-repick');
   const btnUseGps = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-use-gps'));
@@ -268,8 +278,9 @@ export function initReporteEventoSidebar(opts) {
   function handleGpsPick(opts = {}) {
     if (!('geolocation' in navigator)) {
       setGpsStatus('Tu dispositivo no permite ubicación GPS.', 'error');
-      return;
+      return Promise.resolve(false);
     }
+    return new Promise((resolve) => {
     const btn = btnUseGps;
     if (btn) {
       btn.disabled = true;
@@ -288,6 +299,7 @@ export function initReporteEventoSidebar(opts) {
         const acc = Number(pos.coords.accuracy);
         if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
           setGpsStatus('Ubicación inválida. Intenta de nuevo.', 'error');
+          resolve(false);
           return;
         }
         lastGpsAccuracy = Number.isFinite(acc) ? acc : null;
@@ -354,6 +366,7 @@ export function initReporteEventoSidebar(opts) {
           : 'bad';
         setGpsStatus(`GPS obtenido${accTxt}.${attachedRouteMsg}`, accLevel);
         setStatus(`Reporte evento: ubicación fijada por GPS${accTxt}.${attachedRouteMsg}`);
+        resolve(true);
       },
       (err) => {
         if (btn) {
@@ -369,9 +382,11 @@ export function initReporteEventoSidebar(opts) {
             ? 'Tiempo de espera agotado. Intenta otra vez sin obstáculos.'
             : 'No se pudo obtener la ubicación.';
         setGpsStatus(codeMsg, 'error');
+        resolve(false);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
+    });
   }
 
   function resetForCableCleared() {
@@ -573,6 +588,7 @@ export function initReporteEventoSidebar(opts) {
     if (!p) return;
     tipoEl.value = p.tipo_evento;
     estadoEl.value = p.estado;
+    syncActionsForTipo(p.accion);
     accionEl.value = p.accion;
     /* Feedback visual: resalta el preset activo brevemente. */
     presetBtns.forEach((b) => b.classList.toggle('is-active', b.dataset.preset === key));
@@ -582,6 +598,41 @@ export function initReporteEventoSidebar(opts) {
     } catch {
       /* */
     }
+  }
+
+  /**
+   * @param {string} preferredAction
+   */
+  function syncActionsForTipo(preferredAction = '') {
+    const tipo = String(tipoEl.value ?? '').trim().toUpperCase();
+    const actions = ACTIONS_BY_TYPE[tipo] || [];
+    if (!actions.length) {
+      accionEl.disabled = true;
+      accionEl.innerHTML = '<option value="">Primero elige tipo</option>';
+      return;
+    }
+    const prev = String(preferredAction || accionEl.value || '').trim().toUpperCase();
+    accionEl.disabled = false;
+    accionEl.innerHTML = '<option value="">Selecciona acción</option>';
+    for (const action of actions) {
+      const opt = document.createElement('option');
+      opt.value = action;
+      opt.textContent = action;
+      accionEl.appendChild(opt);
+    }
+    const hasPrev = actions.some((a) => a.toUpperCase() === prev);
+    if (hasPrev) accionEl.value = prev;
+  }
+
+  function shouldRetryWithoutDistOdf(err) {
+    const raw = `${err?.message ?? ''} ${err?.details ?? ''} ${err?.hint ?? ''}`.toLowerCase();
+    const code = String(err?.code ?? '');
+    const mentionsDist = raw.includes('dist_odf');
+    const schemaIssue =
+      /column|schema cache|does not exist|unknown|pgrst/.test(raw) ||
+      code === '42703' ||
+      code === 'PGRST204';
+    return mentionsDist && schemaIssue;
   }
 
   function resetFormAfterSubmit() {
@@ -648,7 +699,17 @@ export function initReporteEventoSidebar(opts) {
 
     btnGuardar.disabled = true;
     try {
-      const res = await api.postEventoReporte(body);
+      let res;
+      try {
+        res = await api.postEventoReporte(body);
+      } catch (err) {
+        if (dist_odf != null && shouldRetryWithoutDistOdf(err)) {
+          const fallbackBody = { ...body, dist_odf: null };
+          res = await api.postEventoReporte(fallbackBody);
+        } else {
+          throw err;
+        }
+      }
       const id = res?.id;
       setStatus(`Evento guardado${id != null ? ` (id ${id})` : ''}.`);
       showToast(`✓ Evento guardado${id != null ? ` (id ${id})` : ''}`, 'ok');
@@ -713,9 +774,37 @@ export function initReporteEventoSidebar(opts) {
 
   btnUseGps?.addEventListener('click', () => handleGpsPick());
   btnImproveGps?.addEventListener('click', () => handleGpsPick({ silent: false }));
+  btnRapido?.addEventListener('click', async () => {
+    if (btnRapido.disabled) return;
+    btnRapido.disabled = true;
+    try {
+      let hasPoint =
+        !!pinnedLngLat &&
+        Number.isFinite(pinnedLngLat.lng) &&
+        Number.isFinite(pinnedLngLat.lat);
+      if (!hasPoint) {
+        hasPoint = await handleGpsPick({ silent: false });
+      }
+      if (!hasPoint) {
+        setStatus('Evento rápido: no se pudo fijar ubicación GPS.');
+        return;
+      }
+      applyPreset('corte-obras');
+      if (!String(descEl.value || '').trim()) {
+        descEl.value = 'Evento rápido en campo';
+      }
+      await submit();
+    } finally {
+      btnRapido.disabled = false;
+    }
+  });
 
   presetBtns.forEach((b) => {
     b.addEventListener('click', () => applyPreset(b.dataset.preset || ''));
+  });
+
+  tipoEl.addEventListener('change', () => {
+    syncActionsForTipo();
   });
 
   /* Detectar edición manual del campo Dist ODF para no sobreescribirlo luego. */
@@ -726,6 +815,8 @@ export function initReporteEventoSidebar(opts) {
 
   /* Borrador automático de la descripción. */
   descEl.addEventListener('input', () => persistDraft());
+
+  syncActionsForTipo();
 
   /* Flush al recuperar red y cuando vuelve el foco de la pestaña. */
   window.addEventListener('online', () => void flushQueue());
