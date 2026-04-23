@@ -154,7 +154,7 @@ function initMap(token) {
       source: 'rutas-corp',
       filter: ['==', ['geometry-type'], 'LineString'],
       paint: {
-        'line-color': '#a78bfa',
+        'line-color': '#1e40af',
         'line-width': 2.2,
         'line-opacity': 0.85
       }

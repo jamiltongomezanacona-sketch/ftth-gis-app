@@ -1,7 +1,7 @@
 const SOURCE_ID = 'rutas-source';
 const LAYER_ID = 'rutas-layer';
 
-/** Tendidos FTTH (no seleccionados): azul oscuro. */
+/** Tendidos FTTH y corporativa: mismo color unificado. */
 const FTTH_LINE_COLOR = '#1e40af';
 
 /** Color/grosor con resaltado del tendido seleccionado (clic o buscador). */
@@ -12,10 +12,10 @@ const PAINT_COLOR_WITH_SELECTION = [
     'match',
     ['get', 'red_tipo'],
     'corporativa',
-    '#f0abfc',
+    '#22d3ee',
     '#22d3ee'
   ],
-  ['match', ['get', 'red_tipo'], 'corporativa', '#a78bfa', FTTH_LINE_COLOR]
+  ['match', ['get', 'red_tipo'], 'corporativa', FTTH_LINE_COLOR, FTTH_LINE_COLOR]
 ];
 
 const PAINT_WIDTH_WITH_SELECTION = [
@@ -26,7 +26,7 @@ const PAINT_WIDTH_WITH_SELECTION = [
 ];
 
 /** Misma apariencia para todos los tendidos (p. ej. varios cables de una molécula). */
-const PAINT_COLOR_UNIFORM = ['match', ['get', 'red_tipo'], 'corporativa', '#a78bfa', FTTH_LINE_COLOR];
+const PAINT_COLOR_UNIFORM = FTTH_LINE_COLOR;
 
 const PAINT_WIDTH_UNIFORM = 5;
 
