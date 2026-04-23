@@ -77,6 +77,121 @@
   --app-blur-strong: blur(18px) saturate(1.15);
 }
 
+/* ----------------------------------------------------------------------
+   Botones más grandes para PC (mejor experiencia de usuario en escritorio)
+   ---------------------------------------------------------------------- */
+@media (min-width: 901px) {
+  /* Botones principales del panel de acciones */
+  .panel-otdr .otdr-btn {
+    padding: 14px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    min-height: 52px;
+    border-radius: 14px;
+  }
+
+  /* Botón de armado OTDR */
+  .panel-otdr .otdr-arm-btn {
+    padding: 16px 20px;
+    min-height: 56px;
+    border-radius: 14px;
+  }
+
+  .panel-otdr .otdr-arm-btn-ico {
+    width: 44px;
+    height: 44px;
+  }
+
+  .panel-otdr .otdr-arm-btn-title {
+    font-size: 0.95rem;
+  }
+
+  /* Botones de reporte de eventos */
+  .reporte-ev-btn {
+    padding: 14px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    min-height: 52px;
+    border-radius: 14px;
+  }
+
+  .reporte-ev-btn--gps {
+    min-height: 60px;
+    font-size: 1.1rem;
+    padding: 16px 24px;
+  }
+
+  .reporte-ev-btn--guardar {
+    min-height: 56px;
+    font-size: 1.05rem;
+    padding: 16px 22px;
+  }
+
+  .reporte-ev-btn--ghost-sm {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  /* Botones de autenticación */
+  .auth-btn-install {
+    padding: 14px 22px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    min-height: 52px;
+    border-radius: 999px;
+  }
+
+  .auth-submit {
+    padding: 16px 24px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-height: 56px;
+    border-radius: 999px;
+  }
+
+  /* Botones de popup de eventos */
+  .evento-popup__btn {
+    padding: 12px 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  /* Botones de navegación externa */
+  .map-external-nav-popup__btn {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  /* Botón de toggle del editor */
+  .editor-chrome-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  /* Botones de tarjetas de red */
+  .network-card {
+    padding: 22px 18px 20px;
+    min-height: 120px;
+    border-radius: 16px;
+  }
+
+  .network-card-lbl {
+    font-size: 1.1rem;
+  }
+
+  .network-card-sub {
+    font-size: 0.8rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --transition: 0.01ms;
