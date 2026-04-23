@@ -2001,7 +2001,12 @@ body.editor-body #sidebar {
 }
 
 .panel-reporte-evento {
-  border-color: rgba(148, 163, 184, 0.28);
+  border-color: rgba(148, 163, 184, 0.24);
+  background:
+    linear-gradient(175deg, rgba(15, 23, 42, 0.95) 0%, rgba(17, 24, 39, 0.97) 62%, rgba(30, 41, 59, 0.96) 100%);
+  box-shadow:
+    0 20px 42px rgba(2, 6, 23, 0.5),
+    0 0 0 1px rgba(148, 163, 184, 0.14) inset;
 }
 
 .sidebar-details.panel-reporte-evento > summary {
@@ -2075,6 +2080,21 @@ body.editor-body #sidebar {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+.reporte-ev-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.reporte-ev-body::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.45), rgba(148, 163, 184, 0.45));
+}
+
+.reporte-ev-body::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .reporte-ev-showcase {
@@ -2088,15 +2108,15 @@ body.editor-body #sidebar {
    para reducir el alto total del panel en pantallas pequeñas. */
 .reporte-ev-collapse {
   margin: 0 0 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(15, 23, 42, 0.32);
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: linear-gradient(170deg, rgba(30, 41, 59, 0.62), rgba(15, 23, 42, 0.58));
   overflow: hidden;
 }
 
 .reporte-ev-collapse[open] {
-  background: rgba(15, 23, 42, 0.44);
-  border-color: rgba(148, 163, 184, 0.26);
+  background: linear-gradient(170deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.68));
+  border-color: rgba(148, 163, 184, 0.34);
 }
 
 .reporte-ev-collapse > summary {
@@ -2198,8 +2218,8 @@ body.editor-body #sidebar {
   margin-bottom: 12px;
   padding: 11px 12px 13px;
   border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(15, 23, 42, 0.28);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: linear-gradient(165deg, rgba(30, 41, 59, 0.45), rgba(15, 23, 42, 0.5));
   transition:
     background 0.22s ease,
     border-color 0.22s ease,
@@ -2211,23 +2231,23 @@ body.editor-body #sidebar {
 }
 
 .reporte-ev-field:focus-within {
-  border-color: rgba(52, 211, 153, 0.38);
+  border-color: rgba(96, 165, 250, 0.5);
   background: linear-gradient(
     165deg,
-    rgba(52, 211, 153, 0.1) 0%,
-    rgba(30, 41, 59, 0.35) 48%,
-    rgba(15, 23, 42, 0.52) 100%
+    rgba(59, 130, 246, 0.18) 0%,
+    rgba(30, 41, 59, 0.54) 48%,
+    rgba(15, 23, 42, 0.62) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(52, 211, 153, 0.16),
-    0 0 28px rgba(52, 211, 153, 0.1),
+    0 0 0 1px rgba(96, 165, 250, 0.2),
+    0 0 28px rgba(59, 130, 246, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(12px) saturate(1.15);
   -webkit-backdrop-filter: blur(12px) saturate(1.15);
 }
 
 .reporte-ev-field:focus-within .reporte-ev-label {
-  color: #6ee7b7;
+  color: #bfdbfe;
 }
 
 .reporte-ev-label {
@@ -2247,9 +2267,9 @@ body.editor-body #sidebar {
   width: 100%;
   box-sizing: border-box;
   border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(15, 23, 42, 0.65);
-  color: var(--text);
+  border: 1px solid rgba(148, 163, 184, 0.38);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.78));
+  color: #f8fafc;
   font-size: 0.88rem;
   padding: 10px 12px;
   font-family: inherit;
@@ -2268,11 +2288,11 @@ body.editor-body #sidebar {
 .reporte-ev-select:focus,
 .reporte-ev-textarea:focus {
   outline: none;
-  border-color: rgba(52, 211, 153, 0.45);
+  border-color: rgba(96, 165, 250, 0.55);
   background: rgba(15, 23, 42, 0.78);
   box-shadow:
-    0 0 0 1px rgba(52, 211, 153, 0.22),
-    0 0 20px rgba(52, 211, 153, 0.12);
+    0 0 0 1px rgba(96, 165, 250, 0.26),
+    0 0 20px rgba(59, 130, 246, 0.16);
 }
 
 .reporte-ev-textarea {
@@ -2298,7 +2318,8 @@ body.editor-body #sidebar {
 
 .reporte-ev-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
   gap: 10px;
   margin-top: 14px;
 }
@@ -2306,12 +2327,21 @@ body.editor-body #sidebar {
 .reporte-ev-btn {
   width: 100%;
   border: none;
-  border-radius: 10px;
-  padding: 12px 14px;
-  font-size: 0.9rem;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.reporte-ev-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 .reporte-ev-btn:disabled {
@@ -2320,16 +2350,28 @@ body.editor-body #sidebar {
 }
 
 .reporte-ev-btn--guardar {
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, #0f172a 100%);
-  color: #e2e8f0;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: 1px solid rgba(147, 197, 253, 0.5);
+  box-shadow:
+    0 10px 24px rgba(37, 99, 235, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .reporte-ev-btn--guardar:hover:not(:disabled) {
-  border-color: rgba(52, 211, 153, 0.4);
+  border-color: rgba(191, 219, 254, 0.65);
   color: #fff;
-  box-shadow: 0 0 20px rgba(52, 211, 153, 0.12);
+  box-shadow:
+    0 12px 28px rgba(37, 99, 235, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.reporte-ev-actions .reporte-ev-btn--ghost-sm {
+  flex: 0 0 44%;
+}
+
+.reporte-ev-actions .reporte-ev-btn--guardar {
+  flex: 1 1 auto;
 }
 
 .reporte-ev-select--estado option.reporte-ev-opt--critico {
@@ -7963,15 +8005,15 @@ body.editor-body .reporte-ev-wait-hint {
 }
 
 body.editor-body .reporte-ev-btn--ghost-sm {
-  border-color: var(--hub-border-strong);
-  background: var(--hub-surface-2);
-  color: var(--hub-text);
+    border-color: rgba(148, 163, 184, 0.36);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(226, 232, 240, 0.94));
+    color: #0f172a;
 }
 
 body.editor-body .reporte-ev-btn--ghost-sm:hover {
-  border-color: rgba(148, 163, 184, 0.38);
-  color: var(--hub-text);
-  background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(96, 165, 250, 0.52);
+    color: #0f172a;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.95));
 }
 
 body.editor-body .reporte-ev-summary-title {
@@ -8022,21 +8064,21 @@ body.editor-body .reporte-ev-li-line2 {
 }
 
 body.editor-body .reporte-ev-field:focus-within {
-  border-color: rgba(52, 211, 153, 0.38);
+    border-color: rgba(96, 165, 250, 0.46);
   background: linear-gradient(
     165deg,
-    rgba(52, 211, 153, 0.1) 0%,
+      rgba(59, 130, 246, 0.16) 0%,
     rgba(30, 41, 59, 0.4) 48%,
     rgba(15, 23, 42, 0.55) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(52, 211, 153, 0.16),
-    0 0 26px rgba(52, 211, 153, 0.1),
+      0 0 0 1px rgba(96, 165, 250, 0.2),
+      0 0 26px rgba(59, 130, 246, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 body.editor-body .reporte-ev-field:focus-within .reporte-ev-label {
-  color: #6ee7b7;
+    color: #bfdbfe;
 }
 
 body.editor-body .reporte-ev-input,
@@ -8050,23 +8092,23 @@ body.editor-body .reporte-ev-textarea {
 body.editor-body .reporte-ev-input:focus,
 body.editor-body .reporte-ev-select:focus,
 body.editor-body .reporte-ev-textarea:focus {
-  border-color: rgba(52, 211, 153, 0.45);
+    border-color: rgba(96, 165, 250, 0.55);
   box-shadow:
-    0 0 0 1px rgba(52, 211, 153, 0.22),
-    0 0 20px rgba(52, 211, 153, 0.12);
+      0 0 0 1px rgba(96, 165, 250, 0.26),
+      0 0 20px rgba(59, 130, 246, 0.16);
 }
 
 body.editor-body .reporte-ev-btn--guardar {
-  background: linear-gradient(180deg, #0d9488 0%, #047857 100%);
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
   color: #ffffff;
-  border: 1px solid rgba(52, 211, 153, 0.35);
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+    border: 1px solid rgba(147, 197, 253, 0.5);
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.34);
 }
 
 body.editor-body .reporte-ev-btn--guardar:hover:not(:disabled) {
   filter: brightness(1.06);
   color: #ffffff;
-  border-color: rgba(110, 231, 183, 0.45);
+    border-color: rgba(191, 219, 254, 0.65);
 }
 
 /* Editor: mismo popup claro (legible sobre mapa); acento sutil en borde */
@@ -8846,10 +8888,28 @@ body.editor-body
     position: sticky;
     bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
     z-index: 3;
-    margin: 14px -10px -12px;
-    padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0%, rgba(8, 12, 22, 0.95) 45%);
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    margin: 12px -10px -12px;
+    padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px));
+    display: grid;
+    grid-template-columns: minmax(120px, 0.9fr) minmax(160px, 1.1fr);
+    gap: 8px;
+    background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0%, rgba(8, 12, 22, 0.92) 42%);
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  body.editor-body .panel-reporte-evento .reporte-ev-actions--sticky .reporte-ev-btn {
+    min-height: 46px;
+    margin: 0;
+  }
+
+  body.editor-body .panel-reporte-evento .reporte-ev-actions--sticky .reporte-ev-btn--guardar {
+    min-height: 50px;
+  }
+
+  body.editor-body .panel-reporte-evento .reporte-ev-actions--sticky .reporte-ev-btn--ghost-sm {
+    border-radius: 12px;
   }
 
   /* Plantillas rápidas: grid de 2 columnas en móvil (ya lo está), pero permite wrap. */
