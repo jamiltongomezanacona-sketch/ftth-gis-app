@@ -8242,6 +8242,22 @@ body.editor-body .editor-float-panel__body {
   -webkit-overflow-scrolling: touch;
 }
 
+body.editor-body .editor-float-panel__body .otdr-panel-hint {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #94a3b8;
+  background: rgba(30, 41, 59, 0.45);
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  border-radius: 10px;
+}
+
+body.editor-body .editor-float-panel__body .otdr-panel-hint strong {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
 body.editor-body .editor-float-panel .panel-block.panel-otdr {
   margin: 0;
   border-radius: 12px;

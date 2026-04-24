@@ -2173,11 +2173,40 @@ export async function boot() {
     otdrCutLayer.bringToFront();
   }
 
+  /**
+   * Capas de MapboxDraw encima de rutas/eventos/medición; si no, el trazo no recibe clics
+   * (quedan por debajo de `routesLayer` y el modo «Trazar / nueva ruta» parece roto).
+   */
+  function bringMapboxDrawLayersToTop() {
+    try {
+      if (!editing) return;
+      const layers = map.getStyle()?.layers;
+      if (!layers?.length) return;
+      const drawIds = layers
+        .map((l) => l.id)
+        .filter(
+          (id) =>
+            typeof id === 'string' &&
+            (id.startsWith('mapbox-gl-draw') || id.startsWith('gl-draw'))
+        );
+      for (const id of drawIds) {
+        try {
+          map.moveLayer(id);
+        } catch {
+          /* */
+        }
+      }
+    } catch (e) {
+      console.warn('MapboxDraw (orden de capas):', e);
+    }
+  }
+
   /** Mantiene el orden visual estable de capas operativas tras cambios de datos/estilo. */
   function bringOperationalLayersToFront() {
     centralesLayer.bringToFront();
     moleculeOverlayLayer.bringToFront();
     bumpLayersAfterPolylineMeasure();
+    bringMapboxDrawLayersToTop();
   }
 
   /** @type {number[]} */
@@ -2759,6 +2788,10 @@ export async function boot() {
   }
 
   map.on('load', async () => {
+    /* Tras cambiar modo en Draw, volver a subir capas (otras rutinas reordenan el estilo). */
+    map.on('draw.modechange', () => {
+      bringMapboxDrawLayersToTop();
+    });
     scheduleMapResize(0);
     /* Segundo resize en timer aparte: no cancelar el primero (mismo mapResizeTimer). */
     window.setTimeout(() => scheduleMapResize(0), 280);
@@ -3615,6 +3648,14 @@ export async function boot() {
     cableSearch?.reset();
     editor.attach();
     editor.startNewLineDrawing();
+    bringMapboxDrawLayersToTop();
+    try {
+      map.once('idle', () => {
+        bringMapboxDrawLayersToTop();
+      });
+    } catch {
+      /* */
+    }
     setStatus(
       `Nueva ruta «${nombre}»: traza la línea en el mapa (doble clic para cerrar el trazo). Luego Guardar.`
     );
@@ -3633,6 +3674,14 @@ export async function boot() {
     routesLayer.setHiddenRouteId(selectedFeature.id);
     editor.attach();
     editor.startEdit(selectedFeature);
+    bringMapboxDrawLayersToTop();
+    try {
+      map.once('idle', () => {
+        bringMapboxDrawLayersToTop();
+      });
+    } catch {
+      /* */
+    }
     setStatus('Modo edición: arrastra vértices, añade puntos (+ línea) o borra (papelera).');
     syncButtons();
   });
