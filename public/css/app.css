@@ -5017,8 +5017,7 @@ body.editor-body #editor-gps-dock.editor-gps-compass {
   pointer-events: none;
 }
 
-body.editor-body:has(#measure-polyline-dock:not([hidden])) #editor-gps-dock.editor-gps-compass,
-body.editor-body:has(#measure-cable-dock:not([hidden])) #editor-gps-dock.editor-gps-compass {
+body.editor-body:has(#measure-polyline-dock:not([hidden])) #editor-gps-dock.editor-gps-compass {
   bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 108px));
 }
 
@@ -9124,80 +9123,8 @@ body.editor-body .mapboxgl-ctrl-bottom-right {
 
 /* Si la barra de medición inferior está visible, subir el GPS para evitar
    solape con ese dock fijo bottom-right. */
-body.editor-body:has(#measure-polyline-dock:not([hidden])) .mapboxgl-ctrl-bottom-right,
-body.editor-body:has(#measure-cable-dock:not([hidden])) .mapboxgl-ctrl-bottom-right {
+body.editor-body:has(#measure-polyline-dock:not([hidden])) .mapboxgl-ctrl-bottom-right {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 86px) !important;
-}
-
-/* Dock medición tendido: mismo anclaje que polilínea; panel un poco más ancho para dos tramos. */
-.measure-cable-inner {
-  width: min(304px, calc(100vw - 24px));
-}
-
-.measure-cable-hint {
-  margin: 0 0 8px;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: #cbd5e1;
-}
-
-.measure-cable-body {
-  margin-bottom: 6px;
-}
-
-.measure-cable-meta {
-  margin: 0 0 4px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 0.72rem;
-  color: #94a3b8;
-}
-
-.measure-cable-meta__lbl {
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.measure-cable-meta__name {
-  font-size: 0.84rem;
-  font-weight: 800;
-  color: #f8fafc;
-}
-
-.measure-cable-ref {
-  margin: 0 0 10px;
-  font-size: 0.68rem;
-  line-height: 1.35;
-  color: #94a3b8;
-}
-
-.measure-cable-dir {
-  margin: 8px 0 4px;
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: #64748b;
-}
-
-.measure-cable-dir--total {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(100, 116, 139, 0.25);
-}
-
-.measure-cable-actions {
-  grid-template-columns: 1fr !important;
-}
-
-.measure-cable-trash-btn {
-  width: 100%;
-  max-width: none;
-  height: 40px;
-  border-radius: 11px;
 }
 
 /* =============================================================================
