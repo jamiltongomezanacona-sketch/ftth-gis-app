@@ -236,20 +236,35 @@ export function snapLngLatToLine(line, lngLat, turf) {
  * @returns {{ meters: number, nombre: string } | null}
  */
 export function nearestCentralMeters(lngLatPoint, fcCent, turf) {
+  const full = nearestCentralPoint(lngLatPoint, fcCent, turf);
+  if (!full) return null;
+  return { meters: full.meters, nombre: full.nombre };
+}
+
+/**
+ * Central o nodo más cercano (aire) a un punto, con coordenadas para proyectar al tendido.
+ * @param {[number, number]} lngLatPoint
+ * @param {GeoJSON.FeatureCollection} fcCent
+ * @param {object} turf
+ * @returns {{ meters: number, nombre: string, coordinates: [number, number] } | null}
+ */
+export function nearestCentralPoint(lngLatPoint, fcCent, turf) {
   const feats = fcCent?.features?.filter(
     (f) => f?.geometry?.type === 'Point' && Array.isArray(f.geometry.coordinates)
   );
   if (!feats?.length) return null;
   const target = turf.point(lngLatPoint);
-  let best = /** @type {{ meters: number, nombre: string } | null} */ (null);
+  let best = /** @type {{ meters: number, nombre: string, coordinates: [number, number] } | null} */ (
+    null
+  );
   for (const f of feats) {
-    const c = f.geometry.coordinates;
+    const c = /** @type {[number, number]} */ (f.geometry.coordinates);
     const d = turf.distance(target, turf.point(c), { units: 'meters' });
     const nombre = String(
       f.properties?.nombre ?? f.properties?.name ?? 'Central'
     ).trim();
     if (!best || d < best.meters) {
-      best = { meters: d, nombre: nombre || 'Central' };
+      best = { meters: d, nombre: nombre || 'Central', coordinates: c };
     }
   }
   return best;

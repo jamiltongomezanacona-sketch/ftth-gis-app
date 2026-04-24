@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260423noChromeNuevaRuta" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423medirCableTendido" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -103,8 +103,16 @@
             <span class="editor-field-sidebar__item-sub">OTDR · demo localización</span>
           </button>
           <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-medir">
-            <span class="editor-field-sidebar__item-title">Medir</span>
-            <span class="editor-field-sidebar__item-sub">Distancia y +20 % reserva en mapa</span>
+            <span class="editor-field-sidebar__item-title">Medir · trazo libre</span>
+            <span class="editor-field-sidebar__item-sub">Polilínea en el mapa · tendido y fibra +20 %</span>
+          </button>
+          <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-medir-cable-punto">
+            <span class="editor-field-sidebar__item-title">Medir cable · desde punto</span>
+            <span class="editor-field-sidebar__item-sub">Clic en tendido FTTH o corporativo · atrás y adelante +20 %</span>
+          </button>
+          <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-medir-cable-central">
+            <span class="editor-field-sidebar__item-title">Medir cable · desde central/nodo</span>
+            <span class="editor-field-sidebar__item-sub">Referencia = central o nodo proyectado al tendido (+20 %)</span>
           </button>
           <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-montar-evento">
             <span class="editor-field-sidebar__item-title">Montar evento</span>
@@ -233,6 +241,64 @@
     </div>
   </div>
 
+  <!-- Medición a lo largo del tendido (referencia en cable o en central/nodo proyectado). -->
+  <div id="measure-cable-dock" class="measure-polyline-dock measure-cable-dock" hidden>
+    <div class="measure-polyline-inner measure-cable-inner">
+      <p id="measure-cable-hint" class="measure-cable-hint" aria-live="polite"></p>
+      <div id="measure-cable-body" class="measure-cable-body" hidden>
+        <p class="measure-cable-meta">
+          <span class="measure-cable-meta__lbl">Tendido</span>
+          <strong id="measure-cable-cable-name" class="measure-cable-meta__name">—</strong>
+        </p>
+        <p id="measure-cable-ref-note" class="measure-cable-ref"></p>
+        <p class="measure-cable-dir">← Hacia inicio (1.º vértice)</p>
+        <div class="measure-poly-stat-row measure-poly-stat-row--compact">
+          <div class="measure-poly-stat">
+            <span class="measure-poly-stat__label">Tendido</span>
+            <strong id="measure-cable-start-geom" class="measure-poly-stat__value measure-poly-stat__value--dist">—</strong>
+          </div>
+          <div class="measure-poly-stat">
+            <span class="measure-poly-stat__label measure-poly-stat__label--accent">Fibra +20 %</span>
+            <strong id="measure-cable-start-fib" class="measure-poly-stat__value measure-poly-stat__value--res">—</strong>
+          </div>
+        </div>
+        <p class="measure-cable-dir">→ Hacia fin (último vértice)</p>
+        <div class="measure-poly-stat-row measure-poly-stat-row--compact">
+          <div class="measure-poly-stat">
+            <span class="measure-poly-stat__label">Tendido</span>
+            <strong id="measure-cable-end-geom" class="measure-poly-stat__value measure-poly-stat__value--dist">—</strong>
+          </div>
+          <div class="measure-poly-stat">
+            <span class="measure-poly-stat__label measure-poly-stat__label--accent">Fibra +20 %</span>
+            <strong id="measure-cable-end-fib" class="measure-poly-stat__value measure-poly-stat__value--res">—</strong>
+          </div>
+        </div>
+        <p class="measure-cable-dir measure-cable-dir--total">Total del trazado en mapa</p>
+        <div class="measure-poly-stat-row measure-poly-stat-row--compact">
+          <div class="measure-poly-stat">
+            <span class="measure-poly-stat__label">Tendido</span>
+            <strong id="measure-cable-total-geom" class="measure-poly-stat__value measure-poly-stat__value--dist">—</strong>
+          </div>
+          <div class="measure-poly-stat">
+            <span class="measure-poly-stat__label measure-poly-stat__label--accent">Fibra +20 %</span>
+            <strong id="measure-cable-total-fib" class="measure-poly-stat__value measure-poly-stat__value--res">—</strong>
+          </div>
+        </div>
+      </div>
+      <div class="measure-polyline-actions measure-cable-actions">
+        <button
+          type="button"
+          id="measure-cable-trash"
+          class="measure-poly-btn measure-poly-btn--trash measure-cable-trash-btn"
+          aria-label="Borrar medición en tendido"
+          title="Borrar tramos y referencia del mapa"
+        >
+          <svg class="measure-poly-ico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Estado y métricas: sin paneles en sidebar; app.js sigue usando estos nodos. #status con aria-live para accesibilidad. -->
   <div id="status" class="status-body editor-ui-sink" role="status" aria-live="polite" aria-atomic="true">
     Iniciando…
@@ -257,6 +323,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260423noChromeNuevaRuta"></script>
+  <script type="module" src="/js/app.js?v=20260423medirCableTendido"></script>
 </body>
 </html>

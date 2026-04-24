@@ -34,7 +34,9 @@ import {
   lineLengthMeters,
   lengthWithReserve20Pct,
   snapLngLatToLine,
-  nearestCentralMeters
+  nearestCentralMeters,
+  nearestCentralPoint,
+  distanceFromStartAlongLineMeters
 } from './measurements.js';
 import {
   ensureMeasurePolylineLayers,
@@ -43,6 +45,12 @@ import {
   lineLengthMetersSafe,
   fmtTotalHuman
 } from './measurePolylineLayer.js';
+import {
+  setCableAlongMeasureData,
+  clearCableAlongMeasureData,
+  bringMeasureCableAlongLayersToFront,
+  cableSplitLengthsFromRef
+} from './measureCableAlongLayer.js';
 import { initEditorGpsDock } from './editorGpsDock.js';
 async function loadConfig() {
   const deploy = await import('./config.deploy.js');
@@ -587,7 +595,10 @@ function initEditorChromeMapBridge(mapInstance, opts) {
  *   toggleMeasurePolylineMode: () => void,
  *   isEditing: () => boolean,
  *   btnNewRoute: HTMLButtonElement,
- *   isMeasurePolyDrawing: () => boolean
+ *   isMeasurePolyDrawing: () => boolean,
+ *   isCableMeasurePicking: () => boolean,
+ *   onStartCableMeasurePoint: () => void,
+ *   onStartCableMeasureCentral: () => void
  * }} opts
  */
 function initEditorFieldSidebarMenu(opts) {
@@ -597,7 +608,10 @@ function initEditorFieldSidebarMenu(opts) {
     toggleMeasurePolylineMode,
     isEditing,
     btnNewRoute,
-    isMeasurePolyDrawing
+    isMeasurePolyDrawing,
+    isCableMeasurePicking,
+    onStartCableMeasurePoint,
+    onStartCableMeasureCentral
   } = opts;
   const btn = document.getElementById('btn-editor-field-menu');
   const panel = document.getElementById('editor-field-sidebar');
@@ -687,6 +701,22 @@ function initEditorFieldSidebarMenu(opts) {
     toggleMeasurePolylineMode();
   });
 
+  wire('btn-sidebar-medir-cable-punto', () => {
+    if (isEditing()) {
+      setStatus('Medir cable: no disponible mientras editas una ruta.');
+      return;
+    }
+    onStartCableMeasurePoint();
+  });
+
+  wire('btn-sidebar-medir-cable-central', () => {
+    if (isEditing()) {
+      setStatus('Medir cable: no disponible mientras editas una ruta.');
+      return;
+    }
+    onStartCableMeasureCentral();
+  });
+
   wire('btn-sidebar-montar-evento', () => {
     setStatus('Montar evento: flujo en preparación.');
   });
@@ -696,7 +726,7 @@ function initEditorFieldSidebarMenu(opts) {
   });
 
   wire('btn-sidebar-montar-ruta', () => {
-    if (btnNewRoute.disabled || isMeasurePolyDrawing()) {
+    if (btnNewRoute.disabled || isMeasurePolyDrawing() || isCableMeasurePicking()) {
       setStatus('Montar ruta: termina la medición abierta o la edición antes de crear una ruta.');
       return;
     }
@@ -1529,6 +1559,9 @@ export async function boot() {
   let measurePolylineConfirmed = false;
   /** @type {[number, number][]} */
   let measurePolylineCoords = [];
+  /** Medición a lo largo del tendido: esperando clic en ruta (`point`|`central`) o resultado ya pintado. */
+  let cableMeasurePickKind = /** @type {null | 'point' | 'central'} */ (null);
+  let cableMeasureHasResult = false;
 
   const btnEdit = $('btn-edit');
   const btnSave = $('btn-save');
@@ -1549,6 +1582,21 @@ export async function boot() {
   const measurePolyUndo = /** @type {HTMLButtonElement} */ ($('measure-poly-undo'));
   const measurePolyConfirm = /** @type {HTMLButtonElement} */ ($('measure-poly-confirm'));
   const measurePolyTrash = /** @type {HTMLButtonElement} */ ($('measure-poly-trash'));
+
+  const measureCableDock = document.getElementById('measure-cable-dock');
+  const measureCableHint = document.getElementById('measure-cable-hint');
+  const measureCableBody = document.getElementById('measure-cable-body');
+  const measureCableCableName = document.getElementById('measure-cable-cable-name');
+  const measureCableRefNote = document.getElementById('measure-cable-ref-note');
+  const measureCableStartGeom = document.getElementById('measure-cable-start-geom');
+  const measureCableStartFib = document.getElementById('measure-cable-start-fib');
+  const measureCableEndGeom = document.getElementById('measure-cable-end-geom');
+  const measureCableEndFib = document.getElementById('measure-cable-end-fib');
+  const measureCableTotalGeom = document.getElementById('measure-cable-total-geom');
+  const measureCableTotalFib = document.getElementById('measure-cable-total-fib');
+  const measureCableTrash = /** @type {HTMLButtonElement | null} */ (
+    document.getElementById('measure-cable-trash')
+  );
 
   document.getElementById('btn-change-network')?.addEventListener('click', () => {
     try {
@@ -1676,18 +1724,10 @@ export async function boot() {
     getSuppressMapSidebarCollapse: () => {
       if (editing) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
+      if (isCableMeasurePicking()) return true;
       return false;
     },
     scheduleMapResize
-  });
-
-  initEditorFieldSidebarMenu({
-    scheduleMapResize,
-    setStatus,
-    toggleMeasurePolylineMode,
-    isEditing: () => editing,
-    btnNewRoute,
-    isMeasurePolyDrawing: () => measurePolylineActive && !measurePolylineConfirmed
   });
 
   function updateMetrics(geom, turfNs) {
@@ -1704,15 +1744,17 @@ export async function boot() {
 
   function syncButtons() {
     const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
-    btnNewRoute.disabled = editing || polyDrawing;
+    const cablePick = isCableMeasurePicking();
+    btnNewRoute.disabled = editing || polyDrawing || cablePick;
     btnEdit.disabled = !selectedFeature || editing;
     btnSave.disabled = !editing;
     btnCancel.disabled = !editing;
     measureFab.disabled = editing;
     measureFab.classList.toggle('measure-fab--muted', editing);
-    cableSearch?.setDisabled(editing || polyDrawing);
+    cableSearch?.setDisabled(editing || polyDrawing || cablePick);
     syncMeasureFloatUi();
     syncMeasurePolyDockVisibility();
+    syncCableMeasureDockVisibility();
   }
 
   /** Longitud geodésica del trazo libre y +20 % fibra (dock inferior). */
@@ -1758,6 +1800,11 @@ export async function boot() {
   /** Tras subir la polilínea de medición, vuelve a poner pins de eventos por encima del trazo naranja. */
   function bumpLayersAfterPolylineMeasure() {
     bringMeasurePolylineLayersToFront();
+    try {
+      bringMeasureCableAlongLayersToFront(map);
+    } catch {
+      /* */
+    }
     eventosReporteLayer.bringToFront();
     /* Crítico: sin esto, tras medición/actualización, Draw vuelve a quedar bajo otras capas (trazo inactivo). */
     bringMapboxDrawLayersToTop();
@@ -1882,6 +1929,7 @@ export async function boot() {
       syncButtons();
       return;
     }
+    deactivateCableAlongMeasure();
     measurePolylineActive = true;
     measurePolylineConfirmed = false;
     reporteCtl?.cancelMapPickMode?.();
@@ -1931,8 +1979,143 @@ export async function boot() {
     }
   }
 
+  function isCableMeasurePicking() {
+    return cableMeasurePickKind === 'point' || cableMeasurePickKind === 'central';
+  }
+
+  function syncCableMeasureDockVisibility() {
+    if (!measureCableDock) return;
+    measureCableDock.hidden = !isCableMeasurePicking() && !cableMeasureHasResult;
+  }
+
+  function paintCableDockWaiting(/** @type {'point'|'central'} */ kind) {
+    if (measureCableBody) measureCableBody.hidden = true;
+    if (measureCableHint) {
+      measureCableHint.hidden = false;
+      measureCableHint.textContent =
+        kind === 'central'
+          ? appNetwork === 'corporativa'
+            ? 'Pulsa un tendido: la referencia es el nodo más cercano al cable, proyectado sobre el trazado (+20 % fibra).'
+            : 'Pulsa un tendido: la referencia es la central más cercana al cable, proyectada sobre el trazado (+20 % fibra).'
+          : 'Pulsa un tendido: la referencia es el punto del cable bajo el clic (+20 % fibra).';
+    }
+    if (measureCableTrash) measureCableTrash.disabled = false;
+  }
+
+  /**
+   * @param {{
+   *   lenTowardStartM: number,
+   *   lenTowardEndM: number,
+   *   fiberTowardStartM: number,
+   *   fiberTowardEndM: number,
+   *   totalGeomM: number,
+   *   totalFiberM: number
+   * }} split
+   * @param {string} cableNombre
+   * @param {string} refNote
+   */
+  function fillCableDockWithResult(split, cableNombre, refNote) {
+    if (measureCableBody) measureCableBody.hidden = false;
+    if (measureCableHint) measureCableHint.hidden = true;
+    if (measureCableCableName) measureCableCableName.textContent = cableNombre || '—';
+    if (measureCableRefNote) measureCableRefNote.textContent = refNote || '';
+    if (measureCableStartGeom) {
+      measureCableStartGeom.textContent = formatPolylineDockMeters(split.lenTowardStartM);
+    }
+    if (measureCableStartFib) {
+      measureCableStartFib.textContent = formatPolylineDockMeters(split.fiberTowardStartM);
+    }
+    if (measureCableEndGeom) {
+      measureCableEndGeom.textContent = formatPolylineDockMeters(split.lenTowardEndM);
+    }
+    if (measureCableEndFib) {
+      measureCableEndFib.textContent = formatPolylineDockMeters(split.fiberTowardEndM);
+    }
+    if (measureCableTotalGeom) {
+      measureCableTotalGeom.textContent = formatPolylineDockMeters(split.totalGeomM);
+    }
+    if (measureCableTotalFib) {
+      measureCableTotalFib.textContent = formatPolylineDockMeters(split.totalFiberM);
+    }
+    if (measureCableTrash) measureCableTrash.disabled = false;
+  }
+
+  function deactivateCableAlongMeasure() {
+    cableMeasurePickKind = null;
+    cableMeasureHasResult = false;
+    try {
+      clearCableAlongMeasureData(map);
+    } catch {
+      /* */
+    }
+    if (measureCableBody) measureCableBody.hidden = true;
+    if (measureCableHint) {
+      measureCableHint.hidden = false;
+      measureCableHint.textContent = '';
+    }
+    if (measureCableCableName) measureCableCableName.textContent = '—';
+    if (measureCableRefNote) measureCableRefNote.textContent = '';
+    for (const el of [
+      measureCableStartGeom,
+      measureCableStartFib,
+      measureCableEndGeom,
+      measureCableEndFib,
+      measureCableTotalGeom,
+      measureCableTotalFib
+    ]) {
+      if (el) el.textContent = '—';
+    }
+    syncCableMeasureDockVisibility();
+    syncButtons();
+  }
+
+  function startCableAlongWithKind(/** @type {'point'|'central'} */ kind) {
+    if (editing) return;
+    deactivateMeasurePolyline();
+    cableMeasurePickKind = kind;
+    cableMeasureHasResult = false;
+    try {
+      clearCableAlongMeasureData(map);
+    } catch {
+      /* */
+    }
+    if (measureCableDock) measureCableDock.hidden = false;
+    paintCableDockWaiting(kind);
+    syncCableMeasureDockVisibility();
+    syncButtons();
+    bumpLayersAfterPolylineMeasure();
+    const hint =
+      kind === 'central'
+        ? appNetwork === 'corporativa'
+          ? 'Medición desde nodo: toca un tendido en el mapa.'
+          : 'Medición desde central: toca un tendido en el mapa.'
+        : 'Medición desde punto en cable: toca un tendido en el mapa.';
+    setStatus(hint);
+  }
+
+  function startCableAlongFromPoint() {
+    startCableAlongWithKind('point');
+  }
+
+  function startCableAlongFromCentral() {
+    startCableAlongWithKind('central');
+  }
+
+  initEditorFieldSidebarMenu({
+    scheduleMapResize,
+    setStatus,
+    toggleMeasurePolylineMode,
+    isEditing: () => editing,
+    btnNewRoute,
+    isMeasurePolyDrawing: () => measurePolylineActive && !measurePolylineConfirmed,
+    isCableMeasurePicking,
+    onStartCableMeasurePoint: startCableAlongFromPoint,
+    onStartCableMeasureCentral: startCableAlongFromCentral
+  });
+
   function clearMeasureClickModes() {
     deactivateMeasurePolyline();
+    deactivateCableAlongMeasure();
   }
 
   /** Carga o reset del mapa: sin medición polilínea ni dock inferior. */
@@ -2576,7 +2759,8 @@ export async function boot() {
       onClearCable: () => {
         clearCableFromMapOnly();
       },
-      isInteractionLocked: () => editing || (measurePolylineActive && !measurePolylineConfirmed)
+      isInteractionLocked: () =>
+        editing || (measurePolylineActive && !measurePolylineConfirmed) || isCableMeasurePicking()
     });
 
     document.getElementById('btn-refresh-editor-catalog')?.addEventListener('click', () => {
@@ -2909,6 +3093,63 @@ export async function boot() {
       const f = e.features?.[0];
       if (!f) return;
 
+      if (isCableMeasurePicking()) {
+        const geomCable = /** @type {any} */ (f.geometry);
+        if (geomCable?.type !== 'LineString' || !geomCable.coordinates || geomCable.coordinates.length < 2) {
+          setStatus('Medición en cable: elige un tendido (línea en el mapa).');
+        } else {
+          const line = /** @type {GeoJSON.LineString} */ (geomCable);
+          const click = [e.lngLat.lng, e.lngLat.lat];
+          const kindNow = cableMeasurePickKind;
+          let refDist = 0;
+          let refNote = '';
+          let ok = false;
+          try {
+            if (kindNow === 'point') {
+              const snap = snapLngLatToLine(line, click, turf);
+              refDist = distanceFromStartAlongLineMeters(line, snap, turf);
+              refNote = 'Referencia: punto del cable bajo el clic (proyección al tendido).';
+              ok = true;
+            } else if (kindNow === 'central') {
+              const onCable = snapLngLatToLine(line, click, turf);
+              const nc = nearestCentralPoint(onCable, lastCentralesFc, turf);
+              if (!nc) {
+                setStatus(
+                  appNetwork === 'corporativa'
+                    ? 'Medición desde nodo: no hay nodos en el mapa para esta red.'
+                    : 'Medición desde central: no hay centrales en el mapa.'
+                );
+              } else {
+                const refOnCable = snapLngLatToLine(line, nc.coordinates, turf);
+                refDist = distanceFromStartAlongLineMeters(line, refOnCable, turf);
+                refNote =
+                  appNetwork === 'corporativa'
+                    ? `Nodo «${nc.nombre}» (${fmtM(nc.meters)} m en aire hasta el cable) · proyección sobre tendido`
+                    : `Central «${nc.nombre}» (${fmtM(nc.meters)} m en aire hasta el cable) · proyección sobre tendido`;
+                ok = true;
+              }
+            }
+          } catch (err) {
+            console.warn('Medición cable:', err);
+            setStatus('No se pudo calcular la medición en este tendido.');
+          }
+          if (ok) {
+            cableMeasurePickKind = null;
+            cableMeasureHasResult = true;
+            setCableAlongMeasureData(map, line, refDist, turf);
+            bumpLayersAfterPolylineMeasure();
+            const split = cableSplitLengthsFromRef(line, refDist, turf);
+            const nom = String(f.properties?.nombre ?? f.id ?? '');
+            fillCableDockWithResult(split, nom, refNote);
+            syncCableMeasureDockVisibility();
+            syncButtons();
+            setStatus(
+              `Cable «${nom}»: hacia inicio (vértice 1) ${fmtM(split.lenTowardStartM)} m tendido / ${fmtM(split.fiberTowardStartM)} m fibra · hacia fin ${fmtM(split.lenTowardEndM)} m / ${fmtM(split.fiberTowardEndM)} m fibra · total ${fmtM(split.totalGeomM)} m / ${fmtM(split.totalFiberM)} m fibra (+20 %).`
+            );
+          }
+        }
+      }
+
       if (reporteCtl.handleRouteLinePick(e, f)) return;
 
       selectedFeature = /** @type {any} */ (f);
@@ -2991,6 +3232,7 @@ export async function boot() {
       if (editing) return true;
       if (document.body.classList.contains('editor-pick-mode-active')) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
+      if (isCableMeasurePicking()) return true;
       return false;
     }
 
@@ -3304,6 +3546,16 @@ export async function boot() {
 
   measurePolyDock.addEventListener('click', (ev) => {
     ev.stopPropagation();
+  });
+
+  measureCableDock?.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+  });
+
+  measureCableTrash?.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    deactivateCableAlongMeasure();
+    setStatus('Medición en tendido borrada.');
   });
 
   syncButtons();
