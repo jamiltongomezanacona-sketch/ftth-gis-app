@@ -1,3 +1,7 @@
+/**
+ * Re-enganche al editor: importar `initReporteEventoSidebar` en `app.js` y sustituir el stub `reporteCtl`
+ * cuando exista de nuevo el panel `#reporte-evento-details` y el cableado Mapbox (ruta + pin).
+ */
 import { distanceFromStartAlongLineMeters, snapLngLatToLine } from './measurements.js';
 
 const OFFLINE_QUEUE_KEY = 'reporteEventoQueueV1';

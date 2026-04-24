@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>OTDR — localizar falla (demo Leaflet)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link rel="stylesheet" href="./otdr-field.css" />
+  </head>
+  <body>
+    <div id="map-otdr-field"></div>
+    <div id="trazar-otdr-ui-wrap">
+      <div id="trazar-otdr-ui"></div>
+    </div>
+    <p id="otdr-offline-hint" style="position: fixed; top: 8px; left: 8px; right: 8px; z-index: 1000; margin: 0; font: 0.8rem/1.3 system-ui; background: rgba(15, 23, 42, 0.85); color: #e2e8f0; padding: 8px 10px; border-radius: 8px; max-width: min(100%, 420px)">
+      <strong>Demo</strong> — Red OSM hace falta conexión. <strong>Offline</strong>: sirve GeoJSON local y
+      <code>Leaflet + Turf</code> en /vendor, o sustituye el tile layer en <code>mapa.ftth.js</code>.
+    </p>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "@turf/turf": "https://esm.sh/@turf/turf@7.2.0"
+        }
+      }
+    </script>
+    <script type="module">
+      /**
+       * Carga de datos: fetch relativo a esta carpeta (sirve en file:// relativo o bajo /demos/otdr-field/).
+       */
+      import * as turf from '@turf/turf';
+      import { montarHerramientaTrazarOtdr } from './js/tool.trazar.js';
+
+      const res = await fetch('./data/otdr-demo-cable-y-elementos.json', { cache: 'default' });
+      if (!res.ok) {
+        document.body.textContent = 'No se pudo cargar ./data/otdr-demo-cable-y-elementos.json';
+        throw new Error('demo data');
+      }
+      const { cable, elementos } = await res.json();
+
+      montarHerramientaTrazarOtdr({
+        mapContainerId: 'map-otdr-field',
+        panelId: 'trazar-otdr-ui',
+        cable,
+        nombreCable: cable?.properties?.nombre || 'Tendido',
+        elementosCercanos: elementos,
+        turf
+      });
+    </script>
+  </body>
+</html>

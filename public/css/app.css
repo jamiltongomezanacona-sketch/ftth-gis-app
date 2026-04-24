@@ -8403,7 +8403,6 @@ body.editor-body .editor-float-panel {
 }
 
 /* Shell: si el root lleva otras clases, deben perder `position: relative` del panel estándar. */
-body.editor-body #editor-float-trazar.editor-float-panel,
 body.editor-body #reporte-evento-details.editor-float-panel {
   position: fixed !important;
   margin: 0;
@@ -8420,7 +8419,7 @@ body.editor-body .editor-float-panel--open {
 
 /*
  * Montar evento: ventana modal compacta, centrada en el viewport.
- * (Trazar sigue anclada arriba-izquierda; el modo pick chip mantiene sus reglas propias.)
+ * (El modo pick chip mantiene sus reglas propias.)
  * !important: gana a reglas móviles de `.editor-float-panel` genérico o restos de `.panel-block` en el shell.
  */
 body.editor-body
@@ -8602,7 +8601,7 @@ body.editor-body .editor-float-panel .panel-block.panel-otdr {
 }
 
 /* === MODO «pick chip» ============================================
-   Cuando el usuario arma «Fijar referencia» (OTDR) o el clic en el cable
+   Cuando el usuario arma referencia en mapa o el clic en el cable
    para Reporte de evento, el panel flotante se encoge a una píldora
    centrada en la parte superior, libera el mapa por completo y muestra
    un mensaje + botón Cancelar bien visible. */
@@ -8776,27 +8775,6 @@ body.editor-body
     right: max(8px, env(safe-area-inset-right, 0px));
     width: auto;
     max-height: min(70dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 16px));
-  }
-
-  /* Trazar (OTDR): ficha centrada y anclada al borde inferior (uso con una mano, como mock móvil). */
-  body.editor-body #editor-float-trazar.editor-float-panel.editor-float-panel--open:not(.editor-float-panel--pick-mode) {
-    top: auto !important;
-    bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
-    left: 50% !important;
-    right: auto !important;
-    width: min(400px, calc(100vw - 20px)) !important;
-    max-height: min(75dvh, 560px) !important;
-    transform: translateX(-50%) translateY(0) !important;
-  }
-
-  body.editor-body #editor-float-trazar .otdr-btn--primary,
-  body.editor-body #editor-float-trazar .otdr-btn--ghost {
-    min-height: 48px;
-    font-size: 0.95rem;
-  }
-  body.editor-body #editor-float-trazar .otdr-fiber-block .otdr-input {
-    min-height: 48px;
-    font-size: 16px;
   }
 
   /* Montar evento: alto útil con safe area (misma #id que el bloque base). */

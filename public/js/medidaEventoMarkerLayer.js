@@ -2,6 +2,9 @@
  * Pin de **evento** en el mapa: punto donde se mide (proyección del clic en el cable)
  * o referencia OTDR por clic en tramo.
  * Icono: raster desde `evento.svg` (fallback círculo rosa).
+ *
+ * Re-enganche: en `app.js`, `import { MedidaEventoMarkerLayer } from './medidaEventoMarkerLayer.js'`
+ * e instanciar junto al flujo de reporte cuando se reactive el panel de evento.
  */
 
 const SOURCE_ID = 'medida-evento-source';
