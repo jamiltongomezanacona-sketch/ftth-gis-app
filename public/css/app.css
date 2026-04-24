@@ -860,6 +860,14 @@ body.editor-body .editor-chrome-search-slot > * {
   max-width: 100%;
 }
 
+/* PC: buscador un poco más ancho (móvil/tablet ≤900px sigue con la regla base o @media propias). */
+@media (min-width: 901px) {
+  body.editor-body .editor-chrome-search-slot {
+    width: min(340px, calc(100% - 140px));
+    max-width: min(340px, calc(100vw - 40px));
+  }
+}
+
 /* Controles a la izquierda por encima del buscador si se solapan en pantallas muy bajas */
 body.editor-body .editor-chrome-toggle,
 body.editor-body .editor-chrome-home {
