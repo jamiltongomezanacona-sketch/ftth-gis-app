@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260423searchWidePc2" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423gpsDock" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -79,78 +79,143 @@
     <div id="map-wrap">
       <!-- Mapa antes del sidebar en el DOM: capa base en móvil; medición encima del lienzo WebGL. -->
       <div id="map"></div>
-      <div class="editor-map-gps-fab" id="editor-map-gps-fab">
-        <button
-          type="button"
-          id="btn-map-gps"
-          class="editor-map-gps-fab__btn"
-          title="GPS · mi ubicación"
-          aria-label="Centrar mapa en mi ubicación (GPS)"
-        >
-          <svg
-            class="editor-map-gps-fab__svg"
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <defs>
-              <linearGradient id="editorGpsFabCore" x1="9" y1="7" x2="15" y2="15" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#ecfdf5" />
-                <stop offset="0.4" stop-color="#4ade80" />
-                <stop offset="1" stop-color="#166534" />
-              </linearGradient>
-              <linearGradient id="editorGpsFabArc" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#86efac" stop-opacity="0.95" />
-                <stop offset="1" stop-color="#22c55e" stop-opacity="0.35" />
-              </linearGradient>
-            </defs>
-            <!-- Anillo «precisión» + arcos (señal / ondas) -->
-            <circle cx="12" cy="11" r="9.25" fill="none" stroke="rgba(134,239,172,0.22)" stroke-width="1" />
-            <path
-              fill="none"
-              stroke="url(#editorGpsFabArc)"
-              stroke-width="1.35"
-              stroke-linecap="round"
-              d="M 5.5 15.25 A 6.5 9 0 0 0 18.5 15.25"
-            />
-            <path
-              fill="none"
-              stroke="url(#editorGpsFabArc)"
-              stroke-width="1.15"
-              stroke-linecap="round"
-              opacity="0.72"
-              d="M 6.75 16.6 A 5.25 7.5 0 0 0 17.25 16.6"
-            />
-            <path
-              fill="none"
-              stroke="rgba(187,247,208,0.55)"
-              stroke-width="1"
-              stroke-linecap="round"
-              d="M 8.25 17.65 A 3.75 5.5 0 0 0 15.75 17.65"
-            />
-            <!-- Flecha de norte: referencia visual rápida para orientación -->
-            <path
-              d="M12 2.4 L13.6 5.9 L12 5.1 L10.4 5.9 Z"
-              fill="rgba(186,230,253,0.96)"
-              stroke="rgba(14,116,144,0.9)"
-              stroke-width="0.6"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M12 5.3 V7.1"
-              stroke="rgba(186,230,253,0.82)"
-              stroke-width="0.9"
-              stroke-linecap="round"
-            />
-            <!-- Núcleo: punto vivo -->
-            <circle cx="12" cy="11" r="3.85" fill="url(#editorGpsFabCore)" />
-            <circle cx="12" cy="11" r="2.35" fill="#14532d" opacity="0.38" />
-            <circle cx="10.85" cy="9.95" r="0.95" fill="#fff" opacity="0.9" />
-          </svg>
-        </button>
-      </div>
+      <aside
+        class="editor-gps-dock"
+        id="editor-gps-dock"
+        aria-label="Ubicación y GPS"
+      >
+        <div class="editor-gps-dock__shell">
+          <div class="editor-gps-dock__top">
+            <span class="editor-gps-dock__pulse" id="editor-gps-pulse" aria-hidden="true"></span>
+            <button
+              type="button"
+              id="btn-map-gps"
+              class="editor-gps-dock__main-btn"
+              title="GPS · alta precisión · centrar mapa"
+              aria-label="Obtener posición GPS y centrar el mapa"
+            >
+              <svg
+                class="editor-gps-dock__svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <defs>
+                  <linearGradient id="editorGpsDockCore" x1="9" y1="7" x2="15" y2="15" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#ecfdf5" />
+                    <stop offset="0.4" stop-color="#4ade80" />
+                    <stop offset="1" stop-color="#166534" />
+                  </linearGradient>
+                  <linearGradient id="editorGpsDockArc" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#86efac" stop-opacity="0.95" />
+                    <stop offset="1" stop-color="#22c55e" stop-opacity="0.35" />
+                  </linearGradient>
+                </defs>
+                <circle cx="12" cy="11" r="9.25" fill="none" stroke="rgba(134,239,172,0.22)" stroke-width="1" />
+                <path
+                  fill="none"
+                  stroke="url(#editorGpsDockArc)"
+                  stroke-width="1.35"
+                  stroke-linecap="round"
+                  d="M 5.5 15.25 A 6.5 9 0 0 0 18.5 15.25"
+                />
+                <path
+                  fill="none"
+                  stroke="url(#editorGpsDockArc)"
+                  stroke-width="1.15"
+                  stroke-linecap="round"
+                  opacity="0.72"
+                  d="M 6.75 16.6 A 5.25 7.5 0 0 0 17.25 16.6"
+                />
+                <path
+                  fill="none"
+                  stroke="rgba(187,247,208,0.55)"
+                  stroke-width="1"
+                  stroke-linecap="round"
+                  d="M 8.25 17.65 A 3.75 5.5 0 0 0 15.75 17.65"
+                />
+                <path
+                  d="M12 2.4 L13.6 5.9 L12 5.1 L10.4 5.9 Z"
+                  fill="rgba(186,230,253,0.96)"
+                  stroke="rgba(14,116,144,0.9)"
+                  stroke-width="0.6"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M12 5.3 V7.1"
+                  stroke="rgba(186,230,253,0.82)"
+                  stroke-width="0.9"
+                  stroke-linecap="round"
+                />
+                <circle cx="12" cy="11" r="3.85" fill="url(#editorGpsDockCore)" />
+                <circle cx="12" cy="11" r="2.35" fill="#14532d" opacity="0.38" />
+                <circle cx="10.85" cy="9.95" r="0.95" fill="#fff" opacity="0.9" />
+              </svg>
+            </button>
+            <div class="editor-gps-dock__meta-inline">
+              <span class="editor-gps-dock__pill" id="editor-gps-pill">En espera</span>
+              <span class="editor-gps-dock__age" id="editor-gps-age">—</span>
+            </div>
+            <button
+              type="button"
+              class="editor-gps-dock__expand"
+              id="btn-editor-gps-expand"
+              aria-expanded="false"
+              aria-controls="editor-gps-panel"
+              title="Detalles de posición"
+              aria-label="Mostrar u ocultar detalles de GPS"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M6 9l6 6 6-6"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="editor-gps-dock__panel" id="editor-gps-panel" hidden>
+            <div class="editor-gps-accuracy">
+              <div class="editor-gps-accuracy__head">
+                <span class="editor-gps-accuracy__label">Incertidumbre</span>
+                <strong class="editor-gps-accuracy__value" id="editor-gps-acc-m">—</strong>
+              </div>
+              <div class="editor-gps-accuracy__bar" role="presentation">
+                <span class="editor-gps-accuracy__fill" id="editor-gps-acc-fill"></span>
+              </div>
+            </div>
+            <dl class="editor-gps-coords">
+              <div class="editor-gps-coords__row">
+                <dt>Lat</dt>
+                <dd id="editor-gps-lat">—</dd>
+              </div>
+              <div class="editor-gps-coords__row">
+                <dt>Lng</dt>
+                <dd id="editor-gps-lng">—</dd>
+              </div>
+            </dl>
+            <p class="editor-gps-dock__heading" id="editor-gps-heading-row" hidden>
+              Rumbo magnético / GPS: <span id="editor-gps-heading">—</span>°
+            </p>
+            <div class="editor-gps-dock__actions">
+              <button type="button" class="editor-gps-dock__chip" id="btn-editor-gps-copy">Copiar WGS84</button>
+              <button
+                type="button"
+                class="editor-gps-dock__chip editor-gps-dock__chip--toggle"
+                id="btn-editor-gps-follow"
+                aria-pressed="true"
+              >
+                Seguir mapa
+              </button>
+            </div>
+            <p class="editor-gps-dock__fineprint">Alta precisión activa · HTTPS requerido en la mayoría de navegadores</p>
+          </div>
+        </div>
+      </aside>
       <div class="map-fab-row map-fab-row--measure" id="map-fab-row-measure">
         <span class="map-fab-label">MEDIR</span>
         <div class="measure-fab-dock" id="measure-fab-dock">
@@ -233,6 +298,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260423noChromeTools"></script>
+  <script type="module" src="/js/app.js?v=20260423gpsDock"></script>
 </body>
 </html>

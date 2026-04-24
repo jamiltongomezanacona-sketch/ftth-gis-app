@@ -43,6 +43,7 @@ import {
   lineLengthMetersSafe,
   fmtTotalHuman
 } from './measurePolylineLayer.js';
+import { initEditorGpsDock } from './editorGpsDock.js';
 async function loadConfig() {
   const deploy = await import('./config.deploy.js');
   const tok = String(deploy.MAPBOX_ACCESS_TOKEN ?? '').trim();
@@ -678,13 +679,12 @@ function initStatusBar(mapInstance) {
 }
 
 /**
- * Acciones de campo: FAB GPS en mapa, medir y paneles desde el menú lateral.
+ * Acciones de campo: layout del mapa y medición desde el menú lateral (GPS va en `editorGpsDock.js`).
  * @param {{ resize: () => void }} mapInstance
- * @param {{ trigger: () => void }} geolocateCtl
  * @param {() => void} scheduleMapResize
  * @param {() => void} [onToggleMeasurePolyline] En editor el FAB de medir está oculto; el menú llama aquí.
  */
-function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize, onToggleMeasurePolyline) {
+function initFieldSidebar(mapInstance, scheduleMapResize, onToggleMeasurePolyline) {
   const editorBody = document.body;
 
   function requestMapResize() {
@@ -713,14 +713,6 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize, onToggle
   });
   window.addEventListener('resize', () => {
     clearBottomSheetSpacer();
-  });
-
-  document.getElementById('btn-map-gps')?.addEventListener('click', () => {
-    try {
-      geolocateCtl.trigger();
-    } catch {
-      /* */
-    }
   });
 
 }
@@ -1504,12 +1496,13 @@ export async function boot() {
     }
   }
 
-  /** GPS del navegador (Geolocation API). Control Mapbox oculto; el técnico usa el FAB `#btn-map-gps` (inferior derecha del lienzo). */
+  /** GPS del navegador (Geolocation API). Botón nativo oculto (`showButton: false`); UI en `#editor-gps-dock`. */
   const geolocate = new mapboxgl.GeolocateControl({
-    positionOptions: { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
+    positionOptions: { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 },
     trackUserLocation: true,
     showUserHeading: true,
-    showAccuracyCircle: true
+    showAccuracyCircle: true,
+    showButton: false
   });
   map.addControl(geolocate, 'bottom-right');
   /**
@@ -1531,15 +1524,7 @@ export async function boot() {
     }
   }
   ensureGeolocateBottomRight();
-  geolocate.on('error', () => {
-    setStatus(
-      'GPS: sin señal o permiso denegado. Revisa permisos del sitio y que la ubicación esté activa (móvil/PC).'
-    );
-  });
-  geolocate.on('geolocate', () => {
-    ensureGeolocateBottomRight();
-    setStatus('GPS: posición actualizada en el mapa.');
-  });
+  initEditorGpsDock({ geolocate, setStatus });
 
   const statusBar = initStatusBar(map);
   statusBar.setNet(appNetwork === 'corporativa' ? 'CORP' : 'FTTH');
@@ -1555,7 +1540,7 @@ export async function boot() {
     notifyReportePanelClosed: () => {}
   };
 
-  initFieldSidebar(map, geolocate, scheduleMapResize, toggleMeasurePolylineMode);
+  initFieldSidebar(map, scheduleMapResize, toggleMeasurePolylineMode);
 
   initEditorChromeMapBridge(map, {
     getSuppressMapSidebarCollapse: () => {
