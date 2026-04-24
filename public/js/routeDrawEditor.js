@@ -23,32 +23,42 @@ export class RouteDrawEditor {
     if (this.draw) return;
 
     const MapboxDraw = globalThis.MapboxDraw;
-    if (!MapboxDraw) throw new Error('MapboxDraw no está cargado');
+    if (!MapboxDraw) {
+      const err = new Error('MapboxDraw no está cargado (¿mapbox-gl-draw.js antes de app.js?)');
+      console.error(err);
+      throw err;
+    }
 
-    this.draw = new MapboxDraw({
-      displayControlsDefault: false,
-      /* En direct_select los puntos medios permiten añadir vértices; papelera borra selección/aristas. */
-      controls: { trash: true },
-      defaultMode: 'simple_select'
-    });
+    try {
+      this.draw = new MapboxDraw({
+        displayControlsDefault: false,
+        /* En direct_select los puntos medios permiten añadir vértices; papelera borra selección/aristas. */
+        controls: { trash: true },
+        defaultMode: 'simple_select'
+      });
 
-    this.map.addControl(this.draw, 'top-right');
+      this.map.addControl(this.draw, 'top-right');
 
-    const emit = () => {
-      const g = this.getActiveLineGeometry();
-      this.onGeometryChange(g);
-    };
+      const emit = () => {
+        const g = this.getActiveLineGeometry();
+        this.onGeometryChange(g);
+      };
 
-    this.map.on('draw.create', (e) => {
-      if (this._pendingNewLineSelect && e.features?.[0]?.id != null) {
-        this._pendingNewLineSelect = false;
-        this.drawFeatureId = e.features[0].id;
-        this.draw.changeMode('direct_select', { featureId: this.drawFeatureId });
-      }
-      emit();
-    });
-    this.map.on('draw.update', emit);
-    this.map.on('draw.delete', emit);
+      this.map.on('draw.create', (e) => {
+        if (this._pendingNewLineSelect && e.features?.[0]?.id != null) {
+          this._pendingNewLineSelect = false;
+          this.drawFeatureId = e.features[0].id;
+          this.draw.changeMode('direct_select', { featureId: this.drawFeatureId });
+        }
+        emit();
+      });
+      this.map.on('draw.update', emit);
+      this.map.on('draw.delete', emit);
+    } catch (e) {
+      this.draw = null;
+      console.error('MapboxDraw onAdd / eventos:', e);
+      throw e;
+    }
   }
 
   /** Dibuja una línea nueva; al cerrar el trazo se puede refinar en direct_select. */

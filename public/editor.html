@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260423otdrhelp1" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423otdrreadout1" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -281,6 +281,24 @@
         <strong>Marcar corte</strong>. &nbsp;— Para <strong>medir un trazo libre</strong> con distancia y +20%, usa
         <strong>Medir</strong> (icono cinta en la barra), no confundir con OTDR.
       </p>
+      <div
+        id="otdr-cable-readout"
+        class="otdr-cable-readout"
+        role="status"
+        aria-live="polite"
+        hidden
+      >
+        <span class="otdr-cable-readout__label">Tendido seleccionado (mapa)</span>
+        <span class="otdr-cable-readout__row">
+          <span class="otdr-cable-readout__k">Recorrido geométrico</span>
+          <span id="otdr-ro-geom" class="otdr-cable-readout__v">—</span>
+        </span>
+        <span class="otdr-cable-readout__row">
+          <span class="otdr-cable-readout__k">Equiv. fibra +20&nbsp;%</span>
+          <span id="otdr-ro-fib" class="otdr-cable-readout__v">—</span>
+        </span>
+        <span class="otdr-cable-readout__sub">(referencia: mismo criterio que en el resto de la app)</span>
+      </div>
       <div class="panel-block panel-otdr">
         <fieldset class="otdr-fieldset otdr-fieldset--seg" id="otdr-ref-fieldset">
           <legend class="otdr-legend">Origen</legend>
@@ -633,6 +651,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260423otdrhelp1"></script>
+  <script type="module" src="/js/app.js?v=20260423otdrreadout1"></script>
 </body>
 </html>

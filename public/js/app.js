@@ -618,7 +618,7 @@ function setEditorFloatPickMode(which, on) {
 /**
  * Abre/cierra una ventana flotante de herramienta (solo una visible; mismo botón cierra).
  * @param {'trazar'|'reporte'} which
- * @param {{ onReporteOpen?: () => void, onReporteClose?: () => void }} [hooks]
+ * @param {{ onReporteOpen?: () => void, onReporteClose?: () => void, onTrazarOpen?: () => void }} [hooks]
  */
 function toggleEditorFloatPanel(which, hooks) {
   const tr = document.getElementById('editor-float-trazar');
@@ -632,6 +632,7 @@ function toggleEditorFloatPanel(which, hooks) {
       if (openR) hooks?.onReporteClose?.();
       rep?.classList.remove('editor-float-panel--open');
       tr?.classList.add('editor-float-panel--open');
+      hooks?.onTrazarOpen?.();
     }
   } else if (openR) {
     rep?.classList.remove('editor-float-panel--open');
@@ -1872,6 +1873,13 @@ export async function boot() {
     },
     onReporteClose: () => {
       reporteCtl.notifyReportePanelClosed();
+    },
+    onTrazarOpen: () => {
+      if (!selectedFeature) {
+        setStatus(
+          'Trazar (OTDR): elige un tendido — clic en un cable del mapa o cárgalo con el buscador. Luego: origen, metros de fibra, Marcar corte.'
+        );
+      }
     }
   };
 
@@ -2031,6 +2039,25 @@ export async function boot() {
     )} m de fibra OTDR (÷1,2).`;
   }
 
+  /** Tendido seleccionado: longitud en mapa y fibra equivalente (+20%), visible en el panel Trazar. */
+  function syncOtdrCableReadout() {
+    const box = document.getElementById('otdr-cable-readout');
+    const geomEl = document.getElementById('otdr-ro-geom');
+    const fibEl = document.getElementById('otdr-ro-fib');
+    if (!box || !geomEl || !fibEl) return;
+    const ok = !!selectedFeature && !editing && selectedFeature.geometry?.type === 'LineString';
+    if (!ok) {
+      box.hidden = true;
+      return;
+    }
+    const geom = /** @type {GeoJSON.LineString} */ (selectedFeature.geometry);
+    const L = lineLengthMeters(geom, turf);
+    const fib = lengthWithReserve20Pct(L);
+    geomEl.textContent = fmtM(L);
+    fibEl.textContent = fmtM(fib);
+    box.hidden = false;
+  }
+
   function syncOtdrUi() {
     const ok =
       !!selectedFeature && !editing && selectedFeature.geometry?.type === 'LineString';
@@ -2051,6 +2078,7 @@ export async function boot() {
     }
     updateOtdrClickPanelVisibility();
     syncOtdrFiberGeomHint();
+    syncOtdrCableReadout();
   }
 
   function clearOtdrMapOverlay() {
@@ -2192,6 +2220,8 @@ export async function boot() {
     eventosReporteLayer.bringToFront();
     medidaEventoMarkerLayer.bringToFront();
     otdrCutLayer.bringToFront();
+    /* Crítico: sin esto, tras medición/actualización, Draw vuelve a quedar bajo otras capas (trazo inactivo). */
+    bringMapboxDrawLayersToTop();
   }
 
   /**
@@ -2811,6 +2841,15 @@ export async function boot() {
   map.on('load', async () => {
     /* Tras cambiar modo en Draw, volver a subir capas (otras rutinas reordenan el estilo). */
     map.on('draw.modechange', () => {
+      bringMapboxDrawLayersToTop();
+    });
+    /* Tras reposo del mapa, re-asegurar Draw arriba (tiles/estilo pueden reordenar capas). Throttle leve. */
+    let _idleDrawBumpAt = 0;
+    map.on('idle', () => {
+      if (!editing) return;
+      const t = Date.now();
+      if (t - _idleDrawBumpAt < 220) return;
+      _idleDrawBumpAt = t;
       bringMapboxDrawLayersToTop();
     });
     scheduleMapResize(0);
