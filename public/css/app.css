@@ -4878,20 +4878,22 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   }
 }
 
-/* Editor: dock GPS (inferior derecha del lienzo, sobre el mapa). */
+/* Editor: dock GPS — fixed al viewport para no quedar bajo el borde / recortado por #map-wrap. */
 body.editor-body .editor-gps-dock {
-  position: absolute;
-  z-index: 520;
+  position: fixed;
+  z-index: 650;
   top: auto;
   left: auto;
-  bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  right: max(12px, env(safe-area-inset-right, 0px));
+  /* Suficiente margen sobre barra de gestos / home indicator (12px solo quedaba «perdido» abajo). */
+  bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 18px));
+  right: max(14px, env(safe-area-inset-right, 0px));
   max-width: min(calc(100vw - 24px), 320px);
   pointer-events: none;
 }
 
+/* Dock medición fijo z-640: subir GPS para que quede claramente encima y usable. */
 body.editor-body:has(#measure-polyline-dock:not([hidden])) .editor-gps-dock {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+  bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 108px));
 }
 
 /* Editor: medición solo desde el menú hamburguesa; ocultar FAB duplicado en el mapa. */
