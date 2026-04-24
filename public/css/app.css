@@ -8261,6 +8261,65 @@ body.editor-body .editor-float-panel--open {
   transform: translateY(0);
 }
 
+/*
+ * Montar evento: ventana modal compacta, centrada en el viewport.
+ * (Trazar sigue anclada arriba-izquierda; el modo pick chip mantiene sus reglas propias.)
+ */
+body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) {
+  left: 50%;
+  right: auto;
+  top: 50%;
+  bottom: auto;
+  width: min(360px, calc(100vw - 24px));
+  max-width: min(400px, calc(100vw - 20px));
+  max-height: min(78dvh, 600px);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 40px -10px rgba(251, 146, 60, 0.14);
+  transform: translate(-50%, calc(-50% + 8px));
+}
+
+body.editor-body .editor-float-panel.panel-reporte-evento.editor-float-panel--open:not(.editor-float-panel--pick-mode) {
+  transform: translate(-50%, -50%);
+}
+
+body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-body {
+  padding: 6px 8px 8px;
+  gap: 2px;
+}
+
+body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-collapse {
+  margin-bottom: 8px;
+  border-radius: 12px;
+}
+
+body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-collapse > summary {
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 0.76rem;
+}
+
+body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .editor-float-panel__titlebar {
+  padding: 8px 10px;
+  min-height: 0;
+  border-bottom: 1px solid rgba(251, 146, 60, 0.2);
+  background: linear-gradient(180deg, rgba(30, 25, 20, 0.45), rgba(15, 23, 42, 0.15));
+  border-radius: 16px 16px 0 0;
+}
+
+body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-field {
+  margin-bottom: 8px;
+  padding: 9px 10px 11px;
+  border-radius: 11px;
+}
+
+body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-textarea {
+  min-height: 88px;
+}
+
 body.editor-body .editor-float-panel__titlebar {
   display: flex;
   align-items: center;
@@ -8559,23 +8618,22 @@ body.editor-body
     max-height: min(70dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 16px));
   }
 
-  /* Reporte evento: bottom-sheet full-width para el técnico de campo (móvil). */
-  body.editor-body .editor-float-panel.panel-reporte-evento {
-    top: auto;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: 100%;
-    max-height: 85dvh;
-    border-radius: 18px 18px 0 0;
-    border-left: none;
-    border-right: none;
+  /* Montar evento: misma ventana modal centrada (pisa la regla móvil `left`/`right` de todos los float). */
+  body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) {
+    left: 50% !important;
+    right: auto !important;
+    top: 50% !important;
+    width: min(360px, calc(100vw - 20px)) !important;
+    max-width: min(400px, calc(100vw - 16px)) !important;
+    max-height: min(
+      80dvh,
+      calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px)
+    ) !important;
   }
 
   body.editor-body .editor-float-panel.panel-reporte-evento .editor-float-panel__body,
   body.editor-body .editor-float-panel.panel-reporte-evento .sidebar-details-body {
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Tamaños táctiles mínimos para inputs/selects/botones en móvil. */
@@ -8604,8 +8662,8 @@ body.editor-body
     position: sticky;
     bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
     z-index: 3;
-    margin: 12px -10px -12px;
-    padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px));
+    margin: 8px -8px -8px;
+    padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px));
     display: grid;
     grid-template-columns: minmax(120px, 0.9fr) minmax(160px, 1.1fr);
     gap: 8px;

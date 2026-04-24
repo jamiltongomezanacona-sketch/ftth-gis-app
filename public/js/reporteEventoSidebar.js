@@ -220,7 +220,7 @@ export function initReporteEventoSidebar(opts) {
     awaitingMapPick = true;
     details.classList.add('reporte-ev--armed');
     disarmOtdrPick();
-    setStatus('Reporte evento: toca cualquier punto del mapa (o el tendido) o usa GPS.');
+    setStatus('Montar evento: toca cualquier punto del mapa (o el tendido) o usa GPS.');
     onArmingChanged?.(true);
     updatePhaseDom();
   }
@@ -292,7 +292,7 @@ export function initReporteEventoSidebar(opts) {
     updatePhaseDom();
     refreshFechaText();
     setStatus(
-      `Reporte evento: punto fijado en «${pinnedRouteLabel || f.id}». Completa el formulario y guarda.`
+      `Montar evento: punto fijado en «${pinnedRouteLabel || f.id}». Completa el formulario y guarda.`
     );
     try {
       tipoEl.focus();
@@ -355,7 +355,7 @@ export function initReporteEventoSidebar(opts) {
     onArmingChanged?.(false);
     updatePhaseDom();
     refreshFechaText();
-    setStatus(`Reporte evento: punto fijado. ${msgExtra} Completa y guarda.`);
+    setStatus(`Montar evento: punto fijado. ${msgExtra} Completa y guarda.`);
     try {
       tipoEl.focus();
     } catch {
@@ -459,7 +459,7 @@ export function initReporteEventoSidebar(opts) {
           ? 'warn'
           : 'bad';
         setGpsStatus(`GPS obtenido${accTxt}.${attachedRouteMsg}`, accLevel);
-        setStatus(`Reporte evento: ubicación fijada por GPS${accTxt}.${attachedRouteMsg}`);
+        setStatus(`Montar evento: ubicación fijada por GPS${accTxt}.${attachedRouteMsg}`);
         resolve(true);
       },
       (err) => {
@@ -604,7 +604,7 @@ export function initReporteEventoSidebar(opts) {
     saveQueue(left);
     updateOfflineBadge();
     if (sent > 0) {
-      setStatus(`Reporte evento: ${sent} evento(s) en cola enviados correctamente.`);
+      setStatus(`Montar evento: ${sent} evento(s) en cola enviados correctamente.`);
       onEventoGuardado?.();
     }
     return { sent, left: left.length };
@@ -753,19 +753,19 @@ export function initReporteEventoSidebar(opts) {
   async function submit() {
     if (!ensureMoleculeSelected(true)) return;
     if (!pinnedLngLat) {
-      setStatus('Reporte evento: primero indica el punto (usa GPS o toca el cable en el mapa).');
+      setStatus('Montar evento: primero indica el punto (usa GPS o toca el cable en el mapa).');
       return;
     }
     const tipo = tipoEl.value.trim();
     const estado = estadoEl.value.trim();
     const accion = accionEl.value.trim();
     if (!tipo || !estado || !accion) {
-      setStatus('Reporte evento: elige tipo, estado y acción.');
+      setStatus('Montar evento: elige tipo, estado y acción.');
       return;
     }
     const descripcionRaw = descEl.value.trim();
     if (!descripcionRaw) {
-      setStatus('Reporte evento: describe el incidente.');
+      setStatus('Montar evento: describe el incidente.');
       descEl.focus();
       return;
     }
@@ -827,7 +827,7 @@ export function initReporteEventoSidebar(opts) {
           msg += ' · En la carpeta del proyecto: npm run db:apply-eventos (o ejecuta sql/06_eventos_reporte.sql en PostgreSQL).';
         }
         showToast(`Error al guardar: ${msg}`, 'err');
-        setStatus(`Reporte evento: ${msg}`);
+        setStatus(`Montar evento: ${msg}`);
       }
     } finally {
       btnGuardar.disabled = false;
@@ -859,12 +859,12 @@ export function initReporteEventoSidebar(opts) {
   btnCancelWait?.addEventListener('click', () => {
     cancelAwaitingMapPickOnly();
     closeReportePanelUi?.();
-    setStatus('Reporte evento: modo mapa cancelado.');
+    setStatus('Montar evento: modo mapa cancelado.');
   });
 
   btnRepick?.addEventListener('click', () => {
     clearPinnedAndRearm();
-    setStatus('Reporte evento: vuelve a elegir el punto (GPS o toque en el cable).');
+    setStatus('Montar evento: vuelve a elegir el punto (GPS o toque en el cable).');
   });
 
   btnUseGps?.addEventListener('click', () => handleGpsPick());
