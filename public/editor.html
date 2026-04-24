@@ -271,24 +271,15 @@
         ×
       </button>
     </div>
-    <div class="editor-float-panel__body">
+    <div class="editor-float-panel__body trazar-otdr-root">
       <p class="otdr-panel-hint" role="note">
-        <strong>Trazar (OTDR):</strong> 1) <strong>clic en un tendido</strong> del mapa. 2) <strong>Origen:</strong>
-        <em>Inicio</em> = desde el primer vértice (lado “central” si el trazado empieza ahí);
-        <em>Final</em> = desde el extremo opuesto; <em>Punto tramo</em> = cualquier punto: activa
-        <strong>Fijar referencia</strong>, clica en el mismo cable y el sentido. 3) <strong>Fibra (m):</strong> lectura OTDR;
-        el corte se sitúa con <strong>reserva 20%</strong> (tendido geom. = fibra ÷ 1,2; ver abajo). 4)
-        <strong>Marcar corte</strong>. &nbsp;— Para <strong>medir un trazo libre</strong> con distancia y +20%, usa
-        <strong>Medir</strong> (icono cinta en la barra), no confundir con OTDR.
+        <strong>OTDR en mapa</strong> — 1) Selecciona un tendido (clic o buscador). 2) <strong>Origen:</strong>
+        <em>Inicio / Final / Punto tramo</em> (este último: Fijar referencia → clic en el cable → sentido). 3) Metros
+        de <strong>fibra</strong> (lectura); el mapa usa <strong>tendido = fibra ÷ 1,2</strong>. 4)
+        <strong>Marcar corte</strong>. Trazo libre con cinta: herramienta <strong>Medir</strong>.
       </p>
-      <div
-        id="otdr-cable-readout"
-        class="otdr-cable-readout"
-        role="status"
-        aria-live="polite"
-        hidden
-      >
-        <span class="otdr-cable-readout__label">Tendido seleccionado (mapa)</span>
+      <div id="otdr-cable-readout" class="otdr-cable-readout" role="status" aria-live="polite" hidden>
+        <span class="otdr-cable-readout__label">Tendido activo</span>
         <span class="otdr-cable-readout__row">
           <span class="otdr-cable-readout__k">Recorrido geométrico</span>
           <span id="otdr-ro-geom" class="otdr-cable-readout__v">—</span>
@@ -297,25 +288,33 @@
           <span class="otdr-cable-readout__k">Equiv. fibra +20&nbsp;%</span>
           <span id="otdr-ro-fib" class="otdr-cable-readout__v">—</span>
         </span>
-        <span class="otdr-cable-readout__sub">(referencia: mismo criterio que en el resto de la app)</span>
+        <span class="otdr-cable-readout__sub">(criterio unificado con el resto de la app)</span>
       </div>
-      <div class="panel-block panel-otdr">
+      <div class="panel-block panel-otdr" id="trazar-otdr-form">
         <fieldset class="otdr-fieldset otdr-fieldset--seg" id="otdr-ref-fieldset">
-          <legend class="otdr-legend">Origen</legend>
+          <legend class="otdr-legend">Origen de la medida</legend>
           <svg class="otdr-sprite" aria-hidden="true" focusable="false" width="0" height="0">
             <defs>
               <symbol id="otdr-ico-pin-ref" viewBox="0 0 24 24" fill="none">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                  d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
                 <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="1.75" />
               </symbol>
             </defs>
           </svg>
-          <div class="otdr-seg-grid" role="presentation">
+          <div class="otdr-seg-grid" role="group" aria-label="Elegir origen OTDR">
             <label class="otdr-seg-card">
               <input type="radio" name="otdr-ref" value="start" class="otdr-seg-input" checked />
               <span class="otdr-seg-face">
                 <span class="otdr-seg-ico-wrap" aria-hidden="true">
-                  <svg class="otdr-ref-pin-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><use href="#otdr-ico-pin-ref" width="24" height="24" /></svg>
+                  <svg class="otdr-ref-pin-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                    <use href="#otdr-ico-pin-ref" width="24" height="24" />
+                  </svg>
                 </span>
                 <span class="otdr-seg-title">Inicio</span>
               </span>
@@ -324,7 +323,9 @@
               <input type="radio" name="otdr-ref" value="end" class="otdr-seg-input" />
               <span class="otdr-seg-face">
                 <span class="otdr-seg-ico-wrap" aria-hidden="true">
-                  <svg class="otdr-ref-pin-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><use href="#otdr-ico-pin-ref" width="24" height="24" /></svg>
+                  <svg class="otdr-ref-pin-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                    <use href="#otdr-ico-pin-ref" width="24" height="24" />
+                  </svg>
                 </span>
                 <span class="otdr-seg-title">Final</span>
               </span>
@@ -333,7 +334,9 @@
               <input type="radio" name="otdr-ref" value="click" class="otdr-seg-input" />
               <span class="otdr-seg-face">
                 <span class="otdr-seg-ico-wrap" aria-hidden="true">
-                  <svg class="otdr-ref-pin-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><use href="#otdr-ico-pin-ref" width="24" height="24" /></svg>
+                  <svg class="otdr-ref-pin-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                    <use href="#otdr-ico-pin-ref" width="24" height="24" />
+                  </svg>
                 </span>
                 <span class="otdr-seg-title">Punto tramo</span>
               </span>
@@ -346,19 +349,19 @@
               <img src="/icons/ui/map-pin.svg" width="18" height="18" alt="" decoding="async" />
             </span>
             <span class="otdr-arm-btn-text">
-              <span class="otdr-arm-btn-title">Fijar referencia</span>
+              <span class="otdr-arm-btn-title">Fijar referencia en el tendido</span>
             </span>
           </button>
           <p id="otdr-click-status" class="otdr-click-status">Referencia: —</p>
           <fieldset class="otdr-fieldset otdr-fieldset--seg otdr-fieldset--dir">
-            <legend class="otdr-legend">Sentido</legend>
-            <div class="otdr-seg-grid otdr-seg-grid--dir" role="presentation">
+            <legend class="otdr-legend">Sentido desde el punto</legend>
+            <div class="otdr-seg-grid otdr-seg-grid--dir" role="group" aria-label="Sentido hacia corte">
               <label class="otdr-seg-card otdr-seg-card--dir">
                 <input type="radio" name="otdr-dir" value="toward_end" class="otdr-seg-input" checked />
                 <span class="otdr-seg-face">
                   <span class="otdr-seg-ico-wrap otdr-seg-ico-wrap--svg" aria-hidden="true">
                     <svg class="otdr-arrow-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
-                      <path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                      <path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z" />
                     </svg>
                   </span>
                   <span class="otdr-seg-title">Hacia final</span>
@@ -369,7 +372,7 @@
                 <span class="otdr-seg-face">
                   <span class="otdr-seg-ico-wrap otdr-seg-ico-wrap--svg" aria-hidden="true">
                     <svg class="otdr-arrow-ico otdr-arrow-ico--flip" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
-                      <path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+                      <path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z" />
                     </svg>
                   </span>
                   <span class="otdr-seg-title">Hacia inicio</span>
@@ -383,9 +386,19 @@
             <img class="otdr-input-label-ico" src="/icons/ui/ruler.svg" width="14" height="14" alt="" decoding="async" />
             Fibra OTDR (m)
           </label>
-          <input type="number" id="otdr-fiber-m" class="otdr-input" min="0" step="0.1" placeholder="Ej. 1250" disabled inputmode="decimal" />
+          <input
+            type="number"
+            id="otdr-fiber-m"
+            class="otdr-input"
+            min="0"
+            step="0.1"
+            placeholder="Ej. 1250"
+            disabled
+            inputmode="decimal"
+            autocomplete="off"
+          />
           <p id="otdr-fiber-geom-hint" class="otdr-fiber-geom-hint" aria-live="polite">
-            Reserva 20%: el trazado en el mapa usa tendido = fibra ÷ 1,2 (mismo criterio que en el resto de la app).
+            Reserva 20%: tendido en mapa = fibra ÷ 1,2
           </p>
         </div>
         <div class="otdr-actions">
@@ -651,6 +664,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260423floatOpenSuppress"></script>
+  <script type="module" src="/js/app.js?v=20260423trazarOtdrModule"></script>
 </body>
 </html>

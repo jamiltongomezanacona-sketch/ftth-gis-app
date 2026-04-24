@@ -12,6 +12,7 @@ import { snapEventPointsToRouteCatalog } from './eventosReporteSnap.js';
 import { RouteDrawEditor } from './routeDrawEditor.js';
 import { createCableSearchBar } from './cableSearchBar.js';
 import { initReporteEventoSidebar } from './reporteEventoSidebar.js';
+import { createTrazarOtdrController } from './trazarOtdrController.js';
 import {
   findManifestEntryForMolecule,
   indexManifestEntries,
@@ -36,12 +37,8 @@ import {
 import {
   lineLengthMeters,
   lengthWithReserve20Pct,
-  geometricLengthFromFiberLengthMeters,
-  distanceFromStartAlongLineMeters,
   snapLngLatToLine,
-  nearestCentralMeters,
-  cutPointFromOtdrFiberMeters,
-  cutPointFromFiberFromClickRef
+  nearestCentralMeters
 } from './measurements.js';
 import {
   ensureMeasurePolylineLayers,
@@ -1615,12 +1612,9 @@ export async function boot() {
   /** @type {[number, number][]} */
   let measurePolylineCoords = [];
 
-  /** Esperando clic en el cable para fijar referencia de trazado (fibra) en el tramo. */
-  let otdrAwaitingCableClick = false;
-  /** Metros desde el inicio del cable hasta el punto de referencia (modo clic). */
-  let otdrClickRefFromStartM = /** @type {number | null} */ (null);
-  /** Coordenadas WGS84 del punto de referencia por clic (pin de evento) para trazado. */
-  let otdrClickRefLngLat = /** @type {[number, number] | null} */ (null);
+  /** Controlador Trazar (OTDR): origen inicio/final/punto tramo, fibra, marcar corte. */
+  /** @type {ReturnType<typeof createTrazarOtdrController> | null} */
+  let trazarOtdr = null;
   /** Pin en mapa: coordenada del reporte de evento (clic en tendido). */
   let reporteEventoPinLngLat = /** @type {[number, number] | null} */ (null);
   const btnEdit = $('btn-edit');
@@ -1642,15 +1636,6 @@ export async function boot() {
   const measurePolyUndo = /** @type {HTMLButtonElement} */ ($('measure-poly-undo'));
   const measurePolyConfirm = /** @type {HTMLButtonElement} */ ($('measure-poly-confirm'));
   const measurePolyTrash = /** @type {HTMLButtonElement} */ ($('measure-poly-trash'));
-
-  const otdrRefFieldset = $('otdr-ref-fieldset');
-  const otdrClickPanel = $('otdr-click-panel');
-  const otdrClickStatus = $('otdr-click-status');
-  const btnOtdrArmClick = $('btn-otdr-arm-click');
-  const otdrFiberInput = /** @type {HTMLInputElement} */ ($('otdr-fiber-m'));
-  const otdrFiberGeomHint = document.getElementById('otdr-fiber-geom-hint');
-  const btnOtdrMark = $('btn-otdr-mark');
-  const btnOtdrClear = $('btn-otdr-clear');
 
   document.getElementById('btn-change-network')?.addEventListener('click', () => {
     try {
@@ -1840,7 +1825,7 @@ export async function boot() {
       const prevId = selectedFeature?.id;
       selectedFeature = /** @type {any} */ (f);
       if (prevId != null && prevId !== f.id) {
-        clearOtdrMarkAndRef();
+        trazarOtdr?.clearMarkAndRef?.();
       }
       routesLayer.setSelected(f.id);
       const geom = /** @type {any} */ (f.geometry);
@@ -1857,13 +1842,7 @@ export async function boot() {
       syncMedidaEventoPin();
     },
     disarmOtdrPick: () => {
-      otdrAwaitingCableClick = false;
-      try {
-        btnOtdrArmClick.classList.remove('active');
-      } catch {
-        /* */
-      }
-      setEditorFloatPickMode('trazar', false);
+      trazarOtdr?.disarmPick?.();
     },
     onArmingChanged: (armed) => {
       try {
@@ -1889,6 +1868,36 @@ export async function boot() {
     }
   });
 
+  trazarOtdr = createTrazarOtdrController({
+    map,
+    otdrCutLayer,
+    medidaEventoMarkerLayer,
+    centralesLayer,
+    moleculeOverlayLayer,
+    eventosReporteLayer,
+    getSelectedFeature: () => selectedFeature,
+    isEditing: () => editing,
+    getTurf: () => turf,
+    setStatus,
+    setEditorFloatPickMode,
+    onReporteCancelPick: () => {
+      try {
+        reporteCtl?.cancelMapPickMode?.();
+      } catch {
+        /* */
+      }
+    },
+    fmtM,
+    scheduleSync: () => syncButtons(),
+    onAfterClearRef: () => {
+      try {
+        syncMedidaEventoPin();
+      } catch {
+        /* */
+      }
+    }
+  });
+
   /* Status bar inferior (estilo VSCode): coords del cursor, zoom, red activa, guardado. */
   const statusBar = initStatusBar(map);
   statusBar.setNet(appNetwork === 'corporativa' ? 'CORP' : 'FTTH');
@@ -1899,7 +1908,7 @@ export async function boot() {
     getSuppressMapSidebarCollapse: () => {
       if (editing) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
-      if (otdrAwaitingCableClick) return true;
+      if (trazarOtdr?.isAwaitingRefPick?.()) return true;
       /* Flotante Trazar/Reporte abierto: clics en el mapa (tendido, ruta, etc.) no retraen el menú. */
       if (
         document
@@ -1979,20 +1988,13 @@ export async function boot() {
           } catch {
             /* */
           }
-        } else if (which === 'trazar') {
-          if (otdrAwaitingCableClick) {
-            otdrAwaitingCableClick = false;
-            try {
-              btnOtdrArmClick.classList.remove('active');
-            } catch {
-              /* */
-            }
-            setStatus('Referencia por clic cancelada.');
-            try {
-              syncButtons();
-            } catch {
-              /* */
-            }
+        } else if (which === 'trazar' && trazarOtdr?.isAwaitingRefPick?.()) {
+          trazarOtdr.disarmPick();
+          setStatus('Referencia por clic cancelada.');
+          try {
+            syncButtons();
+          } catch {
+            /* */
           }
         }
         setEditorFloatPickMode(/** @type {'trazar'|'reporte'} */ (which), false);
@@ -2022,18 +2024,8 @@ export async function boot() {
     resEl.textContent = fmtM(fib);
   }
 
-  function getOtdrRef() {
-    const el = document.querySelector('input[name="otdr-ref"]:checked');
-    return /** @type {'start'|'end'|'click'} */ (el?.value ?? 'start');
-  }
-
-  function getOtdrDir() {
-    const el = document.querySelector('input[name="otdr-dir"]:checked');
-    return el?.value === 'toward_start' ? 'toward_start' : 'toward_end';
-  }
-
   /**
-   * Pin de **evento**: referencia de trazado por clic en tramo.
+   * Pin de **evento** o de referencia OTDR en tramo (modo Punto tramo).
    */
   function syncMedidaEventoPin() {
     const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
@@ -2061,9 +2053,11 @@ export async function boot() {
       medidaEventoMarkerLayer.clear();
       return;
     }
-    if (getOtdrRef() === 'click' && otdrClickRefLngLat) {
+    const trRef = trazarOtdr?.getOtdrRef?.();
+    const trRefPt = trazarOtdr?.getClickRefLngLat?.() ?? null;
+    if (trRef === 'click' && trRefPt) {
       medidaEventoMarkerLayer.ensureLayer();
-      medidaEventoMarkerLayer.setPoint(otdrClickRefLngLat);
+      medidaEventoMarkerLayer.setPoint(trRefPt);
       medidaEventoMarkerLayer.bringToFront();
       try {
         otdrCutLayer.bringToFront();
@@ -2075,149 +2069,6 @@ export async function boot() {
     medidaEventoMarkerLayer.clear();
   }
 
-  function updateOtdrClickPanelVisibility() {
-    otdrClickPanel.hidden = getOtdrRef() !== 'click';
-  }
-
-  /** Texto bajo "Fibra OTDR": explica reserva 20% (tendido = fibra ÷ 1,2), coherente con `measurements.js`. */
-  function syncOtdrFiberGeomHint() {
-    if (!otdrFiberGeomHint) return;
-    const v = Number(otdrFiberInput.value);
-    if (!Number.isFinite(v) || v < 0) {
-      otdrFiberGeomHint.textContent =
-        'Reserva 20%: el trazado en el mapa usa tendido = fibra ÷ 1,2 (mismo criterio que en el resto de la app).';
-      return;
-    }
-    if (v === 0) {
-      otdrFiberGeomHint.textContent = 'Reserva 20%: 0 m de fibra → 0 m de recorrido en el tendido.';
-      return;
-    }
-    const g = geometricLengthFromFiberLengthMeters(v);
-    otdrFiberGeomHint.textContent = `Reserva 20%: ≈${fmtM(g)} m de tendido (geométrico) en el mapa por ${fmtM(
-      v
-    )} m de fibra OTDR (÷1,2).`;
-  }
-
-  /** Tendido seleccionado: longitud en mapa y fibra equivalente (+20%), visible en el panel Trazar. */
-  function syncOtdrCableReadout() {
-    const box = document.getElementById('otdr-cable-readout');
-    const geomEl = document.getElementById('otdr-ro-geom');
-    const fibEl = document.getElementById('otdr-ro-fib');
-    if (!box || !geomEl || !fibEl) return;
-    const ok = !!selectedFeature && !editing && selectedFeature.geometry?.type === 'LineString';
-    if (!ok) {
-      box.hidden = true;
-      return;
-    }
-    const geom = /** @type {GeoJSON.LineString} */ (selectedFeature.geometry);
-    const L = lineLengthMeters(geom, turf);
-    const fib = lengthWithReserve20Pct(L);
-    geomEl.textContent = fmtM(L);
-    fibEl.textContent = fmtM(fib);
-    box.hidden = false;
-  }
-
-  function syncOtdrUi() {
-    const ok =
-      !!selectedFeature && !editing && selectedFeature.geometry?.type === 'LineString';
-    otdrFiberInput.disabled = !ok;
-    btnOtdrMark.disabled = !ok;
-    btnOtdrClear.disabled = !ok;
-    btnOtdrArmClick.disabled = !ok || getOtdrRef() !== 'click';
-    otdrRefFieldset.querySelectorAll('input').forEach((/** @type {HTMLInputElement} */ el) => {
-      el.disabled = !ok;
-    });
-    otdrClickPanel.querySelectorAll('input').forEach((/** @type {HTMLInputElement} */ el) => {
-      el.disabled = !ok;
-    });
-    if (!ok) {
-      otdrAwaitingCableClick = false;
-      btnOtdrArmClick.classList.remove('active');
-      setEditorFloatPickMode('trazar', false);
-    }
-    updateOtdrClickPanelVisibility();
-    syncOtdrFiberGeomHint();
-    syncOtdrCableReadout();
-  }
-
-  function clearOtdrMapOverlay() {
-    otdrCutLayer.clear();
-  }
-
-  function clearOtdrMarkAndRef() {
-    clearOtdrMapOverlay();
-    otdrClickRefFromStartM = null;
-    otdrClickRefLngLat = null;
-    otdrAwaitingCableClick = false;
-    btnOtdrArmClick.classList.remove('active');
-    setEditorFloatPickMode('trazar', false);
-    otdrClickStatus.textContent = 'Referencia: —';
-    syncMedidaEventoPin();
-  }
-
-  function markOtdrCut() {
-    if (!selectedFeature || editing) return;
-    const geom = /** @type {GeoJSON.LineString} */ (selectedFeature.geometry);
-    if (geom.type !== 'LineString' || !geom.coordinates?.length) return;
-
-    const fiber = Number(otdrFiberInput.value);
-    if (!Number.isFinite(fiber) || fiber < 0) {
-      setStatus('Indica metros de fibra (trazado) ≥ 0.');
-      return;
-    }
-
-    const ref = getOtdrRef();
-    let res;
-    if (ref === 'click') {
-      if (otdrClickRefFromStartM == null) {
-        setStatus(
-          'Pulsa Fijar referencia y haz clic en el mismo tendido seleccionado.'
-        );
-        return;
-      }
-      res = cutPointFromFiberFromClickRef(
-        geom,
-        otdrClickRefFromStartM,
-        fiber,
-        getOtdrDir(),
-        turf
-      );
-    } else {
-      res = cutPointFromOtdrFiberMeters(geom, fiber, ref === 'end' ? 'end' : 'start', turf);
-    }
-
-    if (!res.point?.geometry?.coordinates) {
-      setStatus('No se pudo calcular el punto de corte.');
-      return;
-    }
-
-    const [lng, lat] = res.point.geometry.coordinates;
-
-    otdrCutLayer.ensureLayer();
-    otdrCutLayer.setCutPoint([lng, lat], `Corte ${fmtM(fiber)} m fibra`);
-    centralesLayer.bringToFront();
-    moleculeOverlayLayer.bringToFront();
-    eventosReporteLayer.bringToFront();
-    medidaEventoMarkerLayer.bringToFront();
-    otdrCutLayer.bringToFront();
-
-    try {
-      map.easeTo({
-        center: [lng, lat],
-        zoom: Math.max(map.getZoom(), 14),
-        duration: 700
-      });
-    } catch {
-      /* */
-    }
-
-    let statusMsg = `Corte por trazado (${fmtM(fiber)} m fibra) en «${selectedFeature.properties?.nombre ?? selectedFeature.id}». ${lng.toFixed(5)}, ${lat.toFixed(5)}`;
-    if (res.clamped) {
-      statusMsg += ' · Lectura acotada al extremo del tendido en el mapa.';
-    }
-    setStatus(statusMsg);
-  }
-
   function syncButtons() {
     const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
     btnNewRoute.disabled = editing || polyDrawing;
@@ -2227,7 +2078,7 @@ export async function boot() {
     measureFab.disabled = editing;
     measureFab.classList.toggle('measure-fab--muted', editing);
     cableSearch?.setDisabled(editing || polyDrawing);
-    syncOtdrUi();
+    trazarOtdr?.syncOtdrUi?.();
     syncMeasureFloatUi();
     syncMeasurePolyDockVisibility();
     syncMedidaEventoPin();
@@ -2502,7 +2353,7 @@ export async function boot() {
     closeEventoMapPopup();
     closeCierreMapPopup();
     reporteCtl?.resetForCableCleared?.();
-    clearOtdrMarkAndRef();
+    trazarOtdr?.clearMarkAndRef?.();
     routesLayer.ensureLayer();
     syncRoutesLineStyleMode();
     moleculeOverlayLayer.ensureLayer();
@@ -2579,7 +2430,7 @@ export async function boot() {
       central: String(central ?? '').trim(),
       molecula: String(molecula ?? '').trim()
     };
-    clearOtdrMarkAndRef();
+    trazarOtdr?.clearMarkAndRef?.();
     moleculeOverlayLayer.ensureLayer();
     routesLayer.ensureLayer();
 
@@ -2640,7 +2491,7 @@ export async function boot() {
    * @param {GeoJSON.Feature} f
    */
   async function showCierreFromSearch(f) {
-    clearOtdrMarkAndRef();
+    trazarOtdr?.clearMarkAndRef?.();
     moleculeOverlayLayer.ensureLayer();
     routesLayer.ensureLayer();
 
@@ -2856,7 +2707,7 @@ export async function boot() {
 
       cableSearch?.reset();
       cableSearch?.refresh();
-      clearOtdrMarkAndRef();
+      trazarOtdr?.clearMarkAndRef?.();
 
       routesLayer.setSelected(null);
       selectedFeature = null;
@@ -2970,7 +2821,7 @@ export async function boot() {
           setStatus('Cable no pertenece a la red de esta sesión. Usa «Cambiar de red» o recarga.');
           return;
         }
-        clearOtdrMarkAndRef();
+        trazarOtdr?.clearMarkAndRef?.();
         moleculeOverlayLayer.ensureLayer();
         moleculeOverlayLayer.clear();
 
@@ -3441,44 +3292,12 @@ export async function boot() {
 
       if (reporteCtl.handleRouteLinePick(e, f)) return;
 
-      if (otdrAwaitingCableClick) {
-        if (!selectedFeature || f.id !== selectedFeature.id) {
-          setStatus(
-            'Usa <strong>Fijar referencia</strong> sobre el mismo tendido ya seleccionado.'
-          );
-          return;
-        }
-        if (geomEarly?.type === 'LineString' && geomEarly.coordinates?.length >= 2) {
-          const clickLL = [e.lngLat.lng, e.lngLat.lat];
-          /** Misma geometría que en «Marcar corte» (evita desfase ref vs tendido si el clic devuelve coords distintas). */
-          const geomSel = /** @type {any} */ (selectedFeature.geometry);
-          const lineForOtdrRef =
-            geomSel?.type === 'LineString' && geomSel.coordinates?.length >= 2
-              ? /** @type {GeoJSON.LineString} */ (geomSel)
-              : /** @type {GeoJSON.LineString} */ (geomEarly);
-          otdrClickRefFromStartM = distanceFromStartAlongLineMeters(lineForOtdrRef, clickLL, turf);
-          const snapped = snapLngLatToLine(lineForOtdrRef, clickLL, turf);
-          otdrClickRefLngLat = /** @type {[number, number]} */ ([snapped[0], snapped[1]]);
-          medidaEventoMarkerLayer.ensureLayer();
-          medidaEventoMarkerLayer.setPoint(otdrClickRefLngLat);
-          medidaEventoMarkerLayer.bringToFront();
-          otdrCutLayer.bringToFront();
-          otdrAwaitingCableClick = false;
-          btnOtdrArmClick.classList.remove('active');
-          setEditorFloatPickMode('trazar', false);
-          otdrClickStatus.textContent = `Referencia en tramo: ${fmtM(otdrClickRefFromStartM)} desde inicio (por tendido).`;
-          setStatus(
-            'Referencia fijada. Metros de fibra y sentido; luego <strong>Marcar corte</strong>.'
-          );
-          syncButtons();
-        }
-        return;
-      }
+      if (trazarOtdr?.handleOtdrRefLinePick(e, f, geomEarly)) return;
 
       const prevId = selectedFeature?.id;
       selectedFeature = /** @type {any} */ (f);
       if (prevId != null && prevId !== f.id) {
-        clearOtdrMarkAndRef();
+        trazarOtdr?.clearMarkAndRef?.();
       }
       routesLayer.setSelected(f.id);
       const geom = /** @type {any} */ (f.geometry);
@@ -3558,7 +3377,7 @@ export async function boot() {
     function shouldBlockExternalNavLongPress() {
       if (editing) return true;
       if (document.body.classList.contains('editor-pick-mode-active')) return true;
-      if (otdrAwaitingCableClick) return true;
+      if (trazarOtdr?.isAwaitingRefPick?.()) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
       return false;
     }
@@ -3686,7 +3505,7 @@ export async function boot() {
         /** @type {MouseEvent} */ (e.originalEvent).shiftKey;
       if (!forceNav) return;
       if (document.body.classList.contains('editor-pick-mode-active')) return;
-      if (otdrAwaitingCableClick) return;
+      if (trazarOtdr?.isAwaitingRefPick?.()) return;
       openMapExternalNavPopup(e.lngLat);
     });
   });
@@ -3698,49 +3517,6 @@ export async function boot() {
       setStatus(e.message);
     }
   });
-
-  document.querySelectorAll('input[name="otdr-ref"]').forEach((el) => {
-    el.addEventListener('change', () => {
-      updateOtdrClickPanelVisibility();
-      if (getOtdrRef() !== 'click') {
-        otdrAwaitingCableClick = false;
-        btnOtdrArmClick.classList.remove('active');
-        setEditorFloatPickMode('trazar', false);
-        otdrClickRefFromStartM = null;
-        otdrClickRefLngLat = null;
-        otdrClickStatus.textContent = 'Referencia: —';
-      }
-      syncButtons();
-    });
-  });
-
-  btnOtdrArmClick.addEventListener('click', () => {
-    if (!selectedFeature || editing) return;
-    if (getOtdrRef() !== 'click') return;
-    if (otdrAwaitingCableClick) {
-      otdrAwaitingCableClick = false;
-      btnOtdrArmClick.classList.remove('active');
-      setEditorFloatPickMode('trazar', false);
-      setStatus('Referencia por clic cancelada.');
-      syncButtons();
-      return;
-    }
-    reporteCtl?.cancelMapPickMode?.();
-    otdrAwaitingCableClick = true;
-    btnOtdrArmClick.classList.add('active');
-    setEditorFloatPickMode('trazar', true);
-    setStatus('Haz clic en el tendido seleccionado para fijar la referencia de trazado.');
-  });
-
-  otdrFiberInput.addEventListener('input', () => {
-    syncOtdrFiberGeomHint();
-  });
-  otdrFiberInput.addEventListener('change', () => {
-    syncOtdrFiberGeomHint();
-  });
-
-  btnOtdrMark.addEventListener('click', () => markOtdrCut());
-  btnOtdrClear.addEventListener('click', () => clearOtdrMapOverlay());
 
   btnNewRoute.addEventListener('click', () => {
     const raw = window.prompt(
@@ -3761,7 +3537,7 @@ export async function boot() {
     selectedFeature = null;
     editing = true;
     reporteCtl?.cancelMapPickMode?.();
-    clearOtdrMarkAndRef();
+    trazarOtdr?.clearMarkAndRef?.();
     clearMeasureClickModes();
     clearCentralMetric();
     routesLayer.ensureLayer();
@@ -3794,7 +3570,7 @@ export async function boot() {
     newRouteNombre = '';
     editing = true;
     reporteCtl?.cancelMapPickMode?.();
-    clearOtdrMarkAndRef();
+    trazarOtdr?.clearMarkAndRef?.();
     clearMeasureClickModes();
     clearCentralMetric();
     routesLayer.setHiddenRouteId(selectedFeature.id);
