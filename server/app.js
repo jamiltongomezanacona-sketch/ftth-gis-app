@@ -157,7 +157,7 @@ app.use(
       if (fp.endsWith('.webmanifest')) {
         res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
       }
-      if (fp.endsWith('.js') || fp.endsWith('.html')) {
+      if (fp.endsWith('.js') || fp.endsWith('.html') || fp.endsWith('.css')) {
         res.setHeader('Cache-Control', 'no-store, max-age=0');
       }
     }

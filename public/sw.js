@@ -2,7 +2,7 @@
  * Service worker — PWA (cacheo controlado para evitar assets stale).
  * Bumpear SW_CACHE al cambiar estrategia o precache.
  */
-const SW_CACHE = 'ftth-gis-pwa-v4';
+const SW_CACHE = 'ftth-gis-pwa-v5';
 
 const PRECACHE_URLS = [
   '/',
@@ -71,25 +71,13 @@ self.addEventListener('fetch', (event) => {
 
   const isHotAsset = request.destination === 'style' || request.destination === 'script' || request.destination === 'document';
   if (isHotAsset) {
-    // Network-first para CSS/JS/HTML: prioriza cambios recientes y evita servir versiones viejas.
+    // Red siempre; no guardar CSS/JS en caché (evita panel “atascado” con estilos viejos).
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const ok =
-            response &&
-            response.status === 200 &&
-            (response.type === 'basic' || response.type === 'cors');
-          if (ok) {
-            const copy = response.clone();
-            caches.open(SW_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
-          }
-          return response;
-        })
-        .catch(() =>
-          caches.match(request).then(
-            (cached) => cached || new Response('', { status: 503, statusText: 'Offline' })
-          )
+      fetch(request, { cache: 'no-store' }).catch(() =>
+        caches.match(request).then(
+          (cached) => cached || new Response('', { status: 503, statusText: 'Offline' })
         )
+      )
     );
     return;
   }
