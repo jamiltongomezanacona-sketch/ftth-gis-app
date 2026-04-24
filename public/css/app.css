@@ -847,7 +847,7 @@ body.editor-body .editor-chrome-search-slot {
   align-items: center;
   justify-content: center;
   min-width: 0;
-  width: min(280px, calc(100% - 196px));
+  width: min(280px, calc(100% - 112px));
   max-width: min(280px, calc(100vw - 40px));
   margin: 0;
   /* El contenedor no intercepta; el listbox/campo sigue con pointer-events en .cable-search */
@@ -863,7 +863,7 @@ body.editor-body .editor-chrome-search-slot > * {
 /* PC: buscador un poco más ancho (móvil/tablet ≤900px sigue con la regla base o @media propias). */
 @media (min-width: 901px) {
   body.editor-body .editor-chrome-search-slot {
-    width: min(440px, calc(100% - 176px));
+    width: min(440px, calc(100% - 100px));
     max-width: min(440px, calc(100vw - 32px));
   }
 }
@@ -912,27 +912,6 @@ body.editor-body .editor-chrome-tool-btn--reporte {
 
 body.editor-body .editor-chrome-tool-btn--reporte:hover {
   border-color: rgba(251, 191, 36, 0.65);
-}
-
-body.editor-body .editor-chrome-text-action {
-  margin-left: auto;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 2;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  background: rgba(15, 23, 42, 0.82);
-  color: #e2e8f0;
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-body.editor-body .editor-chrome-text-action:hover {
-  border-color: rgba(56, 189, 248, 0.6);
-  background: rgba(30, 41, 59, 0.92);
 }
 
 .editor-chrome-toggle {

@@ -1690,14 +1690,6 @@ export async function boot() {
     isMeasurePolyDrawing: () => measurePolylineActive && !measurePolylineConfirmed
   });
 
-  document.getElementById('btn-chrome-new-route')?.addEventListener('click', () => {
-    try {
-      btnNewRoute?.click();
-    } catch {
-      setStatus('No se pudo iniciar el montaje de ruta.');
-    }
-  });
-
   function updateMetrics(geom, turfNs) {
     if (!geom?.coordinates?.length) {
       lenEl.textContent = '—';
