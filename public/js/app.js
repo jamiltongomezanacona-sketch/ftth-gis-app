@@ -36,7 +36,6 @@ import {
   snapLngLatToLine,
   nearestCentralMeters,
   cutPointFromOtdrFiberMeters,
-  cutPointFromFiberFromClickRef,
   distanceFromStartAlongLineMeters
 } from './measurements.js';
 import {
@@ -1552,9 +1551,6 @@ export async function boot() {
   /** @type {[number, number][]} */
   let measurePolylineCoords = [];
   let trazarSheetOpen = false;
-  let trazarAwaitingMidPick = false;
-  /** @type {number | null} */
-  let trazarMidRefDistM = null;
 
   const btnEdit = $('btn-edit');
   const btnSave = $('btn-save');
@@ -1579,13 +1575,8 @@ export async function boot() {
   const trazarBackdrop = document.getElementById('editor-trazar-backdrop');
   const trazarSheet = document.getElementById('editor-trazar-sheet');
   const trazarCloseBtn = document.getElementById('editor-trazar-close');
-  const trazarMidHint = document.getElementById('editor-trazar-mid-hint');
-  const trazarDirWrap = document.getElementById('editor-trazar-dir-wrap');
   const trazarFiberInput = /** @type {HTMLInputElement | null} */ (
     document.getElementById('editor-trazar-fiber-m')
-  );
-  const trazarMarkBtn = /** @type {HTMLButtonElement | null} */ (
-    document.getElementById('editor-trazar-mark')
   );
   const trazarClearMarkBtn = /** @type {HTMLButtonElement | null} */ (
     document.getElementById('editor-trazar-clear-mark')
@@ -1725,48 +1716,52 @@ export async function boot() {
     return n;
   }
 
-  function getTrazarOriginValue() {
-    const el = document.querySelector('input[name="trazar-origen"]:checked');
-    const v = el && 'value' in el ? String(/** @type {HTMLInputElement} */ (el).value) : 'start';
-    if (v === 'end' || v === 'mid') return v;
-    return 'start';
+  function syncTrazarSheetUi() {
+    if (!trazarFiberInput) return;
+    const raw = String(trazarFiberInput.value ?? '').trim();
+    const ok = raw === '' || parseTrazarFiberMeters() != null;
+    trazarFiberInput.setAttribute('aria-invalid', ok ? 'false' : 'true');
   }
 
-  function syncTrazarSheetUi() {
-    const origin = getTrazarOriginValue();
-    if (trazarMidHint) {
-      if (origin === 'mid') {
-        trazarMidHint.hidden = false;
-        if (trazarAwaitingMidPick) {
-          trazarMidHint.textContent =
-            'Toca el tendido seleccionado (o elige otro) en el mapa para fijar el punto de tramo.';
-        } else if (trazarMidRefDistM != null) {
-          trazarMidHint.textContent = `Punto de tramo fijado a ${fmtM(trazarMidRefDistM)} m desde el inicio del tendido (geométrico).`;
-        } else {
-          trazarMidHint.textContent = 'Toca el tendido en el mapa para fijar el punto de tramo.';
-        }
-      } else {
-        trazarMidHint.hidden = true;
-        trazarMidHint.textContent = '';
-      }
+  /**
+   * Un clic en el cable decide automáticamente desde qué extremo se trazó:
+   * se usa el extremo más cercano al clic como referencia OTDR.
+   * @param {GeoJSON.LineString} line
+   * @param {number} fiberM
+   * @param {mapboxgl.LngLat} clickLngLat
+   * @param {string} cableName
+   * @returns {string}
+   */
+  function paintTrazarCutFromClick(line, fiberM, clickLngLat, cableName) {
+    const lineLen = lineLengthMeters(line, turf);
+    const distFromStart = distanceFromStartAlongLineMeters(
+      line,
+      [clickLngLat.lng, clickLngLat.lat],
+      turf
+    );
+    const from = distFromStart <= Math.max(0, lineLen - distFromStart) ? 'start' : 'end';
+    const cut = cutPointFromOtdrFiberMeters(line, fiberM, from, turf);
+    const pt = cut.point;
+    if (!pt?.geometry?.coordinates) {
+      return 'Trazar: no se pudo calcular el punto del evento.';
     }
-    if (trazarDirWrap) {
-      trazarDirWrap.hidden = !(origin === 'mid' && trazarMidRefDistM != null && !trazarAwaitingMidPick);
+    const lngLat = /** @type {[number, number]} */ (pt.geometry.coordinates);
+    try {
+      ensureTrazarCutLayers(map);
+      setTrazarCutMarker(map, lngLat);
+      bumpLayersAfterPolylineMeasure();
+    } catch (err) {
+      console.warn('Trazar corte en mapa:', err);
+      return 'Trazar: error al pintar el evento en el mapa.';
     }
-    const geom = /** @type {any} */ (selectedFeature?.geometry);
-    const hasLine = geom?.type === 'LineString' && geom.coordinates?.length >= 2;
-    const fiberOk = parseTrazarFiberMeters() != null;
-    const midOk = origin !== 'mid' || (!trazarAwaitingMidPick && trazarMidRefDistM != null);
-    if (trazarMarkBtn) {
-      trazarMarkBtn.disabled = !hasLine || !fiberOk || !midOk;
-    }
+    const refLabel = from === 'start' ? 'inicio' : 'final';
+    const clampNote = cut.clamped ? ' · distancia ajustada al extremo del cable' : '';
+    return `Evento en «${cableName}»: ${lngLat[1].toFixed(5)}, ${lngLat[0].toFixed(5)} (clic más cerca del ${refLabel}; fibra ${fmtM(fiberM)} m -> tendido ${fmtM(cut.geometricFromRefM)} m)${clampNote}`;
   }
 
   function closeTrazarSheet() {
     const hadUi = trazarSheetOpen;
     trazarSheetOpen = false;
-    trazarAwaitingMidPick = false;
-    trazarMidRefDistM = null;
     if (hadUi) {
       document.body.classList.remove('editor-trazar-open');
       if (trazarBackdrop) {
@@ -1800,8 +1795,6 @@ export async function boot() {
   function openTrazarSheet() {
     deactivateMeasurePolyline();
     trazarSheetOpen = true;
-    trazarAwaitingMidPick = false;
-    trazarMidRefDistM = null;
     document.body.classList.add('editor-trazar-open');
     if (trazarBackdrop) {
       trazarBackdrop.hidden = false;
@@ -1811,10 +1804,6 @@ export async function boot() {
       trazarSheet.hidden = false;
       trazarSheet.setAttribute('aria-hidden', 'false');
     }
-    const startRadio = document.querySelector('input[name="trazar-origen"][value="start"]');
-    if (startRadio instanceof HTMLInputElement) startRadio.checked = true;
-    const dirEnd = document.querySelector('input[name="trazar-mid-dir"][value="toward_end"]');
-    if (dirEnd instanceof HTMLInputElement) dirEnd.checked = true;
     if (trazarFiberInput) trazarFiberInput.value = '';
     syncTrazarSheetUi();
     try {
@@ -1823,7 +1812,7 @@ export async function boot() {
       /* */
     }
     setStatus(
-      'Trazar: origen (inicio, final o punto de tramo) y metros de fibra; tendido en mapa = fibra ÷ 1,2. Selecciona un tendido si hace falta.'
+      'Trazar: escribe la longitud de fibra y toca el cable cerca del extremo desde donde se midio. El evento se marca con un solo clic.'
     );
     syncButtons();
   }
@@ -3084,25 +3073,12 @@ export async function boot() {
       const f = e.features?.[0];
       if (!f) return;
 
-      if (trazarSheetOpen && getTrazarOriginValue() === 'mid' && trazarAwaitingMidPick) {
-        const gMid = /** @type {any} */ (f.geometry);
-        if (gMid?.type === 'LineString' && gMid.coordinates?.length >= 2) {
-          const lineMid = /** @type {GeoJSON.LineString} */ (gMid);
-          const snapMid = snapLngLatToLine(lineMid, [e.lngLat.lng, e.lngLat.lat], turf);
-          trazarMidRefDistM = distanceFromStartAlongLineMeters(lineMid, snapMid, turf);
-          trazarAwaitingMidPick = false;
-          syncTrazarSheetUi();
-          setStatus(
-            `Punto de tramo en «${f.properties?.nombre ?? f.id}»: ${fmtM(trazarMidRefDistM)} m desde el inicio del tendido (geométrico).`
-          );
-        }
-      }
-
       if (reporteCtl.handleRouteLinePick(e, f)) return;
 
       selectedFeature = /** @type {any} */ (f);
       routesLayer.setSelected(f.id);
       const geom = /** @type {any} */ (f.geometry);
+      const cableName = String(f.properties?.nombre ?? f.id);
       let statusExtra = '';
       if (geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
         const nc = updateCentralMetricForCableClick(geom, e.lngLat);
@@ -3120,7 +3096,21 @@ export async function boot() {
       } else {
         clearCentralMetric();
       }
-      setStatus(`Seleccionada: ${f.properties?.nombre ?? f.id}${statusExtra}`);
+      let trazarStatus = '';
+      if (trazarSheetOpen && geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
+        const fiberM = parseTrazarFiberMeters();
+        if (fiberM == null) {
+          trazarStatus = 'Trazar: escribe la longitud y vuelve a tocar el cable.';
+        } else {
+          trazarStatus = paintTrazarCutFromClick(
+            /** @type {GeoJSON.LineString} */ (geom),
+            fiberM,
+            e.lngLat,
+            cableName
+          );
+        }
+      }
+      setStatus(trazarStatus || `Seleccionada: ${cableName}${statusExtra}`);
       updateMetrics(geom, turf);
       syncButtons();
       if (trazarSheetOpen) syncTrazarSheetUi();
@@ -3515,88 +3505,12 @@ export async function boot() {
   trazarSheet?.addEventListener('click', (ev) => {
     ev.stopPropagation();
   });
-  trazarSheet?.addEventListener('change', (ev) => {
-    const t = ev.target;
-    if (!(t instanceof HTMLInputElement)) return;
-    if (t.name === 'trazar-origen') {
-      if (t.value === 'mid') {
-        trazarAwaitingMidPick = true;
-        trazarMidRefDistM = null;
-      } else {
-        trazarAwaitingMidPick = false;
-        trazarMidRefDistM = null;
-      }
-      syncTrazarSheetUi();
-    }
-    if (t.name === 'trazar-mid-dir') {
-      syncTrazarSheetUi();
-    }
-  });
   trazarFiberInput?.addEventListener('input', () => syncTrazarSheetUi());
   trazarFiberInput?.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter') {
       ev.preventDefault();
-      trazarMarkBtn?.click();
+      setStatus('Trazar: ahora toca el cable cerca del extremo desde donde se midio.');
     }
-  });
-
-  trazarMarkBtn?.addEventListener('click', () => {
-    const geom = /** @type {any} */ (selectedFeature?.geometry);
-    if (geom?.type !== 'LineString' || !geom.coordinates || geom.coordinates.length < 2) {
-      setStatus('Trazar: selecciona un tendido (línea) en el mapa.');
-      return;
-    }
-    const line = /** @type {GeoJSON.LineString} */ (geom);
-    const fiberM = parseTrazarFiberMeters();
-    if (fiberM == null) {
-      setStatus('Trazar: indica metros de fibra (número ≥ 0).');
-      return;
-    }
-    const origin = getTrazarOriginValue();
-    if (origin === 'mid' && (trazarMidRefDistM == null || trazarAwaitingMidPick)) {
-      setStatus('Trazar: toca el tendido en el mapa para fijar el punto de tramo.');
-      return;
-    }
-    /** @type {ReturnType<typeof cutPointFromOtdrFiberMeters> | ReturnType<typeof cutPointFromFiberFromClickRef>} */
-    let cut;
-    if (origin === 'start') {
-      cut = cutPointFromOtdrFiberMeters(line, fiberM, 'start', turf);
-    } else if (origin === 'end') {
-      cut = cutPointFromOtdrFiberMeters(line, fiberM, 'end', turf);
-    } else {
-      const dirEl = document.querySelector('input[name="trazar-mid-dir"]:checked');
-      const dir =
-        dirEl && 'value' in dirEl && /** @type {HTMLInputElement} */ (dirEl).value === 'toward_start'
-          ? 'toward_start'
-          : 'toward_end';
-      cut = cutPointFromFiberFromClickRef(
-        line,
-        /** @type {number} */ (trazarMidRefDistM),
-        fiberM,
-        dir,
-        turf
-      );
-    }
-    const pt = cut.point;
-    if (!pt?.geometry?.coordinates) {
-      setStatus('Trazar: no se pudo calcular el punto de corte.');
-      return;
-    }
-    const lngLat = /** @type {[number, number]} */ (pt.geometry.coordinates);
-    try {
-      ensureTrazarCutLayers(map);
-      setTrazarCutMarker(map, lngLat);
-      bumpLayersAfterPolylineMeasure();
-    } catch (err) {
-      console.warn('Trazar corte en mapa:', err);
-      setStatus('Trazar: error al pintar el corte en el mapa.');
-      return;
-    }
-    const nom = String(selectedFeature?.properties?.nombre ?? selectedFeature?.id ?? '');
-    const clampNote = cut.clamped ? ' · distancia ajustada al extremo del tendido' : '';
-    setStatus(
-      `Corte en «${nom}»: ${lngLat[1].toFixed(5)}, ${lngLat[0].toFixed(5)} (fibra ${fmtM(fiberM)} m → tendido ${fmtM(cut.geometricFromRefM)} m desde referencia)${clampNote}`
-    );
   });
 
   trazarClearMarkBtn?.addEventListener('click', () => {
