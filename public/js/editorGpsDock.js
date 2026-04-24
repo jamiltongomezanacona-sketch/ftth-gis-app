@@ -1,8 +1,7 @@
 /**
- * Dock GPS (esquina inferior derecha del editor): dispara Mapbox GeolocateControl,
- * resume precisión, coordenadas WGS84, copiar y seguimiento del mapa.
+ * Brújula GPS mínima: solo UI — giro mientras sincroniza, color cuando el seguimiento está activo.
  * @param {{ geolocate: import('mapbox-gl').GeolocateControl, setStatus: (msg: string) => void }} opts
- * @returns {() => void} Limpieza de listeners/timers.
+ * @returns {() => void}
  */
 export function initEditorGpsDock(opts) {
   const { geolocate, setStatus } = opts;
@@ -10,174 +9,99 @@ export function initEditorGpsDock(opts) {
   if (!root || !geolocate) return () => {};
 
   const btnGps = document.getElementById('btn-map-gps');
-  const btnExpand = document.getElementById('btn-editor-gps-expand');
-  const panel = document.getElementById('editor-gps-panel');
-  const pill = document.getElementById('editor-gps-pill');
-  const ageEl = document.getElementById('editor-gps-age');
-  const accM = document.getElementById('editor-gps-acc-m');
-  const accFill = document.getElementById('editor-gps-acc-fill');
-  const latEl = document.getElementById('editor-gps-lat');
-  const lngEl = document.getElementById('editor-gps-lng');
-  const btnCopy = document.getElementById('btn-editor-gps-copy');
-  const btnFollow = document.getElementById('btn-editor-gps-follow');
-  const headingRow = document.getElementById('editor-gps-heading-row');
-  const headingEl = document.getElementById('editor-gps-heading');
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let errResetTimer = null;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let syncWatchdog = null;
 
-  let lastCoordsText = '';
-  /** @type {ReturnType<typeof setInterval> | null} */
-  let ageTimer = null;
-
-  function fmtDeg(n, d = 6) {
-    if (typeof n !== 'number' || Number.isNaN(n)) return '—';
-    return n.toFixed(d);
+  function clearSyncWatchdog() {
+    if (syncWatchdog != null) {
+      clearTimeout(syncWatchdog);
+      syncWatchdog = null;
+    }
   }
 
-  /** Calidad visual 8–100 % a partir de radio de incertidumbre (m). */
-  function accuracyQualityPct(meters) {
-    if (typeof meters !== 'number' || meters <= 0) return 92;
-    const m = Math.min(meters, 250);
-    return Math.round(Math.max(8, Math.min(100, 100 - Math.sqrt(m) * 9)));
-  }
-
-  function setPill(text, variant) {
-    if (!pill) return;
-    pill.textContent = text;
-    pill.classList.remove(
-      'editor-gps-dock__pill--idle',
-      'editor-gps-dock__pill--ok',
-      'editor-gps-dock__pill--warn',
-      'editor-gps-dock__pill--err',
-      'editor-gps-dock__pill--wait'
+  function clearModeClasses() {
+    root.classList.remove(
+      'editor-gps-dock--syncing',
+      'editor-gps-dock--active',
+      'editor-gps-dock--idle',
+      'editor-gps-dock--error'
     );
-    if (variant === 'idle') pill.classList.add('editor-gps-dock__pill--idle');
-    else if (variant === 'ok') pill.classList.add('editor-gps-dock__pill--ok');
-    else if (variant === 'warn') pill.classList.add('editor-gps-dock__pill--warn');
-    else if (variant === 'err') pill.classList.add('editor-gps-dock__pill--err');
-    else if (variant === 'wait') pill.classList.add('editor-gps-dock__pill--wait');
   }
 
-  function setSearching(on) {
-    root.classList.toggle('editor-gps-dock--searching', on);
+  function setMode(mode) {
+    clearModeClasses();
+    if (mode === 'syncing') root.classList.add('editor-gps-dock--syncing');
+    else if (mode === 'active') root.classList.add('editor-gps-dock--active');
+    else if (mode === 'error') root.classList.add('editor-gps-dock--error');
+    else root.classList.add('editor-gps-dock--idle');
   }
 
-  function clearAgeTimer() {
-    if (ageTimer != null) {
-      clearInterval(ageTimer);
-      ageTimer = null;
-    }
-  }
-
-  function updateAge(ts) {
-    if (!ageEl || typeof ts !== 'number') return;
-    clearAgeTimer();
-    const tick = () => {
-      const sec = Math.max(0, Math.round((Date.now() - ts) / 1000));
-      ageEl.textContent = sec < 2 ? 'ahora' : `hace ${sec}s`;
-    };
-    tick();
-    ageTimer = setInterval(tick, 1000);
-  }
-
-  function onTrackStart() {
-    btnFollow?.setAttribute('aria-pressed', 'true');
-    btnFollow?.classList.remove('editor-gps-dock__chip--off');
-  }
-
-  function onTrackEnd() {
-    btnFollow?.setAttribute('aria-pressed', 'false');
-    btnFollow?.classList.add('editor-gps-dock__chip--off');
-  }
-
-  /** @param {{ data?: GeolocationPosition }} ev */
-  function onGeolocate(ev) {
-    setSearching(false);
-    const pos = ev?.data;
-    const c = pos?.coords;
-    if (!c) return;
-    const lat = c.latitude;
-    const lng = c.longitude;
-    const acc = c.accuracy;
-    lastCoordsText = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    root.classList.add('editor-gps-dock--has-fix');
-    setPill('Fijo', 'ok');
-    if (latEl) latEl.textContent = fmtDeg(lat);
-    if (lngEl) lngEl.textContent = fmtDeg(lng);
-    if (accM) accM.textContent = `${Math.round(acc)} m`;
-    if (accFill) accFill.style.width = `${accuracyQualityPct(acc)}%`;
-    if (c.heading != null && !Number.isNaN(Number(c.heading))) {
-      headingRow?.removeAttribute('hidden');
-      if (headingEl) headingEl.textContent = String(Math.round(Number(c.heading)));
-    } else {
-      headingRow?.setAttribute('hidden', '');
-    }
-    updateAge(pos.timestamp || Date.now());
+  /** @param {{ data?: GeolocationPosition }} _ev */
+  function onGeolocate(_ev) {
+    clearSyncWatchdog();
+    setMode('active');
     setStatus('GPS: posición actualizada en el mapa.');
   }
 
   /** @param {{ data?: GeolocationPositionError }} ev */
   function onError(ev) {
-    setSearching(false);
+    clearSyncWatchdog();
     const err = ev?.data;
     const code = err?.code;
-    let msg = 'GPS: sin señal o permiso denegado. Revisa permisos del sitio y que la ubicación esté activa (móvil/PC).';
+    let msg = 'GPS: sin señal o permiso denegado.';
     if (code === 1) msg = 'GPS: permiso de ubicación denegado.';
-    else if (code === 2) msg = 'GPS: posición no disponible en este momento.';
+    else if (code === 2) msg = 'GPS: posición no disponible.';
     else if (code === 3) msg = 'GPS: tiempo de espera agotado.';
-    setPill('Sin señal', 'err');
+    setMode('error');
     setStatus(msg);
+    if (errResetTimer) clearTimeout(errResetTimer);
+    errResetTimer = setTimeout(() => {
+      errResetTimer = null;
+      setMode('idle');
+    }, 2600);
   }
 
   function onOutOfMaxBounds() {
-    setPill('Fuera de mapa', 'warn');
     setStatus('GPS: posición fuera de los límites del mapa.');
   }
 
+  function onTrackStart() {
+    setMode('active');
+  }
+
+  function onTrackEnd() {
+    setMode('idle');
+  }
+
   function onGpsClick() {
-    setSearching(true);
-    setPill('Buscando…', 'wait');
+    if (errResetTimer) {
+      clearTimeout(errResetTimer);
+      errResetTimer = null;
+    }
+    clearSyncWatchdog();
+    setMode('syncing');
+    syncWatchdog = setTimeout(() => {
+      syncWatchdog = null;
+      if (!root.classList.contains('editor-gps-dock--syncing')) return;
+      setMode('idle');
+      setStatus('GPS: sin respuesta a tiempo. Vuelve a intentar.');
+    }, 13000);
     try {
       geolocate.trigger();
     } catch {
-      setSearching(false);
-      setPill('Error', 'err');
+      clearSyncWatchdog();
+      setMode('error');
       setStatus('GPS: no se pudo iniciar la solicitud.');
+      errResetTimer = setTimeout(() => {
+        errResetTimer = null;
+        setMode('idle');
+      }, 2600);
     }
   }
 
   btnGps?.addEventListener('click', onGpsClick);
-
-  btnExpand?.addEventListener('click', () => {
-    const open = btnExpand.getAttribute('aria-expanded') === 'true';
-    const next = !open;
-    btnExpand.setAttribute('aria-expanded', next ? 'true' : 'false');
-    if (panel) panel.hidden = !next;
-    btnExpand.classList.toggle('editor-gps-dock__expand--open', next);
-    root.classList.toggle('editor-gps-dock--expanded', next);
-  });
-
-  btnCopy?.addEventListener('click', async () => {
-    if (!lastCoordsText) {
-      setStatus('GPS: aún no hay posición para copiar.');
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(lastCoordsText);
-      setStatus('GPS: coordenadas copiadas al portapapeles.');
-    } catch {
-      setStatus('GPS: no se pudo copiar (permiso del navegador o contexto no seguro).');
-    }
-  });
-
-  btnFollow?.addEventListener('click', () => {
-    const next = btnFollow.getAttribute('aria-pressed') !== 'true';
-    btnFollow.setAttribute('aria-pressed', next ? 'true' : 'false');
-    btnFollow.classList.toggle('editor-gps-dock__chip--off', !next);
-    try {
-      geolocate.setFollowUserLocation(next);
-    } catch {
-      /* */
-    }
-  });
 
   geolocate.on('geolocate', onGeolocate);
   geolocate.on('error', onError);
@@ -185,7 +109,7 @@ export function initEditorGpsDock(opts) {
   geolocate.on('trackuserlocationstart', onTrackStart);
   geolocate.on('trackuserlocationend', onTrackEnd);
 
-  setPill('En espera', 'idle');
+  setMode('idle');
 
   return () => {
     geolocate.off('geolocate', onGeolocate);
@@ -193,6 +117,7 @@ export function initEditorGpsDock(opts) {
     geolocate.off('outofmaxbounds', onOutOfMaxBounds);
     geolocate.off('trackuserlocationstart', onTrackStart);
     geolocate.off('trackuserlocationend', onTrackEnd);
-    clearAgeTimer();
+    if (errResetTimer) clearTimeout(errResetTimer);
+    clearSyncWatchdog();
   };
 }
