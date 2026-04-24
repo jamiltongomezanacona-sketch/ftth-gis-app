@@ -2,7 +2,6 @@ import { ensureAuthenticated } from './authGate.js';
 import { createRutasApi } from './api.js';
 import { RoutesLayer, ROUTES_LAYER_ID, ROUTES_SOURCE_ID } from './routesLayer.js';
 import { CentralesEtBLayer } from './centralesLayer.js';
-import { OtdrCutLayer } from './otdrCutLayer.js';
 import { MedidaEventoMarkerLayer } from './medidaEventoMarkerLayer.js';
 import {
   EventosReporteLayer,
@@ -12,7 +11,6 @@ import { snapEventPointsToRouteCatalog } from './eventosReporteSnap.js';
 import { RouteDrawEditor } from './routeDrawEditor.js';
 import { createCableSearchBar } from './cableSearchBar.js';
 import { initReporteEventoSidebar } from './reporteEventoSidebar.js';
-import { createTrazarOtdrController } from './trazarOtdrController.js';
 import {
   findManifestEntryForMolecule,
   indexManifestEntries,
@@ -558,11 +556,10 @@ function syncBrowserUrlRed(red) {
 function syncEditorFloatBackdrop() {
   const bd = document.getElementById('editor-float-backdrop');
   if (!bd) return;
-  const t = document.getElementById('editor-float-trazar')?.classList.contains('editor-float-panel--open');
   const r = document
     .getElementById('reporte-evento-details')
     ?.classList.contains('editor-float-panel--open');
-  if (t || r) {
+  if (r) {
     bd.removeAttribute('hidden');
     bd.setAttribute('aria-hidden', 'false');
   } else {
@@ -571,188 +568,81 @@ function syncEditorFloatBackdrop() {
   }
 }
 
-/** Cierra ventanas flotantes Trazar / Reporte (backdrop + estado de botones). */
+/** Cierra ventana flotante Montar evento (backdrop + estado de botón). */
 function closeAllEditorFloatPanels() {
-  document.getElementById('editor-float-trazar')?.classList.remove('editor-float-panel--open');
   document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
-  document.getElementById('btn-open-panel-trazar')?.setAttribute('aria-expanded', 'false');
   document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
   syncEditorFloatBackdrop();
 }
 
 /**
- * Activa o desactiva el «modo pick» en un panel flotante: el panel se reduce
- * a una píldora arriba con un botón Cancelar, dejando el mapa totalmente
- * libre para el clic. Si el panel está cerrado, lo abre brevemente para que
- * la píldora sea visible (estado armado).
- *
- * @param {'trazar'|'reporte'} which Panel a marcar.
- * @param {boolean} on `true` para entrar en modo pick, `false` para restaurar.
+ * Activa o desactiva el «modo pick» del panel Montar evento (píldora / mapa libre).
+ * @param {boolean} on
  */
-function setEditorFloatPickMode(which, on) {
-  const id = which === 'reporte' ? 'reporte-evento-details' : 'editor-float-trazar';
-  const el = document.getElementById(id);
+function setEditorFloatPickMode(on) {
+  const el = document.getElementById('reporte-evento-details');
   if (!el) return;
   if (on) {
-    /* Solo un flotante activo: al armar pick (OTDR o reporte) cerramos el otro panel
-       — si no, Trazar + Montar evento quedan abiertos y en documento se ven apilados. */
-    const otherId = which === 'reporte' ? 'editor-float-trazar' : 'reporte-evento-details';
-    const other = document.getElementById(otherId);
-    other?.classList.remove('editor-float-panel--open');
-    if (which === 'reporte') {
-      document.getElementById('btn-open-panel-trazar')?.setAttribute('aria-expanded', 'false');
-    } else {
-      document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
-    }
-    /* Si el usuario armó la herramienta sin el panel abierto (caso raro pero posible),
-       garantizamos que la píldora se vea: añadimos --open + --pick-mode. */
     el.classList.add('editor-float-panel--open');
     el.classList.add('editor-float-panel--pick-mode');
-    if (which === 'reporte') {
-      el.classList.add('editor-float-panel--pick-mode-reporte');
-    }
+    el.classList.add('editor-float-panel--pick-mode-reporte');
     document.body.classList.add('editor-pick-mode-active');
     syncEditorFloatBackdrop();
   } else {
     el.classList.remove('editor-float-panel--pick-mode');
     el.classList.remove('editor-float-panel--pick-mode-reporte');
-    /* Si ningún panel sigue armado, retiramos la marca global del body. */
     const stillArmed = document.querySelector('.editor-float-panel--pick-mode');
     if (!stillArmed) document.body.classList.remove('editor-pick-mode-active');
   }
 }
 
 /**
- * Abre/cierra una ventana flotante de herramienta (solo una visible; mismo botón cierra).
- * @param {'trazar'|'reporte'} which
- * @param {{ onReporteOpen?: () => void, onReporteClose?: () => void, onTrazarOpen?: () => void }} [hooks]
+ * Abre/cierra el panel Montar evento (mismo botón cierra).
+ * @param {{ onReporteOpen?: () => void, onReporteClose?: () => void }} [hooks]
  */
-function toggleEditorFloatPanel(which, hooks) {
-  const tr = document.getElementById('editor-float-trazar');
+function toggleReporteFloatPanel(hooks) {
   const rep = document.getElementById('reporte-evento-details');
-  const openT = !!tr?.classList.contains('editor-float-panel--open');
   const openR = !!rep?.classList.contains('editor-float-panel--open');
-  if (which === 'trazar') {
-    if (openT) {
-      tr?.classList.remove('editor-float-panel--open');
-    } else {
-      if (openR) hooks?.onReporteClose?.();
-      rep?.classList.remove('editor-float-panel--open');
-      tr?.classList.add('editor-float-panel--open');
-      hooks?.onTrazarOpen?.();
-    }
-  } else if (openR) {
+  if (openR) {
     rep?.classList.remove('editor-float-panel--open');
     hooks?.onReporteClose?.();
   } else {
-    if (openT) tr?.classList.remove('editor-float-panel--open');
     rep?.classList.add('editor-float-panel--open');
     hooks?.onReporteOpen?.();
   }
   syncEditorFloatBackdrop();
-  document.getElementById('btn-open-panel-trazar')?.setAttribute(
-    'aria-expanded',
-    tr?.classList.contains('editor-float-panel--open') ? 'true' : 'false'
-  );
   document.getElementById('btn-open-panel-reporte')?.setAttribute(
     'aria-expanded',
     rep?.classList.contains('editor-float-panel--open') ? 'true' : 'false'
   );
 }
 
-/** v2: migración para quitar estado «colapsado» heredado cuando el panel quedaba detrás del mapa. */
-const SIDEBAR_COLLAPSED_KEY = 'ftth-gis-sidebar-collapsed-v2';
-
-/** Por defecto el mapa abre con el panel cerrado; solo se expande si el usuario guardó explícitamente «abierto» (`0`). */
-function readSidebarCollapsedPreference() {
-  try {
-    const v = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-    if (v === '0') return false;
-  } catch {
-    /* */
-  }
-  return true;
-}
-
 /**
- * Panel flotante (escritorio) / apilado (móvil). El mapa va a pantalla completa bajo la barra superior.
+ * Tras tocar la barra superior / herramientas, Mapbox a veces emite `click` en el mapa:
+ * ignoramos cierres fantasma durante un breve margen.
  * @param {{ resize: () => void }} mapInstance
  * @param {{ getSuppressMapSidebarCollapse?: () => boolean }} [opts]
  */
-function initSidebarRail(mapInstance, opts) {
+function initEditorChromeMapBridge(mapInstance, opts) {
   const layout = document.getElementById('layout');
-  const btn = document.getElementById('sidebar-toggle');
-  if (!layout || !btn) return;
+  if (!layout) return;
 
-  const collapsed = readSidebarCollapsedPreference();
-
-  function applyExpandedUi(/** @type {boolean} */ expanded) {
-    btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-    btn.title = expanded ? 'Ocultar herramientas' : 'Mostrar herramientas';
-    btn.setAttribute('aria-label', expanded ? 'Ocultar panel de herramientas' : 'Mostrar panel de herramientas');
-  }
-
-  function bumpMapResize() {
-    if (typeof opts?.scheduleMapResize === 'function') {
-      opts.scheduleMapResize();
-      return;
-    }
-    window.requestAnimationFrame(() => mapInstance.resize());
-    window.setTimeout(() => mapInstance.resize(), 120);
-  }
-
-  function setCollapsed(/** @type {boolean} */ c) {
-    if (c) closeAllEditorFloatPanels();
-    layout.classList.toggle('sidebar-collapsed', c);
-    applyExpandedUi(!c);
-    try {
-      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, c ? '1' : '0');
-    } catch {
-      /* */
-    }
-    bumpMapResize();
-  }
-
-  if (collapsed) {
-    layout.classList.add('sidebar-collapsed');
-    applyExpandedUi(false);
-  } else {
-    layout.classList.remove('sidebar-collapsed');
-    applyExpandedUi(true);
-  }
-
-  btn.addEventListener('click', () => {
-    setCollapsed(!layout.classList.contains('sidebar-collapsed'));
-  });
-
-  /**
-   * Tras tocar el menú hamburguesa / rail de herramientas, Mapbox a veces emite
-   * también `click` en el mapa: eso colapsaba el menú y cerraba paneles al instante
-   * (Trazar / reporte / medir «no hacen nada»). Damos un margen e ignoramos cierres
-   * cuyo evento no provenga del canvas WebGL.
-   */
   const SIDEBAR_RAIL_INTERACTION_GRACE_MS = 520;
   let suppressMapClickUntil = 0;
   const markRailInteraction = () => {
     suppressMapClickUntil = performance.now() + SIDEBAR_RAIL_INTERACTION_GRACE_MS;
   };
-  const sidebar = document.getElementById('sidebar');
+  const tools = document.getElementById('editor-chrome-tools');
   const chrome = document.querySelector('header.editor-chrome');
   for (const ev of ['click', 'pointerdown', 'touchstart']) {
     const opt = ev === 'click' ? false : { capture: true, passive: true };
-    sidebar?.addEventListener(ev, markRailInteraction, opt);
-    if (ev !== 'click') {
-      btn?.addEventListener(ev, markRailInteraction, { capture: true, passive: true });
-    }
+    tools?.addEventListener(ev, markRailInteraction, opt);
+    chrome?.addEventListener(ev, markRailInteraction, ev === 'click' ? false : opt);
   }
-  btn?.addEventListener('click', markRailInteraction, false);
-  chrome?.addEventListener('click', markRailInteraction, false);
-  chrome?.addEventListener('pointerdown', markRailInteraction, { capture: true, passive: true });
 
-  /** Clic en el **lienzo** (canvas): cierra flotantes y retrae el menú. No a clicks fantasma. */
+  /** Clic en el lienzo (canvas): cierra el flotante de reporte si aplica. */
   mapInstance.on('click', (e) => {
     if (performance.now() < suppressMapClickUntil) return;
-    if (layout.classList.contains('sidebar-collapsed')) return;
     if (opts?.getSuppressMapSidebarCollapse?.()) return;
     const t = e?.originalEvent && e.originalEvent.target;
     if (!(t instanceof Node)) return;
@@ -764,7 +654,6 @@ function initSidebarRail(mapInstance, opts) {
     }
     if (canvas && !canvas.contains(/** @type {Node} */ (t))) return;
     closeAllEditorFloatPanels();
-    setCollapsed(true);
   });
 }
 
@@ -973,7 +862,7 @@ function applyNetworkUi(network) {
       'title',
       isCorp
         ? 'Buscador en barra · medición (pin evento en cable) · tendidos corporativos'
-        : 'Buscador en barra · medición (pin evento) · Trazar en panel · tendidos FTTH'
+        : 'Buscador en barra · medición (pin evento) · tendidos FTTH'
     );
   }
   if (chromeMeta) {
@@ -1295,7 +1184,6 @@ export async function boot() {
   const routesLayer = new RoutesLayer(map);
   const moleculeOverlayLayer = new MoleculeOverlayLayer(map);
   const centralesLayer = new CentralesEtBLayer(map);
-  const otdrCutLayer = new OtdrCutLayer(map);
   const medidaEventoMarkerLayer = new MedidaEventoMarkerLayer(map);
   const eventosReporteLayer = new EventosReporteLayer(map);
   /* Blindaje contra "flash" de pines al arrancar: dejamos memorizada la
@@ -1612,9 +1500,6 @@ export async function boot() {
   /** @type {[number, number][]} */
   let measurePolylineCoords = [];
 
-  /** Controlador Trazar (OTDR): origen inicio/final/punto tramo, fibra, marcar corte. */
-  /** @type {ReturnType<typeof createTrazarOtdrController> | null} */
-  let trazarOtdr = null;
   /** Pin en mapa: coordenada del reporte de evento (clic en tendido). */
   let reporteEventoPinLngLat = /** @type {[number, number] | null} */ (null);
   const btnEdit = $('btn-edit');
@@ -1822,11 +1707,7 @@ export async function boot() {
     getSelectedFeature: () => selectedFeature,
     turf,
     applyReportePickedRoute: (f, e) => {
-      const prevId = selectedFeature?.id;
       selectedFeature = /** @type {any} */ (f);
-      if (prevId != null && prevId !== f.id) {
-        trazarOtdr?.clearMarkAndRef?.();
-      }
       routesLayer.setSelected(f.id);
       const geom = /** @type {any} */ (f.geometry);
       if (geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
@@ -1841,9 +1722,7 @@ export async function boot() {
       reporteEventoPinLngLat = ll;
       syncMedidaEventoPin();
     },
-    disarmOtdrPick: () => {
-      trazarOtdr?.disarmPick?.();
-    },
+    disarmOtdrPick: () => {},
     onArmingChanged: (armed) => {
       try {
         map.getCanvas().style.cursor = armed ? 'crosshair' : '';
@@ -1851,7 +1730,7 @@ export async function boot() {
         /* */
       }
       /* Mantener panel visible: no colapsar a píldora al armar reporte. */
-      setEditorFloatPickMode('reporte', false);
+      setEditorFloatPickMode(false);
     },
     onEventoGuardado: () => {
       void refreshEventosReporteDisplay();
@@ -1868,55 +1747,16 @@ export async function boot() {
     }
   });
 
-  trazarOtdr = createTrazarOtdrController({
-    map,
-    otdrCutLayer,
-    medidaEventoMarkerLayer,
-    centralesLayer,
-    moleculeOverlayLayer,
-    eventosReporteLayer,
-    getSelectedFeature: () => selectedFeature,
-    isEditing: () => editing,
-    getTurf: () => turf,
-    setStatus,
-    setEditorFloatPickMode,
-    onReporteCancelPick: () => {
-      try {
-        reporteCtl?.cancelMapPickMode?.();
-      } catch {
-        /* */
-      }
-    },
-    fmtM,
-    scheduleSync: () => syncButtons(),
-    onAfterClearRef: () => {
-      try {
-        syncMedidaEventoPin();
-      } catch {
-        /* */
-      }
-    }
-  });
-
   /* Status bar inferior (estilo VSCode): coords del cursor, zoom, red activa, guardado. */
   const statusBar = initStatusBar(map);
   statusBar.setNet(appNetwork === 'corporativa' ? 'CORP' : 'FTTH');
 
   initFieldSidebar(map, geolocate, scheduleMapResize, toggleMeasurePolylineMode);
 
-  initSidebarRail(map, {
+  initEditorChromeMapBridge(map, {
     getSuppressMapSidebarCollapse: () => {
       if (editing) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
-      if (trazarOtdr?.isAwaitingRefPick?.()) return true;
-      /* Flotante Trazar/Reporte abierto: clics en el mapa (tendido, ruta, etc.) no retraen el menú. */
-      if (
-        document
-          .getElementById('editor-float-trazar')
-          ?.classList.contains('editor-float-panel--open')
-      ) {
-        return true;
-      }
       if (
         document
           .getElementById('reporte-evento-details')
@@ -1941,26 +1781,15 @@ export async function boot() {
     },
     onReporteClose: () => {
       reporteCtl.notifyReportePanelClosed();
-    },
-    onTrazarOpen: () => {
-      if (!selectedFeature) {
-        setStatus(
-          'Trazar (OTDR): elige un tendido — clic en un cable del mapa o cárgalo con el buscador. Luego: origen, metros de fibra, Marcar corte.'
-        );
-      }
     }
   };
 
-  document.getElementById('btn-open-panel-trazar')?.addEventListener('click', () => {
-    toggleEditorFloatPanel('trazar', editorFloatHooks);
-  });
   document.getElementById('btn-open-panel-reporte')?.addEventListener('click', () => {
-    toggleEditorFloatPanel('reporte', editorFloatHooks);
+    toggleReporteFloatPanel(editorFloatHooks);
   });
   document.getElementById('btn-open-panel-ruta')?.addEventListener('click', () => {
     try {
       btnNewRoute?.click();
-      toggleEditorFloatPanel('trazar', editorFloatHooks);
     } catch {
       setStatus('No se pudo iniciar el montaje de ruta.');
     }
@@ -1977,37 +1806,20 @@ export async function boot() {
   document.querySelectorAll('[data-close-float]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const which = btn.getAttribute('data-close-float');
-      const panelId = which === 'reporte' ? 'reporte-evento-details' : 'editor-float-trazar';
-      const panel = document.getElementById(panelId);
-      /* Si el panel está en modo «pick chip», el botón actúa como Cancelar
-         del armado y restaura el panel a su estado normal en lugar de cerrarlo. */
+      if (which !== 'reporte') return;
+      const panel = document.getElementById('reporte-evento-details');
       if (panel?.classList.contains('editor-float-panel--pick-mode')) {
-        if (which === 'reporte') {
-          try {
-            reporteCtl?.cancelMapPickMode?.();
-          } catch {
-            /* */
-          }
-        } else if (which === 'trazar' && trazarOtdr?.isAwaitingRefPick?.()) {
-          trazarOtdr.disarmPick();
-          setStatus('Referencia por clic cancelada.');
-          try {
-            syncButtons();
-          } catch {
-            /* */
-          }
+        try {
+          reporteCtl?.cancelMapPickMode?.();
+        } catch {
+          /* */
         }
-        setEditorFloatPickMode(/** @type {'trazar'|'reporte'} */ (which), false);
+        setEditorFloatPickMode(false);
         return;
       }
-      if (which === 'reporte') {
-        editorFloatHooks.onReporteClose();
-        document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
-        document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
-      } else if (which === 'trazar') {
-        document.getElementById('editor-float-trazar')?.classList.remove('editor-float-panel--open');
-        document.getElementById('btn-open-panel-trazar')?.setAttribute('aria-expanded', 'false');
-      }
+      editorFloatHooks.onReporteClose();
+      document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
+      document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
       syncEditorFloatBackdrop();
     });
   });
@@ -2024,9 +1836,7 @@ export async function boot() {
     resEl.textContent = fmtM(fib);
   }
 
-  /**
-   * Pin de **evento** o de referencia OTDR en tramo (modo Punto tramo).
-   */
+  /** Pin de **evento** (Montar evento) sobre el mapa. */
   function syncMedidaEventoPin() {
     const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
     if (polyDrawing || editing) {
@@ -2037,33 +1847,6 @@ export async function boot() {
       medidaEventoMarkerLayer.ensureLayer();
       medidaEventoMarkerLayer.setPoint(reporteEventoPinLngLat);
       medidaEventoMarkerLayer.bringToFront();
-      try {
-        otdrCutLayer.bringToFront();
-      } catch {
-        /* */
-      }
-      return;
-    }
-    if (!selectedFeature) {
-      medidaEventoMarkerLayer.clear();
-      return;
-    }
-    const g = /** @type {any} */ (selectedFeature.geometry);
-    if (g?.type !== 'LineString' || !Array.isArray(g.coordinates) || g.coordinates.length < 2) {
-      medidaEventoMarkerLayer.clear();
-      return;
-    }
-    const trRef = trazarOtdr?.getOtdrRef?.();
-    const trRefPt = trazarOtdr?.getClickRefLngLat?.() ?? null;
-    if (trRef === 'click' && trRefPt) {
-      medidaEventoMarkerLayer.ensureLayer();
-      medidaEventoMarkerLayer.setPoint(trRefPt);
-      medidaEventoMarkerLayer.bringToFront();
-      try {
-        otdrCutLayer.bringToFront();
-      } catch {
-        /* */
-      }
       return;
     }
     medidaEventoMarkerLayer.clear();
@@ -2078,7 +1861,6 @@ export async function boot() {
     measureFab.disabled = editing;
     measureFab.classList.toggle('measure-fab--muted', editing);
     cableSearch?.setDisabled(editing || polyDrawing);
-    trazarOtdr?.syncOtdrUi?.();
     syncMeasureFloatUi();
     syncMeasurePolyDockVisibility();
     syncMedidaEventoPin();
@@ -2124,19 +1906,18 @@ export async function boot() {
     }
   }
 
-  /** Tras subir la polilínea de medición, vuelve a poner pins de eventos (y OTDR/medida) por encima del trazo naranja. */
+  /** Tras subir la polilínea de medición, vuelve a poner pins de eventos por encima del trazo naranja. */
   function bumpLayersAfterPolylineMeasure() {
     bringMeasurePolylineLayersToFront();
     eventosReporteLayer.bringToFront();
     medidaEventoMarkerLayer.bringToFront();
-    otdrCutLayer.bringToFront();
     /* Crítico: sin esto, tras medición/actualización, Draw vuelve a quedar bajo otras capas (trazo inactivo). */
     bringMapboxDrawLayersToTop();
   }
 
   /**
    * Capas de MapboxDraw encima de rutas/eventos/medición; si no, el trazo no recibe clics
-   * (quedan por debajo de `routesLayer` y el modo «Trazar / nueva ruta» parece roto).
+   * (quedan por debajo de `routesLayer` y el modo nueva ruta / edición parece roto).
    */
   function bringMapboxDrawLayersToTop() {
     try {
@@ -2353,7 +2134,6 @@ export async function boot() {
     closeEventoMapPopup();
     closeCierreMapPopup();
     reporteCtl?.resetForCableCleared?.();
-    trazarOtdr?.clearMarkAndRef?.();
     routesLayer.ensureLayer();
     syncRoutesLineStyleMode();
     moleculeOverlayLayer.ensureLayer();
@@ -2430,7 +2210,6 @@ export async function boot() {
       central: String(central ?? '').trim(),
       molecula: String(molecula ?? '').trim()
     };
-    trazarOtdr?.clearMarkAndRef?.();
     moleculeOverlayLayer.ensureLayer();
     routesLayer.ensureLayer();
 
@@ -2491,7 +2270,6 @@ export async function boot() {
    * @param {GeoJSON.Feature} f
    */
   async function showCierreFromSearch(f) {
-    trazarOtdr?.clearMarkAndRef?.();
     moleculeOverlayLayer.ensureLayer();
     routesLayer.ensureLayer();
 
@@ -2707,8 +2485,6 @@ export async function boot() {
 
       cableSearch?.reset();
       cableSearch?.refresh();
-      trazarOtdr?.clearMarkAndRef?.();
-
       routesLayer.setSelected(null);
       selectedFeature = null;
       editing = false;
@@ -2821,7 +2597,6 @@ export async function boot() {
           setStatus('Cable no pertenece a la red de esta sesión. Usa «Cambiar de red» o recarga.');
           return;
         }
-        trazarOtdr?.clearMarkAndRef?.();
         moleculeOverlayLayer.ensureLayer();
         moleculeOverlayLayer.clear();
 
@@ -3214,7 +2989,6 @@ export async function boot() {
 
     routesLayer.ensureLayer();
     moleculeOverlayLayer.ensureLayer();
-    otdrCutLayer.ensureLayer();
     medidaEventoMarkerLayer.ensureLayer();
     routesLayer.setCursorPointerOnHover();
 
@@ -3275,7 +3049,7 @@ export async function boot() {
       );
     });
 
-    /** Centrales encima de rutas; cierres/NAP encima; polilínea de medición; eventos y marcas OTDR por encima del trazo. */
+    /** Centrales encima de rutas; cierres/NAP encima; polilínea de medición; eventos por encima del trazo. */
     scheduleOperationalLayersBump([0, 80, 250, 600]);
 
     routesLayer.onLineClick((e) => {
@@ -3288,17 +3062,10 @@ export async function boot() {
       }
       const f = e.features?.[0];
       if (!f) return;
-      const geomEarly = /** @type {any} */ (f.geometry);
 
       if (reporteCtl.handleRouteLinePick(e, f)) return;
 
-      if (trazarOtdr?.handleOtdrRefLinePick(e, f, geomEarly)) return;
-
-      const prevId = selectedFeature?.id;
       selectedFeature = /** @type {any} */ (f);
-      if (prevId != null && prevId !== f.id) {
-        trazarOtdr?.clearMarkAndRef?.();
-      }
       routesLayer.setSelected(f.id);
       const geom = /** @type {any} */ (f.geometry);
       let statusExtra = '';
@@ -3377,7 +3144,6 @@ export async function boot() {
     function shouldBlockExternalNavLongPress() {
       if (editing) return true;
       if (document.body.classList.contains('editor-pick-mode-active')) return true;
-      if (trazarOtdr?.isAwaitingRefPick?.()) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
       return false;
     }
@@ -3505,7 +3271,6 @@ export async function boot() {
         /** @type {MouseEvent} */ (e.originalEvent).shiftKey;
       if (!forceNav) return;
       if (document.body.classList.contains('editor-pick-mode-active')) return;
-      if (trazarOtdr?.isAwaitingRefPick?.()) return;
       openMapExternalNavPopup(e.lngLat);
     });
   });
@@ -3537,7 +3302,6 @@ export async function boot() {
     selectedFeature = null;
     editing = true;
     reporteCtl?.cancelMapPickMode?.();
-    trazarOtdr?.clearMarkAndRef?.();
     clearMeasureClickModes();
     clearCentralMetric();
     routesLayer.ensureLayer();
@@ -3570,7 +3334,6 @@ export async function boot() {
     newRouteNombre = '';
     editing = true;
     reporteCtl?.cancelMapPickMode?.();
-    trazarOtdr?.clearMarkAndRef?.();
     clearMeasureClickModes();
     clearCentralMetric();
     routesLayer.setHiddenRouteId(selectedFeature.id);

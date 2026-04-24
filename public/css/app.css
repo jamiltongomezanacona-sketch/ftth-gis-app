@@ -847,7 +847,7 @@ body.editor-body .editor-chrome-search-slot {
   align-items: center;
   justify-content: center;
   min-width: 0;
-  width: min(280px, calc(100% - 100px));
+  width: min(280px, calc(100% - 200px));
   max-width: min(280px, calc(100vw - 40px));
   margin: 0;
   /* El contenedor no intercepta; el listbox/campo sigue con pointer-events en .cable-search */
@@ -865,6 +865,45 @@ body.editor-body .editor-chrome-toggle,
 body.editor-body .editor-chrome-home {
   position: relative;
   z-index: 2;
+}
+
+/* Herramientas en barra superior (sin rail lateral #sidebar). */
+body.editor-body .editor-chrome-tools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+body.editor-body .editor-chrome-tool-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(15, 23, 42, 0.82);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #e2e8f0;
+  flex-shrink: 0;
+}
+
+body.editor-body .editor-chrome-tool-btn:hover {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: rgba(30, 41, 59, 0.92);
+}
+
+body.editor-body .editor-chrome-tool-btn--reporte {
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+body.editor-body .editor-chrome-tool-btn--reporte:hover {
+  border-color: rgba(251, 191, 36, 0.65);
 }
 
 .editor-chrome-toggle {
@@ -1565,7 +1604,7 @@ body.editor-body #sidebar {
   box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.22);
 }
 
-/* Mismo aspecto sin :has() (WebView antiguas) — lo asigna trazarOtdrController.js */
+/* Mismo aspecto sin :has() (WebView antiguas) — estado por clase en JS del editor. */
 .panel-otdr .otdr-seg-card.otdr-seg-card--selected {
   border: 2px solid rgba(34, 197, 94, 0.9);
   background: rgba(52, 211, 153, 0.12);
