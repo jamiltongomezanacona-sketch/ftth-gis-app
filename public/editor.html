@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260423gpsCompass" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423gpsCompassGlow" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -87,27 +87,45 @@
           title="GPS · tocar para ubicar"
           aria-label="Activar GPS y centrar el mapa en tu posición"
         >
+          <span class="editor-gps-compass__aura" aria-hidden="true"></span>
           <span class="editor-gps-compass__dial" aria-hidden="true">
-            <svg class="editor-gps-compass__svg" width="26" height="26" viewBox="0 0 48 48" focusable="false">
-              <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-opacity="0.28" stroke-width="2" />
-              <path
-                d="M24 6 L27 14 L24 12 L21 14 Z"
-                fill="currentColor"
-                fill-opacity="0.95"
-              />
-              <text x="24" y="15" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor" opacity="0.45">
+            <svg class="editor-gps-compass__svg" width="28" height="28" viewBox="0 0 48 48" focusable="false">
+              <defs>
+                <linearGradient id="editorGpsRim" x1="4" y1="8" x2="44" y2="42" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#22d3ee" stop-opacity="0.95" />
+                  <stop offset="0.45" stop-color="#a78bfa" stop-opacity="0.85" />
+                  <stop offset="1" stop-color="#34d399" stop-opacity="0.9" />
+                </linearGradient>
+                <radialGradient id="editorGpsFace" cx="32%" cy="28%" r="75%">
+                  <stop offset="0" stop-color="#334155" />
+                  <stop offset="0.55" stop-color="#1e293b" />
+                  <stop offset="1" stop-color="#0c1220" />
+                </radialGradient>
+                <linearGradient id="editorGpsNorth" x1="24" y1="7" x2="24" y2="25" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#fef08a" />
+                  <stop offset="0.45" stop-color="#fb923c" />
+                  <stop offset="1" stop-color="#c2410c" />
+                </linearGradient>
+                <linearGradient id="editorGpsSouth" x1="24" y1="41" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#cbd5e1" />
+                  <stop offset="1" stop-color="#475569" />
+                </linearGradient>
+                <radialGradient id="editorGpsCap" cx="35%" cy="35%" r="55%">
+                  <stop offset="0" stop-color="#f8fafc" stop-opacity="0.35" />
+                  <stop offset="0.4" stop-color="#64748b" stop-opacity="0.5" />
+                  <stop offset="1" stop-color="#0f172a" stop-opacity="0.95" />
+                </radialGradient>
+              </defs>
+              <circle cx="24" cy="24" r="20.5" fill="url(#editorGpsFace)" stroke="url(#editorGpsRim)" stroke-width="2.2" />
+              <path d="M24 7.5 L26.2 13.2 L24 11.8 L21.8 13.2 Z" fill="url(#editorGpsNorth)" />
+              <text x="24" y="14.5" text-anchor="middle" font-size="7.5" font-weight="800" fill="#fffbeb" opacity="0.95">
                 N
               </text>
-              <path d="M24 24 L24 11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity="0.9" />
-              <path
-                d="M24 24 L24 37"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                opacity="0.35"
-              />
-              <circle cx="24" cy="24" r="3.2" fill="currentColor" fill-opacity="0.25" />
-              <circle cx="24" cy="24" r="1.6" fill="currentColor" />
+              <path d="M24 24 L24 12.5" stroke="url(#editorGpsNorth)" stroke-width="2.4" stroke-linecap="round" />
+              <path d="M24 24 L24 35.5" stroke="url(#editorGpsSouth)" stroke-width="2" stroke-linecap="round" />
+              <path d="M24 7.5 L26.8 14 L24 12.2 L21.2 14 Z" fill="none" stroke="rgba(255,250,235,0.35)" stroke-width="0.6" />
+              <circle cx="24" cy="24" r="4" fill="url(#editorGpsCap)" stroke="rgba(148, 163, 184, 0.35)" stroke-width="0.8" />
+              <circle cx="22.6" cy="22.5" r="0.9" fill="#fff" opacity="0.55" />
             </svg>
           </span>
         </button>
