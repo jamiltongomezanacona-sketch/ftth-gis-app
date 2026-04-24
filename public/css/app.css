@@ -3519,7 +3519,9 @@ body.editor-body #sidebar.sidebar--fab-stack,
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
-  z-index: 540 !important;
+  /* Sobre el lienzo (0–520); por debajo de chrome 560 y paneles 585, pero por encima de
+     interceptores intermedios (evita que clics vayan al mapa creyendo tocar un botón). */
+  z-index: 570 !important;
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;

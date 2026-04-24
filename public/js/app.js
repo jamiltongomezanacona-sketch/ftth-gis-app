@@ -718,10 +718,44 @@ function initSidebarRail(mapInstance, opts) {
     setCollapsed(!layout.classList.contains('sidebar-collapsed'));
   });
 
-  /** Clic en el lienzo: cierra el panel para ver más mapa (salvo modos que exigen el clic en el mapa). */
-  mapInstance.on('click', () => {
+  /**
+   * Tras tocar el menú hamburguesa / rail de herramientas, Mapbox a veces emite
+   * también `click` en el mapa: eso colapsaba el menú y cerraba paneles al instante
+   * (Trazar / reporte / medir «no hacen nada»). Damos un margen e ignoramos cierres
+   * cuyo evento no provenga del canvas WebGL.
+   */
+  const SIDEBAR_RAIL_INTERACTION_GRACE_MS = 520;
+  let suppressMapClickUntil = 0;
+  const markRailInteraction = () => {
+    suppressMapClickUntil = performance.now() + SIDEBAR_RAIL_INTERACTION_GRACE_MS;
+  };
+  const sidebar = document.getElementById('sidebar');
+  const chrome = document.querySelector('header.editor-chrome');
+  for (const ev of ['click', 'pointerdown', 'touchstart']) {
+    const opt = ev === 'click' ? false : { capture: true, passive: true };
+    sidebar?.addEventListener(ev, markRailInteraction, opt);
+    if (ev !== 'click') {
+      btn?.addEventListener(ev, markRailInteraction, { capture: true, passive: true });
+    }
+  }
+  btn?.addEventListener('click', markRailInteraction, false);
+  chrome?.addEventListener('click', markRailInteraction, false);
+  chrome?.addEventListener('pointerdown', markRailInteraction, { capture: true, passive: true });
+
+  /** Clic en el **lienzo** (canvas): cierra flotantes y retrae el menú. No a clicks fantasma. */
+  mapInstance.on('click', (e) => {
+    if (performance.now() < suppressMapClickUntil) return;
     if (layout.classList.contains('sidebar-collapsed')) return;
     if (opts?.getSuppressMapSidebarCollapse?.()) return;
+    const t = e?.originalEvent && e.originalEvent.target;
+    if (!(t instanceof Node)) return;
+    let canvas;
+    try {
+      canvas = mapInstance.getCanvas();
+    } catch {
+      return;
+    }
+    if (canvas && !canvas.contains(/** @type {Node} */ (t))) return;
     closeAllEditorFloatPanels();
     setCollapsed(true);
   });
