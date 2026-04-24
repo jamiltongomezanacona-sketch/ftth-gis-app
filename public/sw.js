@@ -2,11 +2,12 @@
  * Service worker — PWA (cacheo controlado para evitar assets stale).
  * Bumpear SW_CACHE al cambiar estrategia o precache.
  */
-const SW_CACHE = 'ftth-gis-pwa-v10';
+const SW_CACHE = 'ftth-gis-pwa-v11';
 
 const PRECACHE_URLS = [
   '/',
   '/index.html',
+  '/editor.html',
   '/manifest.webmanifest',
   '/favicon.svg',
   '/branding/login-logo.png',
@@ -64,12 +65,22 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('/index.html')))
+        .catch(() =>
+          caches.match(request, { ignoreSearch: true }).then((cached) => {
+            if (cached) return cached;
+            return caches.match('/editor.html', { ignoreSearch: true }).then((ed) => {
+              if (ed) return ed;
+              return caches.match('/index.html');
+            });
+          })
+        )
     );
     return;
   }
 
-  const isHotAsset = request.destination === 'style' || request.destination === 'script' || request.destination === 'document';
+  // Solo CSS/JS en “caliente”: si incluimos destination=document, editor.html (iframe, preview, etc.)
+  // cae aquí, la red falla y no hay caché → 503 Offline en consola. El HTML sigue la rama general (caché + red).
+  const isHotAsset = request.destination === 'style' || request.destination === 'script';
   if (isHotAsset) {
     // Red siempre; no guardar CSS/JS en caché (evita panel “atascado” con estilos viejos).
     event.respondWith(
