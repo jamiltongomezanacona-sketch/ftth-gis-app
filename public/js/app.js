@@ -1900,6 +1900,21 @@ export async function boot() {
       if (editing) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
       if (otdrAwaitingCableClick) return true;
+      /* Flotante Trazar/Reporte abierto: clics en el mapa (tendido, ruta, etc.) no retraen el menú. */
+      if (
+        document
+          .getElementById('editor-float-trazar')
+          ?.classList.contains('editor-float-panel--open')
+      ) {
+        return true;
+      }
+      if (
+        document
+          .getElementById('reporte-evento-details')
+          ?.classList.contains('editor-float-panel--open')
+      ) {
+        return true;
+      }
       try {
         if (reporteCtl.isAwaitingRoutePick?.()) return true;
       } catch {
