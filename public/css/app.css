@@ -810,6 +810,14 @@ body.editor-body #layout {
   margin-left: 0;
 }
 
+/* PC: buscador más compacto (no estirar a todo el ancho del chrome) */
+@media (min-width: 901px) {
+  body.editor-body .editor-chrome-search-slot {
+    flex: 0 1 280px;
+    max-width: 280px;
+  }
+}
+
 .editor-chrome-toggle {
   width: 36px;
   height: 36px;
