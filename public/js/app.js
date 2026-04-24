@@ -1603,6 +1603,7 @@ export async function boot() {
   const otdrClickStatus = $('otdr-click-status');
   const btnOtdrArmClick = $('btn-otdr-arm-click');
   const otdrFiberInput = /** @type {HTMLInputElement} */ ($('otdr-fiber-m'));
+  const otdrFiberGeomHint = document.getElementById('otdr-fiber-geom-hint');
   const btnOtdrMark = $('btn-otdr-mark');
   const btnOtdrClear = $('btn-otdr-clear');
 
@@ -2011,6 +2012,25 @@ export async function boot() {
     otdrClickPanel.hidden = getOtdrRef() !== 'click';
   }
 
+  /** Texto bajo "Fibra OTDR": explica reserva 20% (tendido = fibra ÷ 1,2), coherente con `measurements.js`. */
+  function syncOtdrFiberGeomHint() {
+    if (!otdrFiberGeomHint) return;
+    const v = Number(otdrFiberInput.value);
+    if (!Number.isFinite(v) || v < 0) {
+      otdrFiberGeomHint.textContent =
+        'Reserva 20%: el trazado en el mapa usa tendido = fibra ÷ 1,2 (mismo criterio que en el resto de la app).';
+      return;
+    }
+    if (v === 0) {
+      otdrFiberGeomHint.textContent = 'Reserva 20%: 0 m de fibra → 0 m de recorrido en el tendido.';
+      return;
+    }
+    const g = geometricLengthFromFiberLengthMeters(v);
+    otdrFiberGeomHint.textContent = `Reserva 20%: ≈${fmtM(g)} m de tendido (geométrico) en el mapa por ${fmtM(
+      v
+    )} m de fibra OTDR (÷1,2).`;
+  }
+
   function syncOtdrUi() {
     const ok =
       !!selectedFeature && !editing && selectedFeature.geometry?.type === 'LineString';
@@ -2030,6 +2050,7 @@ export async function boot() {
       setEditorFloatPickMode('trazar', false);
     }
     updateOtdrClickPanelVisibility();
+    syncOtdrFiberGeomHint();
   }
 
   function clearOtdrMapOverlay() {
@@ -3611,6 +3632,13 @@ export async function boot() {
     btnOtdrArmClick.classList.add('active');
     setEditorFloatPickMode('trazar', true);
     setStatus('Haz clic en el tendido seleccionado para fijar la referencia de trazado.');
+  });
+
+  otdrFiberInput.addEventListener('input', () => {
+    syncOtdrFiberGeomHint();
+  });
+  otdrFiberInput.addEventListener('change', () => {
+    syncOtdrFiberGeomHint();
   });
 
   btnOtdrMark.addEventListener('click', () => markOtdrCut());

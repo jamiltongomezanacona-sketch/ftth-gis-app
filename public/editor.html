@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260423searchc1" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423otdrhelp1" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -273,9 +273,13 @@
     </div>
     <div class="editor-float-panel__body">
       <p class="otdr-panel-hint" role="note">
-        <strong>Trazar (OTDR):</strong> primero <strong>clic en un tendido</strong> del mapa. Luego fibra (m) y
-        <strong>Marcar corte</strong> (o <strong>Fijar referencia</strong> si eliges “Punto tramo”). Para
-        <strong>dibujar una ruta nueva</strong>, pulsa <strong>Montar ruta</strong> en la barra.
+        <strong>Trazar (OTDR):</strong> 1) <strong>clic en un tendido</strong> del mapa. 2) <strong>Origen:</strong>
+        <em>Inicio</em> = desde el primer vértice (lado “central” si el trazado empieza ahí);
+        <em>Final</em> = desde el extremo opuesto; <em>Punto tramo</em> = cualquier punto: activa
+        <strong>Fijar referencia</strong>, clica en el mismo cable y el sentido. 3) <strong>Fibra (m):</strong> lectura OTDR;
+        el corte se sitúa con <strong>reserva 20%</strong> (tendido geom. = fibra ÷ 1,2; ver abajo). 4)
+        <strong>Marcar corte</strong>. &nbsp;— Para <strong>medir un trazo libre</strong> con distancia y +20%, usa
+        <strong>Medir</strong> (icono cinta en la barra), no confundir con OTDR.
       </p>
       <div class="panel-block panel-otdr">
         <fieldset class="otdr-fieldset otdr-fieldset--seg" id="otdr-ref-fieldset">
@@ -359,9 +363,12 @@
         <div class="otdr-fiber-block">
           <label class="otdr-input-label" for="otdr-fiber-m">
             <img class="otdr-input-label-ico" src="/icons/ui/ruler.svg" width="14" height="14" alt="" decoding="async" />
-            Fibra (m)
+            Fibra OTDR (m)
           </label>
           <input type="number" id="otdr-fiber-m" class="otdr-input" min="0" step="0.1" placeholder="Ej. 1250" disabled inputmode="decimal" />
+          <p id="otdr-fiber-geom-hint" class="otdr-fiber-geom-hint" aria-live="polite">
+            Reserva 20%: el trazado en el mapa usa tendido = fibra ÷ 1,2 (mismo criterio que en el resto de la app).
+          </p>
         </div>
         <div class="otdr-actions">
           <button type="button" id="btn-otdr-mark" class="otdr-btn otdr-btn--primary" disabled>
@@ -626,6 +633,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260423trazarfix1"></script>
+  <script type="module" src="/js/app.js?v=20260423otdrhelp1"></script>
 </body>
 </html>

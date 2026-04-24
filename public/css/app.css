@@ -1738,6 +1738,13 @@ body.editor-body #sidebar {
   opacity: 0.45;
 }
 
+.panel-otdr .otdr-fiber-geom-hint {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
 .panel-otdr .otdr-actions {
   display: flex;
   flex-wrap: wrap;
