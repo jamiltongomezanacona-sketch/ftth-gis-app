@@ -70,6 +70,21 @@ export function createTrazarOtdrController(d) {
     if (otdrClickPanel) otdrClickPanel.hidden = getOtdrRef() !== 'click';
   }
 
+  /**
+   * Refuerza el estilo "seleccionado" en móviles / WebView sin :has() en CSS.
+   * @see .otdr-seg-card--selected
+   */
+  function syncOtdrSegCardClasses() {
+    otdrRefFieldset?.querySelectorAll('input[name="otdr-ref"]').forEach((inp) => {
+      const lab = /** @type {HTMLInputElement} */ (inp).closest('label.otdr-seg-card');
+      if (lab) lab.classList.toggle('otdr-seg-card--selected', /** @type {HTMLInputElement} */ (inp).checked);
+    });
+    otdrClickPanel?.querySelectorAll('input[name="otdr-dir"]').forEach((inp) => {
+      const lab = /** @type {HTMLInputElement} */ (inp).closest('label.otdr-seg-card');
+      if (lab) lab.classList.toggle('otdr-seg-card--selected', /** @type {HTMLInputElement} */ (inp).checked);
+    });
+  }
+
   function syncOtdrFiberGeomHint() {
     if (!otdrFiberGeomHint) return;
     const v = Number(otdrFiberInput?.value);
@@ -113,7 +128,10 @@ export function createTrazarOtdrController(d) {
     const ok = !!sf && !isEditing() && sf.geometry?.type === 'LineString';
     if (otdrFiberInput) otdrFiberInput.disabled = !ok;
     if (btnOtdrMark) btnOtdrMark.disabled = !ok;
-    if (btnOtdrClear) btnOtdrClear.disabled = !ok;
+    if (btnOtdrClear) {
+      const marcas = otdrCutLayer.hasMark?.() === true;
+      btnOtdrClear.disabled = !ok && !marcas;
+    }
     if (btnOtdrArmClick) {
       btnOtdrArmClick.disabled = !ok || getOtdrRef() !== 'click';
     }
@@ -131,6 +149,7 @@ export function createTrazarOtdrController(d) {
     updateOtdrClickPanelVisibility();
     syncOtdrFiberGeomHint();
     syncOtdrCableReadout();
+    syncOtdrSegCardClasses();
   }
 
   function clearOtdrMapOverlay() {
@@ -215,6 +234,7 @@ export function createTrazarOtdrController(d) {
       statusMsg += ' · Lectura acotada al extremo del tendido en el mapa.';
     }
     setStatus(statusMsg);
+    scheduleSync();
   }
 
   /**
@@ -273,6 +293,11 @@ export function createTrazarOtdrController(d) {
   document.querySelectorAll('input[name="otdr-ref"]').forEach((el) => {
     el.addEventListener('change', onRefInputChange);
   });
+  document.querySelectorAll('input[name="otdr-dir"]').forEach((el) => {
+    el.addEventListener('change', () => {
+      scheduleSync();
+    });
+  });
 
   btnOtdrArmClick?.addEventListener('click', () => {
     if (!getSelectedFeature() || isEditing()) return;
@@ -303,7 +328,10 @@ export function createTrazarOtdrController(d) {
   });
   btnOtdrClear?.addEventListener('click', () => {
     clearOtdrMapOverlay();
+    scheduleSync();
   });
+
+  syncOtdrSegCardClasses();
 
   return {
     isAwaitingRefPick: () => otdrAwaitingCableClick,

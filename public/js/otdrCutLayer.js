@@ -23,6 +23,7 @@ export class OtdrCutLayer {
    */
   constructor(map) {
     this.map = map;
+    this._lastHadCut = false;
     this.sourceId = SOURCE_ID;
     this.symbolLayerId = SYMBOL_LAYER_ID;
     this.circleLayerId = CIRCLE_LAYER_ID;
@@ -164,6 +165,12 @@ export class OtdrCutLayer {
   clear() {
     if (!this.map.getSource(this.sourceId)) return;
     this.map.getSource(this.sourceId).setData({ type: 'FeatureCollection', features: [] });
+    this._lastHadCut = false;
+  }
+
+  /** @returns {boolean} */
+  hasMark() {
+    return this._lastHadCut === true;
   }
 
   /**
@@ -172,6 +179,7 @@ export class OtdrCutLayer {
    */
   setCutPoint(lngLat, label) {
     this.ensureLayer();
+    this._lastHadCut = true;
     const fc = {
       type: 'FeatureCollection',
       features: [
