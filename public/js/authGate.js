@@ -40,37 +40,41 @@ export async function ensureAuthenticated(apiBase = '') {
   root.innerHTML = `
 <div class="auth-gate" role="dialog" aria-modal="true" aria-labelledby="auth-title">
   <div class="auth-card">
-    <div class="auth-card-brand">
-      <div class="auth-card-logo" aria-hidden="true">
-        <img src="/branding/login-logo.png" width="88" height="88" alt="" decoding="async" />
-      </div>
+    <div class="auth-card__titlebar">
+      <h1 id="auth-title" class="auth-card__title">VISOR GIS</h1>
     </div>
-    <h1 id="auth-title" class="auth-card-title">VISOR GIS</h1>
-    <p class="auth-card-sub">Inicia sesión para continuar</p>
-    <button type="button" class="auth-btn-install" id="auth-install">Instalar app</button>
-    <form id="auth-form" class="auth-form" novalidate>
-      <div id="auth-error" class="auth-error" role="alert" aria-live="polite"></div>
-      <label class="auth-field-label">
-        <span class="auth-sr-only">Correo electrónico</span>
-        <input class="auth-input" type="email" name="email" autocomplete="username" id="auth-email" placeholder="correo@empresa.com" required />
-      </label>
-      <div class="auth-pass-wrap">
-        <label class="auth-field-label auth-field-label--pass">
-          <span class="auth-sr-only">Contraseña</span>
-          <input class="auth-input" type="password" name="password" autocomplete="current-password" id="auth-password" placeholder="Contraseña" required minlength="4" />
-        </label>
-        <button type="button" class="auth-pass-toggle" id="auth-toggle-pass" aria-label="Mostrar u ocultar contraseña" title="Mostrar contraseña">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M12 5C7.36 5 3.29 7.69 2 12c1.29 4.31 5.36 7 10 7s8.71-2.69 10-7c-1.29-4.31-5.36-7-10-7zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>
-          </svg>
-        </button>
+    <div class="auth-card__body">
+      <div class="auth-card-brand">
+        <div class="auth-card-logo" aria-hidden="true">
+          <img src="/branding/login-logo.png" width="88" height="88" alt="" decoding="async" />
+        </div>
       </div>
-      <button type="submit" class="auth-submit" id="auth-submit">Iniciar sesión</button>
-    </form>
-    <div class="auth-card-foot">
-      <button type="button" class="auth-link" id="auth-register">Crear cuenta</button>
-      <span class="auth-dot" aria-hidden="true">·</span>
-      <button type="button" class="auth-link" id="auth-forgot">¿Olvidaste tu contraseña?</button>
+      <p class="auth-card-sub">Inicia sesión para continuar</p>
+      <button type="button" class="auth-btn-install" id="auth-install">Instalar app</button>
+      <form id="auth-form" class="auth-form" novalidate>
+        <div id="auth-error" class="auth-error" role="alert" aria-live="polite"></div>
+        <label class="auth-field-label">
+          <span class="auth-sr-only">Correo electrónico</span>
+          <input class="auth-input" type="email" name="email" autocomplete="username" id="auth-email" placeholder="correo@empresa.com" required />
+        </label>
+        <div class="auth-pass-wrap">
+          <label class="auth-field-label auth-field-label--pass">
+            <span class="auth-sr-only">Contraseña</span>
+            <input class="auth-input" type="password" name="password" autocomplete="current-password" id="auth-password" placeholder="Contraseña" required minlength="4" />
+          </label>
+          <button type="button" class="auth-pass-toggle" id="auth-toggle-pass" aria-label="Mostrar u ocultar contraseña" title="Mostrar contraseña">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 5C7.36 5 3.29 7.69 2 12c1.29 4.31 5.36 7 10 7s8.71-2.69 10-7c-1.29-4.31-5.36-7-10-7zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+        <button type="submit" class="auth-submit" id="auth-submit">Iniciar sesión</button>
+      </form>
+      <div class="auth-card-foot">
+        <button type="button" class="auth-link" id="auth-register">Crear cuenta</button>
+        <span class="auth-dot" aria-hidden="true">·</span>
+        <button type="button" class="auth-link" id="auth-forgot">¿Olvidaste tu contraseña?</button>
+      </div>
     </div>
   </div>
 </div>`;
