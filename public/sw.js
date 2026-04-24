@@ -2,7 +2,7 @@
  * Service worker — PWA (cacheo controlado para evitar assets stale).
  * Bumpear SW_CACHE al cambiar estrategia o precache.
  */
-const SW_CACHE = 'ftth-gis-pwa-v11';
+const SW_CACHE = 'ftth-gis-pwa-v12';
 
 const PRECACHE_URLS = [
   '/',
@@ -68,10 +68,12 @@ self.addEventListener('fetch', (event) => {
         .catch(() =>
           caches.match(request, { ignoreSearch: true }).then((cached) => {
             if (cached) return cached;
-            return caches.match('/editor.html', { ignoreSearch: true }).then((ed) => {
-              if (ed) return ed;
-              return caches.match('/index.html');
-            });
+            const path = url.pathname;
+            const isEditor = path === '/editor.html' || path.endsWith('/editor.html');
+            if (isEditor) {
+              return caches.match('/editor.html', { ignoreSearch: true }).then((ed) => ed || caches.match('/index.html'));
+            }
+            return caches.match('/index.html');
           })
         )
     );
