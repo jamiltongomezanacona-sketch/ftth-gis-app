@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1120" />
+  <meta name="theme-color" content="#080a0f" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="GIS FTTH" />
   <meta name="application-name" content="GIS FTTH" />
-  <meta name="msapplication-TileColor" content="#0b1120" />
+  <meta name="msapplication-TileColor" content="#080a0f" />
   <link rel="apple-touch-icon" href="/icons/pwa/icon-192.png" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <title>GIS FTTH · Panel principal</title>
@@ -17,18 +17,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/app.css?v=20260423home1" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423home2" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="home-body auth-pending">
   <div id="auth-gate-root" class="auth-gate-root"></div>
 
-  <!-- Fondo: auroras difuminadas (gris / azul / verde) -->
+  <!-- Fondo: capas azul / gris (sin verdes) -->
   <div class="home-bg" aria-hidden="true">
     <div class="home-bg-glow home-bg-glow--slate"></div>
     <div class="home-bg-glow home-bg-glow--blue"></div>
-    <div class="home-bg-glow home-bg-glow--teal"></div>
-    <div class="home-bg-glow home-bg-glow--green"></div>
+    <div class="home-bg-glow home-bg-glow--blue-soft"></div>
     <div class="home-bg-glow home-bg-glow--mist"></div>
     <div class="home-bg-grid" role="presentation"></div>
   </div>
@@ -55,33 +54,48 @@
 
     <div class="home-layout">
       <aside class="home-aside" aria-label="Navegación principal">
-        <nav class="home-grid home-grid--compact home-grid--sidebar" aria-label="Módulos principales">
+        <div class="home-aside__head">
+          <span class="home-aside__label">Módulos</span>
+        </div>
+        <nav class="home-nav-panel home-grid home-grid--compact home-grid--sidebar" aria-label="Módulos principales">
           <a class="home-card home-card--ftth" href="/editor.html?red=ftth">
             <span class="home-card-ico home-card-ico--ftth" aria-hidden="true">
-              <img class="home-card-icon-img" src="/icons/ui/home.svg" width="28" height="28" alt="" decoding="async" />
+              <img class="home-card-icon-img" src="/icons/ui/home.svg" width="24" height="24" alt="" decoding="async" />
             </span>
-            <h2 class="home-card-title">Red FTTH</h2>
+            <div class="home-card-text">
+              <h2 class="home-card-title">Red FTTH</h2>
+              <p class="home-card-hint">Operación en mapa</p>
+            </div>
           </a>
 
           <a class="home-card home-card--corp" href="/editor.html?red=corporativa">
             <span class="home-card-ico home-card-ico--corp" aria-hidden="true">
-              <img class="home-card-icon-img" src="/icons/ui/building.svg" width="28" height="28" alt="" decoding="async" />
+              <img class="home-card-icon-img" src="/icons/ui/building.svg" width="24" height="24" alt="" decoding="async" />
             </span>
-            <h2 class="home-card-title">Red corporativa</h2>
+            <div class="home-card-text">
+              <h2 class="home-card-title">Red corporativa</h2>
+              <p class="home-card-hint">Troncales y nodos</p>
+            </div>
           </a>
 
           <a class="home-card home-card--dashboard" href="/dashboard/">
             <span class="home-card-ico home-card-ico--dashboard" aria-hidden="true">
-              <img class="home-card-icon-img" src="/icons/ui/layers.svg" width="28" height="28" alt="" decoding="async" />
+              <img class="home-card-icon-img" src="/icons/ui/layers.svg" width="24" height="24" alt="" decoding="async" />
             </span>
-            <h2 class="home-card-title">Dashboard</h2>
+            <div class="home-card-text">
+              <h2 class="home-card-title">Dashboard</h2>
+              <p class="home-card-hint">Mantenimiento</p>
+            </div>
           </a>
 
           <a class="home-card home-card--analytics" href="/analitica.html">
             <span class="home-card-ico home-card-ico--analytics" aria-hidden="true">
-              <img class="home-card-icon-img" src="/icons/ui/chart.svg" width="28" height="28" alt="" decoding="async" />
+              <img class="home-card-icon-img" src="/icons/ui/chart.svg" width="24" height="24" alt="" decoding="async" />
             </span>
-            <h2 class="home-card-title">Analítica</h2>
+            <div class="home-card-text">
+              <h2 class="home-card-title">Analítica</h2>
+              <p class="home-card-hint">Métricas y eventos</p>
+            </div>
           </a>
         </nav>
       </aside>
