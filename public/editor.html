@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260423gpsCompassGlow" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423fieldSidebar" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -71,11 +71,59 @@
       <a class="editor-chrome-home" href="/" title="Panel principal" aria-label="Ir al panel principal">
         <img class="editor-chrome-home-img" src="/icons/ui/home.svg" width="26" height="26" alt="" decoding="async" />
       </a>
+      <button
+        type="button"
+        id="btn-editor-field-menu"
+        class="editor-chrome-toggle editor-chrome-toggle--field-menu"
+        aria-expanded="false"
+        aria-controls="editor-field-sidebar"
+        title="Herramientas de campo"
+        aria-label="Abrir o cerrar menú de herramientas de campo"
+      >
+        <span class="editor-chrome-burger" aria-hidden="true">
+          <span class="editor-chrome-burger-line"></span>
+          <span class="editor-chrome-burger-line"></span>
+          <span class="editor-chrome-burger-line"></span>
+        </span>
+      </button>
       <div class="editor-chrome-search-slot"></div>
       <button type="button" id="btn-chrome-new-route" class="editor-chrome-text-action">
         Nueva ruta
       </button>
     </header>
+    <div
+      id="editor-field-sidebar-backdrop"
+      class="editor-field-sidebar-backdrop"
+      hidden
+      aria-hidden="true"
+    ></div>
+    <aside id="editor-field-sidebar" class="editor-field-sidebar" aria-hidden="true" aria-label="Herramientas de campo">
+      <div class="editor-field-sidebar__inner">
+        <p class="editor-field-sidebar__head">Campo</p>
+        <nav class="editor-field-sidebar__nav" aria-label="Acciones de campo">
+          <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-trazar">
+            <span class="editor-field-sidebar__item-title">Trazar</span>
+            <span class="editor-field-sidebar__item-sub">OTDR · demo localización</span>
+          </button>
+          <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-medir">
+            <span class="editor-field-sidebar__item-title">Medir</span>
+            <span class="editor-field-sidebar__item-sub">Distancia y +20 % reserva en mapa</span>
+          </button>
+          <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-montar-evento">
+            <span class="editor-field-sidebar__item-title">Montar evento</span>
+            <span class="editor-field-sidebar__item-sub">Próximamente en el editor</span>
+          </button>
+          <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-montar-cierre">
+            <span class="editor-field-sidebar__item-title">Montar cierre</span>
+            <span class="editor-field-sidebar__item-sub">Próximamente en el editor</span>
+          </button>
+          <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-montar-ruta">
+            <span class="editor-field-sidebar__item-title">Montar ruta</span>
+            <span class="editor-field-sidebar__item-sub">Nueva ruta en el mapa</span>
+          </button>
+        </nav>
+      </div>
+    </aside>
     <div id="map-wrap">
       <!-- Mapa antes del sidebar en el DOM: capa base en móvil; medición encima del lienzo WebGL. -->
       <div id="map"></div>
@@ -212,6 +260,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260423gpsCompass"></script>
+  <script type="module" src="/js/app.js?v=20260423fieldSidebar"></script>
 </body>
 </html>

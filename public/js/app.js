@@ -568,10 +568,140 @@ function initEditorChromeMapBridge(mapInstance, opts) {
     suppressMapClickUntil = performance.now() + SIDEBAR_RAIL_INTERACTION_GRACE_MS;
   };
   const chrome = document.querySelector('header.editor-chrome');
-  for (const ev of ['click', 'pointerdown', 'touchstart']) {
-    const opt = ev === 'click' ? false : { capture: true, passive: true };
-    chrome?.addEventListener(ev, markRailInteraction, ev === 'click' ? false : opt);
+  const fieldSidebar = document.getElementById('editor-field-sidebar');
+  const fieldBackdrop = document.getElementById('editor-field-sidebar-backdrop');
+  const railTargets = [chrome, fieldSidebar, fieldBackdrop].filter(Boolean);
+  for (const el of railTargets) {
+    for (const ev of ['click', 'pointerdown', 'touchstart']) {
+      const opt = ev === 'click' ? false : { capture: true, passive: true };
+      el.addEventListener(ev, markRailInteraction, ev === 'click' ? false : opt);
+    }
   }
+}
+
+/**
+ * Menú ☰ (junto a la casita): panel lateral con Trazar, Medir, Montar evento/cierre/ruta.
+ * @param {{
+ *   scheduleMapResize?: () => void,
+ *   setStatus: (msg: string) => void,
+ *   toggleMeasurePolylineMode: () => void,
+ *   isEditing: () => boolean,
+ *   btnNewRoute: HTMLButtonElement,
+ *   isMeasurePolyDrawing: () => boolean
+ * }} opts
+ */
+function initEditorFieldSidebarMenu(opts) {
+  const {
+    scheduleMapResize,
+    setStatus,
+    toggleMeasurePolylineMode,
+    isEditing,
+    btnNewRoute,
+    isMeasurePolyDrawing
+  } = opts;
+  const btn = document.getElementById('btn-editor-field-menu');
+  const panel = document.getElementById('editor-field-sidebar');
+  const backdrop = document.getElementById('editor-field-sidebar-backdrop');
+  if (!btn || !panel || !backdrop) return;
+
+  function requestResize() {
+    try {
+      scheduleMapResize?.();
+    } catch {
+      /* */
+    }
+  }
+
+  let menuOpen = false;
+
+  function openMenu() {
+    menuOpen = true;
+    backdrop.hidden = false;
+    backdrop.setAttribute('aria-hidden', 'false');
+    panel.setAttribute('aria-hidden', 'false');
+    btn.setAttribute('aria-expanded', 'true');
+    window.requestAnimationFrame(() => {
+      panel.classList.add('editor-field-sidebar--open');
+      backdrop.classList.add('editor-field-sidebar-backdrop--open');
+    });
+    requestResize();
+  }
+
+  function closeMenu() {
+    menuOpen = false;
+    panel.classList.remove('editor-field-sidebar--open');
+    backdrop.classList.remove('editor-field-sidebar-backdrop--open');
+    btn.setAttribute('aria-expanded', 'false');
+    panel.setAttribute('aria-hidden', 'true');
+    backdrop.setAttribute('aria-hidden', 'true');
+    window.setTimeout(() => {
+      if (!menuOpen) {
+        backdrop.hidden = true;
+      }
+    }, 280);
+    requestResize();
+  }
+
+  function toggleMenu() {
+    if (menuOpen) closeMenu();
+    else openMenu();
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMenu();
+  });
+  backdrop.addEventListener('click', () => closeMenu());
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menuOpen) {
+      e.preventDefault();
+      closeMenu();
+    }
+  });
+
+  /**
+   * @param {string} id
+   * @param {() => void} fn
+   */
+  function wire(id, fn) {
+    document.getElementById(id)?.addEventListener('click', () => {
+      try {
+        fn();
+      } catch {
+        /* */
+      }
+      closeMenu();
+    });
+  }
+
+  wire('btn-sidebar-trazar', () => {
+    window.open('/demos/otdr-field/', '_blank', 'noopener,noreferrer');
+    setStatus('Trazar: demo OTDR en nueva pestaña.');
+  });
+
+  wire('btn-sidebar-medir', () => {
+    if (isEditing()) {
+      setStatus('Medir: no disponible mientras editas una ruta.');
+      return;
+    }
+    toggleMeasurePolylineMode();
+  });
+
+  wire('btn-sidebar-montar-evento', () => {
+    setStatus('Montar evento: flujo en preparación.');
+  });
+
+  wire('btn-sidebar-montar-cierre', () => {
+    setStatus('Montar cierre: flujo en preparación.');
+  });
+
+  wire('btn-sidebar-montar-ruta', () => {
+    if (btnNewRoute.disabled || isMeasurePolyDrawing()) {
+      setStatus('Montar ruta: termina la medición abierta o la edición antes de crear una ruta.');
+      return;
+    }
+    btnNewRoute.click();
+  });
 }
 
 /**
@@ -1549,6 +1679,15 @@ export async function boot() {
       return false;
     },
     scheduleMapResize
+  });
+
+  initEditorFieldSidebarMenu({
+    scheduleMapResize,
+    setStatus,
+    toggleMeasurePolylineMode,
+    isEditing: () => editing,
+    btnNewRoute,
+    isMeasurePolyDrawing: () => measurePolylineActive && !measurePolylineConfirmed
   });
 
   document.getElementById('btn-chrome-new-route')?.addEventListener('click', () => {
