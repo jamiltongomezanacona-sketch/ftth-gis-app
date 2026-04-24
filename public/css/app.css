@@ -1748,6 +1748,43 @@ body.editor-body #sidebar {
   margin-bottom: 12px;
 }
 
+.panel-otdr .otdr-fiber-block__head {
+  margin: 0 0 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted2);
+}
+
+.panel-otdr .otdr-fiber-dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  align-items: start;
+}
+
+@media (max-width: 420px) {
+  .panel-otdr .otdr-fiber-dual {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel-otdr .otdr-fcol {
+  min-width: 0;
+}
+
+.panel-otdr .otdr-fiber-geom__mini {
+  margin: 8px 0 0;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--muted2);
+}
+
+.panel-otdr .otdr-tendido-or {
+  margin-top: 12px;
+}
+
 .panel-otdr .otdr-input-label {
   display: flex;
   align-items: center;
@@ -1796,6 +1833,32 @@ body.editor-body #sidebar {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* Trazar: CTA verde a ancho completo (misma receta que «Usar mi ubicación (GPS)» en Montar evento) */
+.panel-otdr .otdr-actions--field {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 6px;
+}
+.panel-otdr .otdr-actions--field .reporte-ev-btn--gps {
+  width: 100%;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.panel-otdr .otdr-locate-cta__ico {
+  flex-shrink: 0;
+  display: block;
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
+}
+.panel-otdr .otdr-actions--field .otdr-btn--quitar {
+  width: 100%;
+  min-height: 44px;
+  flex: 0 0 auto;
+  justify-content: center;
 }
 
 .panel-otdr .otdr-btn {

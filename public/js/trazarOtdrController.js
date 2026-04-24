@@ -52,7 +52,10 @@ export function createTrazarOtdrController(d) {
   const otdrClickStatus = document.getElementById('otdr-click-status');
   const btnOtdrArmClick = document.getElementById('btn-otdr-arm-click');
   const otdrFiberInput = /** @type {HTMLInputElement | null} */ (document.getElementById('otdr-fiber-m'));
+  const otdrFiberInputKm = /** @type {HTMLInputElement | null} */ (document.getElementById('otdr-fiber-km'));
   const otdrFiberGeomHint = document.getElementById('otdr-fiber-geom-hint');
+  /** Evita bucle m ↔ km */
+  let otdrFiberSyncLock = false;
   const btnOtdrMark = document.getElementById('btn-otdr-mark');
   const btnOtdrClear = document.getElementById('btn-otdr-clear');
 
@@ -83,6 +86,43 @@ export function createTrazarOtdrController(d) {
       const lab = /** @type {HTMLInputElement} */ (inp).closest('label.otdr-seg-card');
       if (lab) lab.classList.toggle('otdr-seg-card--selected', /** @type {HTMLInputElement} */ (inp).checked);
     });
+  }
+
+  function formatKmFromM(/** @type {number} */ m) {
+    if (!Number.isFinite(m) || m < 0) return '';
+    if (m === 0) return '';
+    const km = m / 1000;
+    const t = Math.round(km * 1000) / 1000;
+    return String(t).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+  }
+
+  function parseKmToM(/** @type {string} */ raw) {
+    const t = String(raw).trim().replace(/,/, '.');
+    if (t === '') return NaN;
+    const km = Number.parseFloat(t);
+    if (!Number.isFinite(km) || km < 0) return NaN;
+    return km * 1000;
+  }
+
+  function syncKmFieldFromMeters() {
+    if (otdrFiberSyncLock) return;
+    if (!otdrFiberInput || !otdrFiberInputKm) return;
+    const m = Number(otdrFiberInput.value);
+    otdrFiberSyncLock = true;
+    if (!Number.isFinite(m) || m < 0) otdrFiberInputKm.value = '';
+    else otdrFiberInputKm.value = formatKmFromM(m);
+    otdrFiberSyncLock = false;
+  }
+
+  function syncMetersFieldFromKm() {
+    if (otdrFiberSyncLock) return;
+    if (!otdrFiberInput || !otdrFiberInputKm) return;
+    const m = parseKmToM(otdrFiberInputKm.value);
+    otdrFiberSyncLock = true;
+    if (!Number.isFinite(m) || m < 0) otdrFiberInput.value = '';
+    else otdrFiberInput.value = String(Math.round(m * 10) / 10);
+    otdrFiberSyncLock = false;
+    syncOtdrFiberGeomHint();
   }
 
   function syncOtdrFiberGeomHint() {
@@ -127,6 +167,7 @@ export function createTrazarOtdrController(d) {
     const sf = getSelectedFeature();
     const ok = !!sf && !isEditing() && sf.geometry?.type === 'LineString';
     if (otdrFiberInput) otdrFiberInput.disabled = !ok;
+    if (otdrFiberInputKm) otdrFiberInputKm.disabled = !ok;
     if (btnOtdrMark) btnOtdrMark.disabled = !ok;
     if (btnOtdrClear) {
       const marcas = otdrCutLayer.hasMark?.() === true;
@@ -150,6 +191,7 @@ export function createTrazarOtdrController(d) {
     syncOtdrFiberGeomHint();
     syncOtdrCableReadout();
     syncOtdrSegCardClasses();
+    if (ok) syncKmFieldFromMeters();
   }
 
   function clearOtdrMapOverlay() {
@@ -185,9 +227,13 @@ export function createTrazarOtdrController(d) {
     const geom = /** @type {GeoJSON.LineString} */ (sf.geometry);
     if (geom.type !== 'LineString' || !geom.coordinates?.length) return;
 
-    const fiber = Number(otdrFiberInput?.value);
+    let fiber = Number(otdrFiberInput?.value);
+    if ((!Number.isFinite(fiber) || fiber < 0) && otdrFiberInputKm && String(otdrFiberInputKm.value).trim() !== '') {
+      syncMetersFieldFromKm();
+      fiber = Number(otdrFiberInput?.value);
+    }
     if (!Number.isFinite(fiber) || fiber < 0) {
-      setStatus('Indica metros de fibra (trazado) ≥ 0.');
+      setStatus('Indica fibra (m) o lectura (km); debe ser ≥ 0.');
       return;
     }
 
@@ -229,7 +275,7 @@ export function createTrazarOtdrController(d) {
       /* */
     }
 
-    let statusMsg = `Corte por trazado (${fmtM(fiber)} m fibra) en «${sf.properties?.nombre ?? sf.id}». ${lng.toFixed(5)}, ${lat.toFixed(5)}`;
+    let statusMsg = `Falla ubicada (${fmtM(fiber)} m fibra) en «${sf.properties?.nombre ?? sf.id}». ${lng.toFixed(5)}, ${lat.toFixed(5)}`;
     if (res.clamped) {
       statusMsg += ' · Lectura acotada al extremo del tendido en el mapa.';
     }
@@ -271,7 +317,7 @@ export function createTrazarOtdrController(d) {
       setEditorFloatPickMode('trazar', false);
       if (otdrClickStatus)
         otdrClickStatus.textContent = `Referencia en tramo: ${fmtM(otdrClickRefFromStartM)} desde inicio (por tendido).`;
-      setStatus('Referencia fijada. Metros de fibra y sentido; luego Marcar corte.');
+      setStatus('Referencia fijada. Metros de fibra y sentido; luego «Ubicar falla».');
       scheduleSync();
     }
     return true;
@@ -318,10 +364,18 @@ export function createTrazarOtdrController(d) {
   });
 
   otdrFiberInput?.addEventListener('input', () => {
+    syncKmFieldFromMeters();
     syncOtdrFiberGeomHint();
   });
   otdrFiberInput?.addEventListener('change', () => {
+    syncKmFieldFromMeters();
     syncOtdrFiberGeomHint();
+  });
+  otdrFiberInputKm?.addEventListener('input', () => {
+    syncMetersFieldFromKm();
+  });
+  otdrFiberInputKm?.addEventListener('change', () => {
+    syncMetersFieldFromKm();
   });
   btnOtdrMark?.addEventListener('click', () => {
     markOtdrCut();
