@@ -801,21 +801,40 @@ body.editor-body #layout {
   overflow: visible;
 }
 
-.editor-chrome-search-slot {
-  flex: 1 1 0%;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: stretch;
-  margin-left: 0;
+/* Referencia para buscador centrado */
+body.editor-body .editor-chrome {
+  position: relative;
 }
 
-/* PC: buscador más compacto (no estirar a todo el ancho del chrome) */
-@media (min-width: 901px) {
-  body.editor-body .editor-chrome-search-slot {
-    flex: 0 1 280px;
-    max-width: 280px;
-  }
+/* Buscador centrado en el eje superior (no pegado a la casita) */
+body.editor-body .editor-chrome-search-slot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  width: min(280px, calc(100% - 100px));
+  max-width: min(280px, calc(100vw - 40px));
+  margin: 0;
+  /* El contenedor no intercepta; el listbox/campo sigue con pointer-events en .cable-search */
+  pointer-events: none;
+}
+
+body.editor-body .editor-chrome-search-slot > * {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Controles a la izquierda por encima del buscador si se solapan en pantallas muy bajas */
+body.editor-body .editor-chrome-toggle,
+body.editor-body .editor-chrome-home {
+  position: relative;
+  z-index: 2;
 }
 
 .editor-chrome-toggle {
@@ -4499,15 +4518,17 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     gap: 8px;
   }
 
-  /* Una sola fila: buscador (alargado) | casita. Aprovechamos el ancho
-     completo del chrome bar dejando solo espacio para la casita (~52px). */
+  /* Buscador centrado en el chrome (móvil: algo más de ancho útil). */
   body.editor-body .editor-chrome-search-slot {
     order: 0;
-    flex: 1 1 auto;
+    left: 50%;
+    right: auto;
+    width: min(100%, calc(100vw - 88px));
+    max-width: min(420px, calc(100vw - 24px));
     min-width: 0;
-    max-width: none;
-    justify-content: stretch;
-    margin-left: 0;
+    flex: none;
+    margin: 0;
+    justify-content: center;
   }
 
   body.editor-body .cable-search-mount--chrome {
@@ -6576,8 +6597,8 @@ body.editor-body .editor-chrome-home-img {
 /* Buscador en chrome: misma familia visual que el sheet «Operación» (cristal, márgenes). */
 body.editor-body .cable-search-mount.cable-search-mount--chrome {
   width: 100%;
-  max-width: min(520px, 100%);
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   filter: none;
 }
 
