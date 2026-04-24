@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260423sinMedirCable" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423trazarSheet" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -100,7 +100,7 @@
         <nav class="editor-field-sidebar__nav" aria-label="Acciones de campo">
           <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-trazar">
             <span class="editor-field-sidebar__item-title">Trazar</span>
-            <span class="editor-field-sidebar__item-sub">OTDR · demo localización</span>
+            <span class="editor-field-sidebar__item-sub">OTDR · fibra +20 % sobre el tendido del mapa</span>
           </button>
           <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-medir">
             <span class="editor-field-sidebar__item-title">Medir</span>
@@ -196,6 +196,122 @@
     </div>
   </div>
 
+  <!-- Trazar (OTDR): panel estilo campo, fibra en metros ÷ 1,2 sobre tendido seleccionado. -->
+  <div
+    id="editor-trazar-backdrop"
+    class="editor-trazar-backdrop"
+    hidden
+    aria-hidden="true"
+  ></div>
+  <div
+    id="editor-trazar-sheet"
+    class="editor-trazar-sheet"
+    hidden
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="editor-trazar-title"
+  >
+    <div class="editor-trazar-sheet__inner">
+      <header class="editor-trazar-sheet__head">
+        <h2 id="editor-trazar-title" class="editor-trazar-sheet__title">Trazar</h2>
+        <button
+          type="button"
+          id="editor-trazar-close"
+          class="editor-trazar-close"
+          aria-label="Cerrar Trazar"
+          title="Cerrar"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </header>
+
+      <fieldset class="editor-trazar-fieldset">
+        <legend class="editor-trazar-legend">Origen</legend>
+        <div class="editor-trazar-seg-row">
+          <label class="editor-trazar-seg">
+            <input type="radio" name="trazar-origen" value="start" class="editor-trazar-seg__input" checked />
+            <span class="editor-trazar-seg__face">
+              <span class="editor-trazar-seg__ico" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
+              </span>
+              <span class="editor-trazar-seg__lbl">Inicio</span>
+            </span>
+          </label>
+          <label class="editor-trazar-seg">
+            <input type="radio" name="trazar-origen" value="end" class="editor-trazar-seg__input" />
+            <span class="editor-trazar-seg__face">
+              <span class="editor-trazar-seg__ico" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
+              </span>
+              <span class="editor-trazar-seg__lbl">Final</span>
+            </span>
+          </label>
+        </div>
+        <label class="editor-trazar-seg editor-trazar-seg--wide">
+          <input type="radio" name="trazar-origen" value="mid" class="editor-trazar-seg__input" />
+          <span class="editor-trazar-seg__face">
+            <span class="editor-trazar-seg__ico" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
+            </span>
+            <span class="editor-trazar-seg__lbl">Punto tramo</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <p id="editor-trazar-mid-hint" class="editor-trazar-hint" hidden></p>
+
+      <fieldset id="editor-trazar-dir-wrap" class="editor-trazar-fieldset editor-trazar-fieldset--compact" hidden>
+        <legend class="editor-trazar-legend">Desde el punto · fibra hacia</legend>
+        <div class="editor-trazar-seg-row">
+          <label class="editor-trazar-seg">
+            <input type="radio" name="trazar-mid-dir" value="toward_end" class="editor-trazar-seg__input" checked />
+            <span class="editor-trazar-seg__face"><span class="editor-trazar-seg__lbl">Fin del tendido</span></span>
+          </label>
+          <label class="editor-trazar-seg">
+            <input type="radio" name="trazar-mid-dir" value="toward_start" class="editor-trazar-seg__input" />
+            <span class="editor-trazar-seg__face"><span class="editor-trazar-seg__lbl">Inicio</span></span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="editor-trazar-fiber">
+        <label class="editor-trazar-fiber__label" for="editor-trazar-fiber-m">
+          <span class="editor-trazar-fiber__ico" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 14 10"/><path d="M14 3v7h7"/><path d="M3 21l7-7"/><path d="M10 21v-7H3"/></svg>
+          </span>
+          Fibra (m)
+        </label>
+        <input
+          id="editor-trazar-fiber-m"
+          class="editor-trazar-fiber__input"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="Ej. 1250"
+          aria-describedby="editor-trazar-fiber-hint"
+        />
+        <p id="editor-trazar-fiber-hint" class="editor-trazar-fiber__hint">
+          Lectura en metros de fibra (criterio +20 %). Sobre el mapa se usa tendido = fibra ÷ 1,2.
+        </p>
+      </div>
+
+      <div class="editor-trazar-actions">
+        <button type="button" id="editor-trazar-mark" class="editor-trazar-btn editor-trazar-btn--primary" disabled>
+          <span class="editor-trazar-btn__ico" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          </span>
+          Marcar corte
+        </button>
+        <button type="button" id="editor-trazar-clear-mark" class="editor-trazar-btn editor-trazar-btn--ghost">
+          <span class="editor-trazar-btn__ico" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </span>
+          Quitar marca
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Nodos usados por app.js para eventos en mapa / metadatos (sin panel flotante). -->
   <input type="checkbox" id="reporte-ev-layer-visible" checked hidden aria-hidden="true" />
   <ul id="reporte-ev-ul" class="reporte-ev-ul" aria-label="Lista de eventos" hidden></ul>
@@ -257,6 +373,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260423sinMedirCable"></script>
+  <script type="module" src="/js/app.js?v=20260423trazarSheet"></script>
 </body>
 </html>

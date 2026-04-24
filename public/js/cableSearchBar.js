@@ -45,7 +45,7 @@ export function createCableSearchBar(mapWrap, opts) {
 
   const searchHint =
     opts.networkRed === 'ftth'
-      ? 'Tras cargar un tendido: al medir, pin de evento en el cable. Trazar en el panel.'
+      ? 'Tras cargar un tendido: al medir, pin de evento en el cable. Trazar desde el menú Campo (☰).'
       : 'Tras cargar un cable: al medir, pin de evento en el cable.';
 
   mount.innerHTML = `
