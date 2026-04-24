@@ -597,6 +597,16 @@ function setEditorFloatPickMode(which, on) {
   const el = document.getElementById(id);
   if (!el) return;
   if (on) {
+    /* Solo un flotante activo: al armar pick (OTDR o reporte) cerramos el otro panel
+       — si no, Trazar + Montar evento quedan abiertos y en documento se ven apilados. */
+    const otherId = which === 'reporte' ? 'editor-float-trazar' : 'reporte-evento-details';
+    const other = document.getElementById(otherId);
+    other?.classList.remove('editor-float-panel--open');
+    if (which === 'reporte') {
+      document.getElementById('btn-open-panel-trazar')?.setAttribute('aria-expanded', 'false');
+    } else {
+      document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
+    }
     /* Si el usuario armó la herramienta sin el panel abierto (caso raro pero posible),
        garantizamos que la píldora se vea: añadimos --open + --pick-mode. */
     el.classList.add('editor-float-panel--open');

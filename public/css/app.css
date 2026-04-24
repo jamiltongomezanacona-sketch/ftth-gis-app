@@ -8254,6 +8254,15 @@ body.editor-body .editor-float-panel {
     transform 0.22s ease;
 }
 
+/* Shell: si el root lleva otras clases, deben perder `position: relative` del panel estándar. */
+body.editor-body #editor-float-trazar.editor-float-panel,
+body.editor-body #reporte-evento-details.editor-float-panel {
+  position: fixed !important;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 0;
+}
+
 body.editor-body .editor-float-panel--open {
   opacity: 1;
   visibility: visible;
@@ -8264,26 +8273,29 @@ body.editor-body .editor-float-panel--open {
 /*
  * Montar evento: ventana modal compacta, centrada en el viewport.
  * (Trazar sigue anclada arriba-izquierda; el modo pick chip mantiene sus reglas propias.)
+ * !important: gana a reglas móviles de `.editor-float-panel` genérico o restos de `.panel-block` en el shell.
  */
-body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) {
-  left: 50%;
-  right: auto;
-  top: 50%;
-  bottom: auto;
-  width: min(360px, calc(100vw - 24px));
-  max-width: min(400px, calc(100vw - 20px));
-  max-height: min(78dvh, 600px);
+body.editor-body
+  #reporte-evento-details.editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) {
+  left: 50% !important;
+  right: auto !important;
+  top: 50% !important;
+  bottom: auto !important;
+  width: min(360px, calc(100vw - 24px)) !important;
+  max-width: min(400px, calc(100vw - 20px)) !important;
+  max-height: min(78dvh, 600px) !important;
   border-radius: 16px;
   box-shadow:
     0 24px 48px rgba(0, 0, 0, 0.48),
     0 0 0 1px rgba(0, 0, 0, 0.38),
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 0 40px -10px rgba(251, 146, 60, 0.14);
-  transform: translate(-50%, calc(-50% + 8px));
+  transform: translate(-50%, calc(-50% + 8px)) !important;
 }
 
-body.editor-body .editor-float-panel.panel-reporte-evento.editor-float-panel--open:not(.editor-float-panel--pick-mode) {
-  transform: translate(-50%, -50%);
+body.editor-body
+  #reporte-evento-details.editor-float-panel.panel-reporte-evento.editor-float-panel--open:not(.editor-float-panel--pick-mode) {
+  transform: translate(-50%, -50%) !important;
 }
 
 body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-body {
@@ -8618,17 +8630,13 @@ body.editor-body
     max-height: min(70dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 16px));
   }
 
-  /* Montar evento: misma ventana modal centrada (pisa la regla móvil `left`/`right` de todos los float). */
-  body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) {
-    left: 50% !important;
-    right: auto !important;
-    top: 50% !important;
-    width: min(360px, calc(100vw - 20px)) !important;
-    max-width: min(400px, calc(100vw - 16px)) !important;
+  /* Montar evento: alto útil con safe area (misma #id que el bloque base). */
+  body.editor-body
+    #reporte-evento-details.editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) {
     max-height: min(
-      80dvh,
-      calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px)
-    ) !important;
+        80dvh,
+        calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px)
+      ) !important;
   }
 
   body.editor-body .editor-float-panel.panel-reporte-evento .editor-float-panel__body,
