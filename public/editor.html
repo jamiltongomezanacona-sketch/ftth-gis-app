@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260423noSidebarRail" />
+  <link rel="stylesheet" href="/css/app.css?v=20260423noChromeTools" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -72,34 +72,9 @@
         <img class="editor-chrome-home-img" src="/icons/ui/home.svg" width="26" height="26" alt="" decoding="async" />
       </a>
       <div class="editor-chrome-search-slot"></div>
-      <div class="editor-chrome-tools" role="toolbar" aria-label="Herramientas de operación">
-        <button
-          type="button"
-          id="btn-open-panel-measure"
-          class="editor-chrome-tool-btn"
-          title="Medir"
-          aria-label="Activar medición"
-        >
-          <img src="/icons/ui/ruler.svg" width="20" height="20" alt="" decoding="async" />
-        </button>
-        <button
-          type="button"
-          id="btn-open-panel-reporte"
-          class="editor-chrome-tool-btn editor-chrome-tool-btn--reporte"
-          title="Montar evento"
-          aria-label="Abrir panel Montar evento"
-          aria-expanded="false"
-          aria-controls="reporte-evento-details"
-        >
-          <img src="/icons/ftth/evento.svg" width="22" height="22" alt="" decoding="async" />
-        </button>
-        <button type="button" id="btn-open-panel-cierre" class="editor-chrome-tool-btn" title="Montar cierre" aria-label="Montar cierre">
-          <img src="/icons/ui/crosshair.svg" width="20" height="20" alt="" decoding="async" />
-        </button>
-        <button type="button" id="btn-open-panel-ruta" class="editor-chrome-tool-btn" title="Montar ruta" aria-label="Montar ruta">
-          <img src="/icons/ui/route.svg" width="22" height="22" alt="" decoding="async" />
-        </button>
-      </div>
+      <button type="button" id="btn-chrome-new-route" class="editor-chrome-text-action">
+        Nueva ruta
+      </button>
     </header>
     <div id="map-wrap">
       <!-- Mapa antes del sidebar en el DOM: capa base en móvil; medición encima del lienzo WebGL. -->
@@ -197,199 +172,9 @@
     </div>
   </div>
 
-  <div id="editor-float-backdrop" class="editor-float-backdrop" hidden aria-hidden="true"></div>
-
-  <div
-    id="reporte-evento-details"
-    class="editor-float-panel panel-reporte-evento"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="reporte-float-title"
-  >
-    <div class="editor-float-panel__titlebar reporte-ev-summary">
-      <span class="reporte-ev-ico-wrap" aria-hidden="true">
-        <img
-          class="reporte-ev-map-ico"
-          src="/icons/ftth/eventos-x-pin.png"
-          width="18"
-          height="18"
-          alt=""
-          decoding="async"
-        />
-      </span>
-      <span class="reporte-ev-summary-text">
-        <span class="reporte-ev-summary-title" id="reporte-float-title">Montar evento</span>
-      </span>
-      <button type="button" class="editor-float-panel__close" data-close-float="reporte" aria-label="Cerrar Montar evento">
-        ×
-      </button>
-    </div>
-    <div class="sidebar-details-body reporte-ev-body">
-          <!-- Visibilidad de pins de eventos en mapa; lista sincronizada desde el API en app.js -->
-          <input type="checkbox" id="reporte-ev-layer-visible" checked hidden aria-hidden="true" />
-          <!-- Historial de incidencias: desplegable, cerrado por defecto para compactar el panel -->
-          <details class="reporte-ev-collapse reporte-ev-collapse--list">
-            <summary class="reporte-ev-collapse__summary">
-              <span class="reporte-ev-collapse__label">Incidencias recientes</span>
-              <span class="reporte-ev-collapse__chev" aria-hidden="true"></span>
-            </summary>
-            <div class="reporte-ev-collapse__body">
-              <div class="reporte-ev-showcase">
-                <ul id="reporte-ev-ul" class="reporte-ev-ul" aria-label="Lista de eventos"></ul>
-              </div>
-            </div>
-          </details>
-          <div id="reporte-ev-phase-wait" class="reporte-ev-phase reporte-ev-phase-wait">
-            <p class="reporte-ev-wait-hint">
-              <strong>Técnico en sitio:</strong> usa tu ubicación actual o toca el tendido en el mapa.
-            </p>
-            <button type="button" id="btn-reporte-use-gps" class="reporte-ev-btn reporte-ev-btn--gps">
-              <svg class="reporte-ev-gps-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
-                <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.9"/>
-                <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6" opacity="0.7"/>
-                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-              Usar mi ubicación (GPS)
-            </button>
-            <p id="reporte-ev-gps-status" class="reporte-ev-gps-status" aria-live="polite"></p>
-            <p class="reporte-ev-or"><span>o toca el tendido en el mapa</span></p>
-            <button type="button" id="btn-reporte-cancel-wait" class="reporte-ev-btn reporte-ev-btn--ghost-sm">
-              Cancelar
-            </button>
-            <p id="reporte-ev-offline-note" class="reporte-ev-offline-note" hidden></p>
-          </div>
-          <div id="reporte-ev-phase-form" class="reporte-ev-phase reporte-ev-phase-form" hidden>
-            <!-- Resumen de la ubicación fijada: coordenadas, precisión GPS y tendido asociado -->
-            <div id="reporte-ev-pin-card" class="reporte-ev-pin-card" hidden>
-              <div class="reporte-ev-pin-card__head">
-                <span class="reporte-ev-pin-card__ico" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#f87171" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg>
-                </span>
-                <div class="reporte-ev-pin-card__txt">
-                  <div id="reporte-ev-pin-coords" class="reporte-ev-pin-card__title">—</div>
-                  <div id="reporte-ev-pin-route" class="reporte-ev-pin-card__sub">—</div>
-                </div>
-                <span id="reporte-ev-pin-acc" class="reporte-ev-acc-pill" hidden></span>
-              </div>
-              <div class="reporte-ev-pin-card__actions">
-                <button type="button" id="btn-reporte-repick" class="reporte-ev-btn reporte-ev-btn--ghost-sm reporte-ev-repick">
-                  Cambiar punto
-                </button>
-                <button type="button" id="btn-reporte-improve-gps" class="reporte-ev-btn reporte-ev-btn--ghost-sm" hidden>
-                  Mejorar GPS
-                </button>
-              </div>
-            </div>
-
-            <!-- Plantillas rápidas: un tap llena tipo + estado + acción.
-                 Va dentro de <details> para poder plegarse cuando el técnico
-                 ya eligió una plantilla y quiere ahorrar espacio vertical. -->
-            <details class="reporte-ev-collapse reporte-ev-collapse--presets" open>
-              <summary class="reporte-ev-collapse__summary">
-                <span class="reporte-ev-collapse__label">Plantillas rápidas</span>
-                <span class="reporte-ev-collapse__chev" aria-hidden="true"></span>
-              </summary>
-              <div class="reporte-ev-collapse__body">
-                <div class="reporte-ev-field reporte-ev-field--preset">
-                  <label class="reporte-ev-label" for="reporte-ev-preset-select">Elegir plantilla</label>
-                  <select id="reporte-ev-preset-select" class="reporte-ev-select">
-                    <option value="">Selecciona una plantilla</option>
-                    <option value="corte-obras">Corte por obras · Obras civiles · Crítico</option>
-                    <option value="vandalismo">Vandalismo · Crítico</option>
-                    <option value="terceros">Daño terceros · Crítico</option>
-                    <option value="mantenimiento">Mantenimiento · En proceso</option>
-                  </select>
-                </div>
-              </div>
-            </details>
-
-            <!-- Detalles del evento: agrupamos los campos del formulario en un
-                 desplegable abierto por defecto. El técnico puede plegarlos si
-                 la pantalla es muy pequeña. -->
-            <details class="reporte-ev-collapse reporte-ev-collapse--fields" open>
-              <summary class="reporte-ev-collapse__summary">
-                <span class="reporte-ev-collapse__label">Detalles del evento</span>
-                <span class="reporte-ev-collapse__chev" aria-hidden="true"></span>
-              </summary>
-              <div class="reporte-ev-collapse__body">
-                <div class="reporte-ev-field">
-                  <label class="reporte-ev-label" for="reporte-ev-dist-odf">
-                    Dist ODF
-                    <span id="reporte-ev-dist-auto" class="reporte-ev-auto-tag" hidden>auto</span>
-                  </label>
-                  <input
-                    type="number"
-                    id="reporte-ev-dist-odf"
-                    class="reporte-ev-input"
-                    min="0"
-                    step="0.1"
-                    inputmode="decimal"
-                    placeholder="Opcional — distancia al ODF (m)"
-                  />
-                </div>
-                <div class="reporte-ev-field">
-                  <label class="reporte-ev-label" for="reporte-ev-tipo">Tipo de evento <span class="reporte-ev-req">*</span></label>
-                  <select id="reporte-ev-tipo" class="reporte-ev-select" required>
-                    <option value="">Selecciona</option>
-                    <option value="VANDALISMO">VANDALISMO</option>
-                    <option value="OBRAS CIVILES">OBRAS CIVILES</option>
-                    <option value="DETERIORO">DETERIORO</option>
-                    <option value="MANTENIMIENTO">MANTENIMIENTO</option>
-                    <option value="DAÑO POR TERCEROS">DAÑO POR TERCEROS</option>
-                  </select>
-                </div>
-                <div class="reporte-ev-field">
-                  <label class="reporte-ev-label" for="reporte-ev-estado">Estado <span class="reporte-ev-req">*</span></label>
-                  <select id="reporte-ev-estado" class="reporte-ev-select reporte-ev-select--estado" required>
-                    <option value="">Selecciona</option>
-                    <option value="CRITICO" class="reporte-ev-opt--critico">CRITICO</option>
-                    <option value="EN PROCESO" class="reporte-ev-opt--proceso">EN PROCESO</option>
-                    <option value="RESUELTO" class="reporte-ev-opt--resuelto">RESUELTO</option>
-                    <option value="PENDIENTE" class="reporte-ev-opt--pendiente">PENDIENTE</option>
-                    <option value="ESCALADO" class="reporte-ev-opt--escalado">ESCALADO</option>
-                  </select>
-                </div>
-                <div class="reporte-ev-field">
-                  <label class="reporte-ev-label" for="reporte-ev-accion">Acción <span class="reporte-ev-req">*</span></label>
-                  <select id="reporte-ev-accion" class="reporte-ev-select" required>
-                    <option value="">Selecciona acción</option>
-                    <option value="REEMPLAZO DE FIBRA">REEMPLAZO DE FIBRA</option>
-                    <option value="CIERRE CONTINUIDAD">CIERRE CONTINUIDAD</option>
-                    <option value="INTERVENCIÓN TECNICA">INTERVENCIÓN TECNICA</option>
-                  </select>
-                </div>
-                <p id="reporte-evento-fecha" class="reporte-ev-fecha" aria-live="polite">Fecha: —</p>
-                <div class="reporte-ev-field">
-                  <label class="reporte-ev-label" for="reporte-ev-descripcion">
-                    Descripción <span class="reporte-ev-req">*</span>
-                    <span id="reporte-ev-desc-draft" class="reporte-ev-auto-tag" hidden>borrador guardado</span>
-                  </label>
-                  <textarea
-                    id="reporte-ev-descripcion"
-                    class="reporte-ev-textarea"
-                    rows="4"
-                    maxlength="8000"
-                    placeholder="Detalle del incidente (qué, dónde exactamente, causa aparente)"
-                  ></textarea>
-                </div>
-              </div>
-            </details>
-          <div class="reporte-ev-actions reporte-ev-actions--sticky">
-            <button type="button" id="btn-reporte-evento-rapido" class="reporte-ev-btn reporte-ev-btn--ghost-sm">
-              Evento rápido
-            </button>
-            <button type="button" id="btn-reporte-evento-guardar" class="reporte-ev-btn reporte-ev-btn--guardar">
-              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" class="reporte-ev-save-ico">
-                <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M20 6 9 17l-5-5"/>
-              </svg>
-              Guardar evento
-            </button>
-          </div>
-          </div>
-        </div>
-        <!-- Toast de confirmación tras guardar -->
-        <div id="reporte-ev-toast" class="reporte-ev-toast" role="status" aria-live="polite" hidden></div>
-  </div>
+  <!-- Nodos usados por app.js para eventos en mapa / metadatos (sin panel flotante). -->
+  <input type="checkbox" id="reporte-ev-layer-visible" checked hidden aria-hidden="true" />
+  <ul id="reporte-ev-ul" class="reporte-ev-ul" aria-label="Lista de eventos" hidden></ul>
 
   <h1 id="app-heading" class="editor-heading-sr">Operación</h1>
 
@@ -448,6 +233,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260423noSidebarRail"></script>
+  <script type="module" src="/js/app.js?v=20260423noChromeTools"></script>
 </body>
 </html>

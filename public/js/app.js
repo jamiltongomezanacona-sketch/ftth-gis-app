@@ -2,7 +2,6 @@ import { ensureAuthenticated } from './authGate.js';
 import { createRutasApi } from './api.js';
 import { RoutesLayer, ROUTES_LAYER_ID, ROUTES_SOURCE_ID } from './routesLayer.js';
 import { CentralesEtBLayer } from './centralesLayer.js';
-import { MedidaEventoMarkerLayer } from './medidaEventoMarkerLayer.js';
 import {
   EventosReporteLayer,
   EVENTOS_REPORTE_INTERACTIVE_LAYER_IDS
@@ -10,7 +9,6 @@ import {
 import { snapEventPointsToRouteCatalog } from './eventosReporteSnap.js';
 import { RouteDrawEditor } from './routeDrawEditor.js';
 import { createCableSearchBar } from './cableSearchBar.js';
-import { initReporteEventoSidebar } from './reporteEventoSidebar.js';
 import {
   findManifestEntryForMolecule,
   indexManifestEntries,
@@ -553,70 +551,6 @@ function syncBrowserUrlRed(red) {
   }
 }
 
-function syncEditorFloatBackdrop() {
-  const bd = document.getElementById('editor-float-backdrop');
-  if (!bd) return;
-  const r = document
-    .getElementById('reporte-evento-details')
-    ?.classList.contains('editor-float-panel--open');
-  if (r) {
-    bd.removeAttribute('hidden');
-    bd.setAttribute('aria-hidden', 'false');
-  } else {
-    bd.setAttribute('hidden', '');
-    bd.setAttribute('aria-hidden', 'true');
-  }
-}
-
-/** Cierra ventana flotante Montar evento (backdrop + estado de botón). */
-function closeAllEditorFloatPanels() {
-  document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
-  document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
-  syncEditorFloatBackdrop();
-}
-
-/**
- * Activa o desactiva el «modo pick» del panel Montar evento (píldora / mapa libre).
- * @param {boolean} on
- */
-function setEditorFloatPickMode(on) {
-  const el = document.getElementById('reporte-evento-details');
-  if (!el) return;
-  if (on) {
-    el.classList.add('editor-float-panel--open');
-    el.classList.add('editor-float-panel--pick-mode');
-    el.classList.add('editor-float-panel--pick-mode-reporte');
-    document.body.classList.add('editor-pick-mode-active');
-    syncEditorFloatBackdrop();
-  } else {
-    el.classList.remove('editor-float-panel--pick-mode');
-    el.classList.remove('editor-float-panel--pick-mode-reporte');
-    const stillArmed = document.querySelector('.editor-float-panel--pick-mode');
-    if (!stillArmed) document.body.classList.remove('editor-pick-mode-active');
-  }
-}
-
-/**
- * Abre/cierra el panel Montar evento (mismo botón cierra).
- * @param {{ onReporteOpen?: () => void, onReporteClose?: () => void }} [hooks]
- */
-function toggleReporteFloatPanel(hooks) {
-  const rep = document.getElementById('reporte-evento-details');
-  const openR = !!rep?.classList.contains('editor-float-panel--open');
-  if (openR) {
-    rep?.classList.remove('editor-float-panel--open');
-    hooks?.onReporteClose?.();
-  } else {
-    rep?.classList.add('editor-float-panel--open');
-    hooks?.onReporteOpen?.();
-  }
-  syncEditorFloatBackdrop();
-  document.getElementById('btn-open-panel-reporte')?.setAttribute(
-    'aria-expanded',
-    rep?.classList.contains('editor-float-panel--open') ? 'true' : 'false'
-  );
-}
-
 /**
  * Tras tocar la barra superior / herramientas, Mapbox a veces emite `click` en el mapa:
  * ignoramos cierres fantasma durante un breve margen.
@@ -632,29 +566,11 @@ function initEditorChromeMapBridge(mapInstance, opts) {
   const markRailInteraction = () => {
     suppressMapClickUntil = performance.now() + SIDEBAR_RAIL_INTERACTION_GRACE_MS;
   };
-  const tools = document.getElementById('editor-chrome-tools');
   const chrome = document.querySelector('header.editor-chrome');
   for (const ev of ['click', 'pointerdown', 'touchstart']) {
     const opt = ev === 'click' ? false : { capture: true, passive: true };
-    tools?.addEventListener(ev, markRailInteraction, opt);
     chrome?.addEventListener(ev, markRailInteraction, ev === 'click' ? false : opt);
   }
-
-  /** Clic en el lienzo (canvas): cierra el flotante de reporte si aplica. */
-  mapInstance.on('click', (e) => {
-    if (performance.now() < suppressMapClickUntil) return;
-    if (opts?.getSuppressMapSidebarCollapse?.()) return;
-    const t = e?.originalEvent && e.originalEvent.target;
-    if (!(t instanceof Node)) return;
-    let canvas;
-    try {
-      canvas = mapInstance.getCanvas();
-    } catch {
-      return;
-    }
-    if (canvas && !canvas.contains(/** @type {Node} */ (t))) return;
-    closeAllEditorFloatPanels();
-  });
 }
 
 /**
@@ -807,13 +723,6 @@ function initFieldSidebar(mapInstance, geolocateCtl, scheduleMapResize, onToggle
     }
   });
 
-  document.getElementById('btn-open-panel-measure')?.addEventListener('click', () => {
-    if (typeof onToggleMeasurePolyline === 'function') {
-      onToggleMeasurePolyline();
-    } else {
-      document.getElementById('measure-fab')?.click();
-    }
-  });
 }
 
 function waitForNetworkChoice() {
@@ -1184,7 +1093,6 @@ export async function boot() {
   const routesLayer = new RoutesLayer(map);
   const moleculeOverlayLayer = new MoleculeOverlayLayer(map);
   const centralesLayer = new CentralesEtBLayer(map);
-  const medidaEventoMarkerLayer = new MedidaEventoMarkerLayer(map);
   const eventosReporteLayer = new EventosReporteLayer(map);
   /* Blindaje contra "flash" de pines al arrancar: dejamos memorizada la
      intención de "no visibles" antes de que cualquier carga async pueda
@@ -1500,8 +1408,6 @@ export async function boot() {
   /** @type {[number, number][]} */
   let measurePolylineCoords = [];
 
-  /** Pin en mapa: coordenada del reporte de evento (clic en tendido). */
-  let reporteEventoPinLngLat = /** @type {[number, number] | null} */ (null);
   const btnEdit = $('btn-edit');
   const btnSave = $('btn-save');
   const btnCancel = $('btn-cancel');
@@ -1635,121 +1541,19 @@ export async function boot() {
     setStatus('GPS: posición actualizada en el mapa.');
   });
 
-  const reporteCtl = initReporteEventoSidebar({
-    api,
-    setStatus,
-    getMap: () => map,
-    resolveRouteForMapClick: (e) => {
-      try {
-        if (!map.getLayer(ROUTES_LAYER_ID)) return null;
-        const pt = e.point;
-        const pad = 16;
-        const box = [
-          [pt.x - pad, pt.y - pad],
-          [pt.x + pad, pt.y + pad]
-        ];
-        const hits = map.queryRenderedFeatures(box, { layers: [ROUTES_LAYER_ID] });
-        const f = hits.find((x) => {
-          const g = /** @type {any} */ (x?.geometry);
-          return g?.type === 'LineString' && Array.isArray(g.coordinates) && g.coordinates.length >= 2;
-        });
-        return f ? /** @type {any} */ (f) : null;
-      } catch {
-        return null;
-      }
-    },
-    canMountEvento: () => {
-      if (appNetwork !== 'ftth') return false;
-      return !!getMoleculeFilterForEventosApi();
-    },
-    /**
-     * Resuelve la ruta más cercana a una coordenada (p. ej. GPS del técnico).
-     * Escanea todas las features del source de rutas (estén o no en pantalla)
-     * y devuelve la más cercana dentro del radio en metros indicado.
-     */
-    findNearestRouteForLngLat: (lng, lat, maxM) => {
-      try {
-        if (!map.getSource(ROUTES_SOURCE_ID)) return null;
-        /** querySourceFeatures: devuelve todas las features cargadas del source GeoJSON. */
-        const feats = map.querySourceFeatures(ROUTES_SOURCE_ID) || [];
-        if (!feats.length) return null;
-        const pt = turf.point([lng, lat]);
-        /** @type {{ feature: any, snapped: [number, number], meters: number } | null} */
-        let best = null;
-        /** Evita evaluar duplicados: un LineString partido en tiles puede aparecer varias veces. */
-        const seen = new Set();
-        for (const f of feats) {
-          const g = /** @type {any} */ (f?.geometry);
-          if (!g || g.type !== 'LineString' || !Array.isArray(g.coordinates) || g.coordinates.length < 2) continue;
-          const id = f.id ?? f.properties?.id ?? null;
-          const dedupKey = id != null ? `id:${id}` : `coords:${g.coordinates.length}:${g.coordinates[0]?.join(',')}`;
-          if (seen.has(dedupKey)) continue;
-          seen.add(dedupKey);
-          try {
-            const snap = turf.nearestPointOnLine(turf.lineString(g.coordinates), pt, { units: 'meters' });
-            const d = Number(snap?.properties?.dist);
-            if (!Number.isFinite(d)) continue;
-            if (!best || d < best.meters) {
-              const sc = /** @type {[number, number]} */ (snap.geometry.coordinates);
-              best = { feature: /** @type {any} */ (f), snapped: sc, meters: d };
-            }
-          } catch {
-            /* tolera geometrías raras y sigue con la siguiente. */
-          }
-        }
-        if (!best) return null;
-        if (Number.isFinite(maxM) && maxM > 0 && best.meters > maxM) return null;
-        return best;
-      } catch {
-        return null;
-      }
-    },
-    getSelectedFeature: () => selectedFeature,
-    turf,
-    applyReportePickedRoute: (f, e) => {
-      selectedFeature = /** @type {any} */ (f);
-      routesLayer.setSelected(f.id);
-      const geom = /** @type {any} */ (f.geometry);
-      if (geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
-        updateCentralMetricForCableClick(geom, e.lngLat);
-      } else {
-        clearCentralMetric();
-      }
-      updateMetrics(geom, turf);
-      syncButtons();
-    },
-    setReportePin: (ll) => {
-      reporteEventoPinLngLat = ll;
-      syncMedidaEventoPin();
-    },
-    disarmOtdrPick: () => {},
-    onArmingChanged: (armed) => {
-      try {
-        map.getCanvas().style.cursor = armed ? 'crosshair' : '';
-      } catch {
-        /* */
-      }
-      /* Mantener panel visible: no colapsar a píldora al armar reporte. */
-      setEditorFloatPickMode(false);
-    },
-    onEventoGuardado: () => {
-      void refreshEventosReporteDisplay();
-      try {
-        statusBar.setSave('ok', 'Evento guardado');
-      } catch {
-        /* */
-      }
-    },
-    closeReportePanelUi: () => {
-      document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
-      document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
-      syncEditorFloatBackdrop();
-    }
-  });
-
-  /* Status bar inferior (estilo VSCode): coords del cursor, zoom, red activa, guardado. */
   const statusBar = initStatusBar(map);
   statusBar.setNet(appNetwork === 'corporativa' ? 'CORP' : 'FTTH');
+
+  /** Panel «Montar evento» retirado: stub para no romper llamadas dispersas. */
+  const reporteCtl = {
+    cancelMapPickMode: () => {},
+    resetForCableCleared: () => {},
+    handleRouteLinePick: () => false,
+    handleMapTapPick: () => false,
+    isAwaitingRoutePick: () => false,
+    notifyReportePanelOpened: () => {},
+    notifyReportePanelClosed: () => {}
+  };
 
   initFieldSidebar(map, geolocate, scheduleMapResize, toggleMeasurePolylineMode);
 
@@ -1757,71 +1561,17 @@ export async function boot() {
     getSuppressMapSidebarCollapse: () => {
       if (editing) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
-      if (
-        document
-          .getElementById('reporte-evento-details')
-          ?.classList.contains('editor-float-panel--open')
-      ) {
-        return true;
-      }
-      try {
-        if (reporteCtl.isAwaitingRoutePick?.()) return true;
-      } catch {
-        /* */
-      }
       return false;
     },
     scheduleMapResize
   });
 
-  const editorFloatHooks = {
-    onReporteOpen: () => {
-      void refreshEventosReporteDisplay();
-      reporteCtl.notifyReportePanelOpened();
-    },
-    onReporteClose: () => {
-      reporteCtl.notifyReportePanelClosed();
-    }
-  };
-
-  document.getElementById('btn-open-panel-reporte')?.addEventListener('click', () => {
-    toggleReporteFloatPanel(editorFloatHooks);
-  });
-  document.getElementById('btn-open-panel-ruta')?.addEventListener('click', () => {
+  document.getElementById('btn-chrome-new-route')?.addEventListener('click', () => {
     try {
       btnNewRoute?.click();
     } catch {
       setStatus('No se pudo iniciar el montaje de ruta.');
     }
-  });
-  document.getElementById('btn-open-panel-cierre')?.addEventListener('click', () => {
-    setStatus('Montar cierre: función en preparación.');
-  });
-
-  document.getElementById('editor-float-backdrop')?.addEventListener('click', () => {
-    editorFloatHooks.onReporteClose();
-    closeAllEditorFloatPanels();
-  });
-
-  document.querySelectorAll('[data-close-float]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const which = btn.getAttribute('data-close-float');
-      if (which !== 'reporte') return;
-      const panel = document.getElementById('reporte-evento-details');
-      if (panel?.classList.contains('editor-float-panel--pick-mode')) {
-        try {
-          reporteCtl?.cancelMapPickMode?.();
-        } catch {
-          /* */
-        }
-        setEditorFloatPickMode(false);
-        return;
-      }
-      editorFloatHooks.onReporteClose();
-      document.getElementById('reporte-evento-details')?.classList.remove('editor-float-panel--open');
-      document.getElementById('btn-open-panel-reporte')?.setAttribute('aria-expanded', 'false');
-      syncEditorFloatBackdrop();
-    });
   });
 
   function updateMetrics(geom, turfNs) {
@@ -1836,22 +1586,6 @@ export async function boot() {
     resEl.textContent = fmtM(fib);
   }
 
-  /** Pin de **evento** (Montar evento) sobre el mapa. */
-  function syncMedidaEventoPin() {
-    const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
-    if (polyDrawing || editing) {
-      medidaEventoMarkerLayer.clear();
-      return;
-    }
-    if (reporteEventoPinLngLat) {
-      medidaEventoMarkerLayer.ensureLayer();
-      medidaEventoMarkerLayer.setPoint(reporteEventoPinLngLat);
-      medidaEventoMarkerLayer.bringToFront();
-      return;
-    }
-    medidaEventoMarkerLayer.clear();
-  }
-
   function syncButtons() {
     const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
     btnNewRoute.disabled = editing || polyDrawing;
@@ -1863,7 +1597,6 @@ export async function boot() {
     cableSearch?.setDisabled(editing || polyDrawing);
     syncMeasureFloatUi();
     syncMeasurePolyDockVisibility();
-    syncMedidaEventoPin();
   }
 
   /** Longitud geodésica del trazo libre y +20 % fibra (dock inferior). */
@@ -1910,7 +1643,6 @@ export async function boot() {
   function bumpLayersAfterPolylineMeasure() {
     bringMeasurePolylineLayersToFront();
     eventosReporteLayer.bringToFront();
-    medidaEventoMarkerLayer.bringToFront();
     /* Crítico: sin esto, tras medición/actualización, Draw vuelve a quedar bajo otras capas (trazo inactivo). */
     bringMapboxDrawLayersToTop();
   }
@@ -2085,7 +1817,6 @@ export async function boot() {
 
   function clearMeasureClickModes() {
     deactivateMeasurePolyline();
-    syncMedidaEventoPin();
   }
 
   /** Carga o reset del mapa: sin medición polilínea ni dock inferior. */
@@ -2989,7 +2720,6 @@ export async function boot() {
 
     routesLayer.ensureLayer();
     moleculeOverlayLayer.ensureLayer();
-    medidaEventoMarkerLayer.ensureLayer();
     routesLayer.setCursorPointerOnHover();
 
     const onOverlayCierreEnter = () => {
