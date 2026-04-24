@@ -1,0 +1,36 @@
+{
+  "cable": {
+    "type": "Feature",
+    "properties": { "id": "BA01FH144", "nombre": "BA01FH144" },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [-74.08, 4.62],
+        [-74.075, 4.63],
+        [-74.07, 4.635],
+        [-74.064, 4.642],
+        [-74.056, 4.648]
+      ]
+    }
+  },
+  "elementos": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "tipo_cierre": "E1", "nombre": "E1BA01_A1" },
+        "geometry": { "type": "Point", "coordinates": [-74.078, 4.621] }
+      },
+      {
+        "type": "Feature",
+        "properties": { "tipo_cierre": "E2", "nombre": "E2BA01_A3" },
+        "geometry": { "type": "Point", "coordinates": [-74.068, 4.636] }
+      },
+      {
+        "type": "Feature",
+        "properties": { "tipo": "NAP", "nombre": "NAP-42" },
+        "geometry": { "type": "Point", "coordinates": [-74.059, 4.6455] }
+      }
+    ]
+  }
+}
