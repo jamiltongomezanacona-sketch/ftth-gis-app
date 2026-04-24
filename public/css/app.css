@@ -863,8 +863,8 @@ body.editor-body .editor-chrome-search-slot > * {
 /* PC: buscador un poco más ancho (móvil/tablet ≤900px sigue con la regla base o @media propias). */
 @media (min-width: 901px) {
   body.editor-body .editor-chrome-search-slot {
-    width: min(340px, calc(100% - 140px));
-    max-width: min(340px, calc(100vw - 40px));
+    width: min(440px, calc(100% - 120px));
+    max-width: min(440px, calc(100vw - 32px));
   }
 }
 
