@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { buildMoleculaCodigoVariants } from './cierresRouter.js';
 import {
   deleteEventoReporteById,
+  getEventoReporteByIdForRed,
   insertEventoReporte,
   listEventosReporteForRed,
   updateEventoReporteById
@@ -181,7 +182,7 @@ export function createEventosReporteRouter(pool, opts) {
 
       const { featureCollection, items } = await listEventosReporteForRed(pool, {
         red: rRed.red,
-        limit: Number.isFinite(lim) && lim > 0 ? lim : 500,
+        limit: Number.isFinite(lim) && lim > 0 ? lim : 2000,
         moleculaCodigoVariants
       });
       res.status(200).json({
@@ -193,6 +194,44 @@ export function createEventosReporteRouter(pool, opts) {
           moleculaCodigoVariants && moleculaCodigoVariants.length
             ? { variants: moleculaCodigoVariants }
             : null
+      });
+    } catch (e) {
+      if (e.code === '42P01') {
+        res.status(503).json({
+          error: 'Tabla eventos_reporte no existe. Ejecuta sql/06_eventos_reporte.sql en PostgreSQL.'
+        });
+        return;
+      }
+      next(e);
+    }
+  });
+
+  /**
+   * GET un evento por id (p. ej. forzar pin con `?evento=147` en el editor).
+   */
+  r.get('/:id', async (req, res, next) => {
+    const raw = String(req.params?.id ?? '').trim();
+    if (!/^\d+$/.test(raw)) {
+      res.status(404).json({ error: 'No encontrado' });
+      return;
+    }
+    const id = Number(raw);
+    const rRed = redTipoDesdePeticionLectura(req);
+    if (!rRed.ok) {
+      res.status(400).json({ error: rRed.error });
+      return;
+    }
+    try {
+      const row = await getEventoReporteByIdForRed(pool, rRed.red, id);
+      if (!row) {
+        res.status(404).json({ error: 'Evento no encontrado' });
+        return;
+      }
+      res.status(200).json({
+        ok: true,
+        red: rRed.red,
+        item: row.item,
+        feature: row.feature
       });
     } catch (e) {
       if (e.code === '42P01') {

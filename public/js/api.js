@@ -193,6 +193,15 @@ export function createRutasApi(apiBase, redTipo) {
     },
 
     /**
+     * Un evento por id (lista acotada / filtro molécula no lo incluye).
+     * @param {number|string} id
+     * @param {RequestInit} [options]
+     */
+    getEventoReporte(id, options = {}) {
+      return getJson(`/api/eventos-reporte/${encodeURIComponent(String(id))}${redQs}`, options);
+    },
+
+    /**
      * @param {number|string} id
      * @param {Record<string, unknown>} body
      */

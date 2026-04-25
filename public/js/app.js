@@ -1512,10 +1512,55 @@ export async function boot() {
     try {
       closeEventoMapPopup();
       closeCierreMapPopup();
-      const res = await api.listEventosReporte(getMoleculeFilterForEventosApi(), {
+      let res = await api.listEventosReporte(getMoleculeFilterForEventosApi(), {
         signal: abortCtrl.signal
       });
       if (abortCtrl.signal.aborted || eventosDisplayAbortCtrl !== abortCtrl) return;
+
+      /** `?evento=147` — si no viene en lista (tope 2000 o filtro molécula), GET por id y fusionar. */
+      let flyToEventCoords = /** @type {[number, number] | null} */ (null);
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        const rawEv = sp.get('evento') ?? sp.get('evento_id') ?? '';
+        const forceId = Number(String(rawEv).trim());
+        if (Number.isInteger(forceId) && forceId > 0) {
+          const listItems = Array.isArray(res?.items) ? res.items : [];
+          if (!listItems.some((it) => Number(it?.id) === forceId)) {
+            const one = await api.getEventoReporte(forceId, { signal: abortCtrl.signal });
+            if (abortCtrl.signal.aborted || eventosDisplayAbortCtrl !== abortCtrl) return;
+            if (one?.ok && one.item) {
+              const prevFc =
+                res.featureCollection?.type === 'FeatureCollection'
+                  ? res.featureCollection
+                  : { type: 'FeatureCollection', features: [] };
+              const feats = [...(prevFc.features || [])];
+              if (one.feature && one.feature.type === 'Feature') {
+                feats.unshift(one.feature);
+                const g = one.feature.geometry;
+                if (g?.type === 'Point' && Array.isArray(g.coordinates) && g.coordinates.length >= 2) {
+                  const lo = Number(g.coordinates[0]);
+                  const la = Number(g.coordinates[1]);
+                  if (Number.isFinite(lo) && Number.isFinite(la)) {
+                    flyToEventCoords = [lo, la];
+                  }
+                }
+              }
+              res = {
+                ...res,
+                items: [one.item, ...listItems],
+                featureCollection: { type: 'FeatureCollection', features: feats }
+              };
+              setStatus(
+                `Evento #${forceId}: cargado por URL (no estaba en el listado actual: límite de filas o filtro de molécula).`
+              );
+            }
+          }
+        }
+      } catch (e) {
+        if (e?.name === 'AbortError') return;
+        console.warn('Parámetro URL evento=…', e);
+      }
+
       const fc = res?.featureCollection;
       const items = Array.isArray(res?.items) ? res.items : [];
       const fcBase =
@@ -1533,6 +1578,17 @@ export async function boot() {
         features: Array.isArray(fcForMap?.features) ? fcForMap.features.slice() : []
       };
       paintEventosMapWithReporteDraft(opts);
+      if (flyToEventCoords && !opts?.suppressMapPins) {
+        try {
+          map.easeTo({
+            center: flyToEventCoords,
+            zoom: Math.max(map.getZoom(), 15.5),
+            duration: 880
+          });
+        } catch (e) {
+          console.warn('Centrado evento URL', e);
+        }
+      }
       const ul = document.getElementById('reporte-ev-ul');
       if (ul) {
         ul.replaceChildren();

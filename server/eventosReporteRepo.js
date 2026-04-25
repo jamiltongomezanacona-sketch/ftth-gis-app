@@ -101,6 +101,110 @@ function sqlMoleculeMatchExpr(moleculaCodigoVariants) {
 }
 
 /**
+ * @param {Record<string, unknown>} r fila SELECT de `eventos_reporte` + geom_json
+ * @returns {{ item: object, feature: import('geojson').Feature<import('geojson').Point> | null }}
+ */
+function eventoDbRowToItemAndFeature(r) {
+  let gj = r.geom_json;
+  if (gj && typeof gj === 'string') {
+    try {
+      gj = JSON.parse(gj);
+    } catch {
+      gj = null;
+    }
+  }
+  const hasMapPoint = Boolean(
+    gj &&
+      typeof gj === 'object' &&
+      /** @type {import('geojson').Point} */ (gj).type === 'Point' &&
+      Array.isArray(/** @type {import('geojson').Point} */ (gj).coordinates) &&
+      /** @type {import('geojson').Point} */ (gj).coordinates.length >= 2
+  );
+
+  const item = {
+    id: Number(r.id),
+    created_at: r.created_at,
+    red_tipo: String(r.red_tipo),
+    dist_odf: r.dist_odf != null ? Number(r.dist_odf) : null,
+    tipo_evento: String(r.tipo_evento ?? ''),
+    estado: String(r.estado ?? ''),
+    accion: String(r.accion ?? ''),
+    descripcion: String(r.descripcion ?? ''),
+    ruta_id: r.ruta_id != null ? Number(r.ruta_id) : null,
+    nombre_tendido: r.nombre_tendido != null ? String(r.nombre_tendido) : null,
+    lng: r.lng != null ? Number(r.lng) : null,
+    lat: r.lat != null ? Number(r.lat) : null,
+    has_map_point: hasMapPoint
+  };
+
+  /** @type {import('geojson').Feature<import('geojson').Point> | null} */
+  let feature = null;
+  if (hasMapPoint && gj) {
+    feature = {
+      type: 'Feature',
+      id: String(r.id),
+      properties: {
+        id: Number(r.id),
+        tipo_evento: String(r.tipo_evento ?? ''),
+        estado: String(r.estado ?? ''),
+        accion: String(r.accion ?? ''),
+        descripcion: String(r.descripcion ?? '').slice(0, 800),
+        nombre_tendido: r.nombre_tendido != null ? String(r.nombre_tendido) : '',
+        created_iso: r.created_at ? new Date(r.created_at).toISOString() : '',
+        dist_odf: r.dist_odf != null ? Number(r.dist_odf) : null,
+        ruta_id: r.ruta_id != null ? Number(r.ruta_id) : null,
+        lng: r.lng != null ? Number(r.lng) : null,
+        lat: r.lat != null ? Number(r.lat) : null
+      },
+      geometry: /** @type {import('geojson').Point} */ (gj)
+    };
+  }
+
+  return { item, feature };
+}
+
+/**
+ * Un evento por id (mapa / depuración / `?evento=` en el editor).
+ * @param {import('pg').Pool} pool
+ * @param {'ftth'|'corporativa'} red
+ * @param {number} id
+ * @returns {Promise<{ item: object, feature: import('geojson').Feature | null } | null>}
+ */
+export async function getEventoReporteByIdForRed(pool, red, id) {
+  const { rows } = await pool.query(
+    `
+    SELECT
+      er.id,
+      er.created_at,
+      er.red_tipo,
+      er.dist_odf,
+      er.tipo_evento,
+      er.estado,
+      er.accion,
+      er.descripcion,
+      er.ruta_id,
+      er.nombre_tendido,
+      er.lng,
+      er.lat,
+      ST_AsGeoJSON(
+        COALESCE(
+          er.geom,
+          CASE
+            WHEN er.lng IS NOT NULL AND er.lat IS NOT NULL
+            THEN ST_SetSRID(ST_MakePoint(er.lng::double precision, er.lat::double precision), 4326)
+          END
+        )
+      )::json AS geom_json
+    FROM eventos_reporte er
+    WHERE er.id = $1::int AND er.red_tipo = $2
+    `,
+    [id, red]
+  );
+  if (!rows[0]) return null;
+  return eventoDbRowToItemAndFeature(rows[0]);
+}
+
+/**
  * Lista eventos de la red para el mapa y el panel lateral.
  * @param {import('pg').Pool} pool
  * @param {{
@@ -129,7 +233,7 @@ function sqlMoleculeMatchExpr(moleculaCodigoVariants) {
  */
 export async function listEventosReporteForRed(pool, opts) {
   const red = opts.red;
-  const limit = Math.min(Math.max(Number(opts.limit) || 500, 1), 2000);
+  const limit = Math.min(Math.max(Number(opts.limit) || 2000, 1), 2000);
   const variants = Array.isArray(opts.moleculaCodigoVariants)
     ? opts.moleculaCodigoVariants.map((s) => String(s ?? '').trim()).filter(Boolean)
     : [];
@@ -175,58 +279,9 @@ export async function listEventosReporteForRed(pool, opts) {
   const items = [];
 
   for (const r of rows) {
-    let gj = r.geom_json;
-    if (gj && typeof gj === 'string') {
-      try {
-        gj = JSON.parse(gj);
-      } catch {
-        gj = null;
-      }
-    }
-    const hasMapPoint = Boolean(
-      gj &&
-        typeof gj === 'object' &&
-        gj.type === 'Point' &&
-        Array.isArray(gj.coordinates) &&
-        gj.coordinates.length >= 2
-    );
-
-    items.push({
-      id: Number(r.id),
-      created_at: r.created_at,
-      red_tipo: String(r.red_tipo),
-      dist_odf: r.dist_odf != null ? Number(r.dist_odf) : null,
-      tipo_evento: String(r.tipo_evento ?? ''),
-      estado: String(r.estado ?? ''),
-      accion: String(r.accion ?? ''),
-      descripcion: String(r.descripcion ?? ''),
-      ruta_id: r.ruta_id != null ? Number(r.ruta_id) : null,
-      nombre_tendido: r.nombre_tendido != null ? String(r.nombre_tendido) : null,
-      lng: r.lng != null ? Number(r.lng) : null,
-      lat: r.lat != null ? Number(r.lat) : null,
-      has_map_point: hasMapPoint
-    });
-
-    if (hasMapPoint && gj) {
-      features.push({
-        type: 'Feature',
-        id: String(r.id),
-        properties: {
-          id: Number(r.id),
-          tipo_evento: String(r.tipo_evento ?? ''),
-          estado: String(r.estado ?? ''),
-          accion: String(r.accion ?? ''),
-          descripcion: String(r.descripcion ?? '').slice(0, 800),
-          nombre_tendido: r.nombre_tendido != null ? String(r.nombre_tendido) : '',
-          created_iso: r.created_at ? new Date(r.created_at).toISOString() : '',
-          dist_odf: r.dist_odf != null ? Number(r.dist_odf) : null,
-          ruta_id: r.ruta_id != null ? Number(r.ruta_id) : null,
-          lng: r.lng != null ? Number(r.lng) : null,
-          lat: r.lat != null ? Number(r.lat) : null
-        },
-        geometry: /** @type {import('geojson').Point} */ (gj)
-      });
-    }
+    const { item, feature } = eventoDbRowToItemAndFeature(r);
+    items.push(item);
+    if (feature) features.push(feature);
   }
 
   return {
