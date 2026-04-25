@@ -3276,7 +3276,7 @@ export async function boot() {
           className: 'evento-popup-wrap',
           anchor: 'bottom',
           offset: isNarrow ? [0, -16] : [0, -12],
-          maxWidth: isNarrow ? 'min(calc(100vw - 16px), 340px)' : 'min(92vw, 380px)',
+          maxWidth: isNarrow ? 'min(calc(100vw - 20px), 288px)' : 'min(90vw, 304px)',
           closeButton: true,
           closeOnClick: true
         })

@@ -3697,29 +3697,34 @@ body.editor-body #sidebar {
   scrollbar-width: thin;
 }
 
-/* Shell tipo “tarjeta / sheet” para ficha de evento (estilo app tipo Waze: redondeo fuerte, sombra, fondo frío) */
+/* Ficha evento en mapa: compacta, paleta gris / azul / blanco / verde */
 .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-content {
-  background: #e8eef5;
-  border: none;
-  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow:
-    0 14px 44px -10px rgba(15, 23, 42, 0.32),
-    0 6px 16px rgba(15, 23, 42, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.55) inset;
+    0 4px 24px rgba(15, 23, 42, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  max-height: min(68vh, 340px);
 }
 
 .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-close-button {
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+  line-height: 26px;
+  border-radius: 6px;
   color: rgba(255, 255, 255, 0.92);
 }
 
 .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-close-button:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
 }
 
 .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-close-button:focus-visible {
-  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.45), 0 0 0 4px rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.35), 0 0 0 4px rgba(255, 255, 255, 0.4);
 }
 
 .evento-popup-wrap .mapboxgl-popup-close-button {
@@ -3793,35 +3798,35 @@ body.editor-body #sidebar {
 }
 
 .evento-popup-wrap:has(.evento-popup--evento).mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
-  border-bottom-color: #e8eef5;
+  border-bottom-color: #ffffff;
 }
 
 .evento-popup-wrap:has(.evento-popup--evento).mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip {
-  border-bottom-color: #e8eef5;
+  border-bottom-color: #ffffff;
 }
 
 .evento-popup-wrap:has(.evento-popup--evento).mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip {
-  border-bottom-color: #e8eef5;
+  border-bottom-color: #ffffff;
 }
 
 .evento-popup-wrap:has(.evento-popup--evento).mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
-  border-top-color: #e8eef5;
+  border-top-color: #ffffff;
 }
 
 .evento-popup-wrap:has(.evento-popup--evento).mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip {
-  border-top-color: #e8eef5;
+  border-top-color: #ffffff;
 }
 
 .evento-popup-wrap:has(.evento-popup--evento).mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
-  border-top-color: #e8eef5;
+  border-top-color: #ffffff;
 }
 
 .evento-popup-wrap:has(.evento-popup--evento).mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
-  border-right-color: #e8eef5;
+  border-right-color: #ffffff;
 }
 
 .evento-popup-wrap:has(.evento-popup--evento).mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
-  border-left-color: #e8eef5;
+  border-left-color: #ffffff;
 }
 
 .evento-popup {
@@ -3833,126 +3838,126 @@ body.editor-body #sidebar {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ficha evento: lectura/edición — estilo “app mapa” (Waze-like: cabecera oscura, chips vivos, botones sólidos) */
+/* Ficha evento: lectura/edición — líneas limpias, sin degradados llamativos */
 .evento-popup--evento {
   padding: 0;
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .evento-popup--evento .evento-popup__head {
-  padding: 18px 44px 18px 20px;
+  padding: 10px 36px 10px 12px;
   border: none;
-  background: linear-gradient(118deg, #2563eb 0%, #1d4ed8 38%, #312e81 92%);
-  box-shadow: 0 10px 32px rgba(30, 64, 175, 0.42);
+  background: #1e40af;
+  box-shadow: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .evento-popup--evento .evento-popup__eyebrow {
-  margin: 0 0 8px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.2em;
+  margin: 0 0 2px;
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .evento-popup--evento .evento-popup__head .evento-popup__title {
   margin: 0;
   padding: 0;
   border: none;
-  font-size: 1.38rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: #ffffff;
-  line-height: 1.12;
-  text-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
+  line-height: 1.15;
+  text-shadow: none;
 }
 
 .evento-popup--evento .evento-popup__summary {
-  padding: 16px 18px 14px;
+  padding: 10px 12px 8px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
+  background: #f8fafc;
 }
 
 .evento-popup--evento .evento-popup__date {
   display: block;
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #64748b;
 }
 
 .evento-popup--evento .evento-popup__badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 6px;
   align-items: center;
 }
 
 .evento-popup--evento .evento-popup__badges .evento-popup__pill {
-  font-size: 0.76rem;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: none;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  font-size: 0.62rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  box-shadow: none;
 }
 
 .evento-popup--evento .evento-popup__badges .evento-popup__pill--tipo {
-  background: linear-gradient(180deg, #ffedd5 0%, #fb923c 100%);
-  color: #431407;
-  box-shadow: 0 5px 16px rgba(234, 88, 12, 0.32);
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #e2e8f0;
 }
 
 .evento-popup--evento .evento-popup__badges .evento-popup__pill--estado.evento-popup__pill--critico {
-  background: linear-gradient(180deg, #fecaca 0%, #f87171 100%);
-  color: #450a0a;
-  box-shadow: 0 5px 16px rgba(220, 38, 38, 0.32);
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
 }
 
 .evento-popup--evento .evento-popup__badges .evento-popup__pill--estado.evento-popup__pill--proceso {
-  background: linear-gradient(180deg, #fef9c3 0%, #facc15 100%);
-  color: #422006;
-  box-shadow: 0 5px 16px rgba(202, 138, 4, 0.28);
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #93c5fd;
 }
 
 .evento-popup--evento .evento-popup__badges .evento-popup__pill--estado.evento-popup__pill--resuelto {
-  background: linear-gradient(180deg, #bbf7d0 0%, #4ade80 100%);
-  color: #052e16;
-  box-shadow: 0 5px 16px rgba(22, 163, 74, 0.28);
+  background: #ecfdf5;
+  color: #166534;
+  border-color: #86efac;
 }
 
 .evento-popup--evento .evento-popup__badges .evento-popup__pill--estado.evento-popup__pill--pendiente {
-  background: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 100%);
-  color: #1e293b;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  background: #f8fafc;
+  color: #475569;
+  border-color: #e2e8f0;
 }
 
 .evento-popup--evento .evento-popup__badges .evento-popup__pill--estado.evento-popup__pill--escalado {
-  background: linear-gradient(180deg, #ede9fe 0%, #a78bfa 100%);
-  color: #2e1065;
-  box-shadow: 0 5px 16px rgba(109, 40, 217, 0.25);
+  background: #eff6ff;
+  color: #1e3a8a;
+  border-color: #60a5fa;
 }
 
 .evento-popup--evento .evento-popup__badges .evento-popup__pill--estado.evento-popup__pill--neutral {
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
-  color: #0f172a;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
 }
 
 .evento-popup--evento .evento-popup__stat {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 18px;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
   background: #ffffff;
-  border: none;
-  box-shadow:
-    0 2px 8px rgba(15, 23, 42, 0.06),
-    0 10px 24px -12px rgba(15, 23, 42, 0.14);
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
 }
 
 .evento-popup--evento .evento-popup__stat--muted {
@@ -3960,128 +3965,127 @@ body.editor-body #sidebar {
 }
 
 .evento-popup--evento .evento-popup__stat-label {
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #64748b;
 }
 
 .evento-popup--evento .evento-popup__stat-value {
-  font-size: 0.88rem;
-  font-weight: 800;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: #0f172a;
 }
 
 .evento-popup--evento .evento-popup__desc {
-  margin: 0 16px 18px;
-  padding: 16px 18px;
-  border-radius: 20px;
-  border: none;
+  margin: 0 10px 10px;
+  padding: 10px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
   background: #ffffff;
-  box-shadow:
-    0 2px 8px rgba(15, 23, 42, 0.05),
-    0 14px 32px -14px rgba(15, 23, 42, 0.18);
+  box-shadow: none;
 }
 
 .evento-popup--evento .evento-popup__desc-label {
-  margin-bottom: 10px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  margin-bottom: 6px;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #64748b;
 }
 
 .evento-popup--evento .evento-popup__desc-text {
-  font-size: 0.92rem;
-  line-height: 1.55;
-  font-weight: 600;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  font-weight: 500;
   color: #0f172a;
 }
 
 .evento-popup--evento .evento-popup__actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
   margin: 0;
-  padding: 14px 16px 20px;
-  border-top: none;
-  background: linear-gradient(180deg, rgba(232, 238, 245, 0) 0%, #dce3ee 100%);
+  padding: 8px 10px 10px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 .evento-popup--evento .evento-popup__actions .evento-popup__btn {
-  min-height: 46px;
-  border-radius: 14px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  min-height: 34px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+  padding: 6px 10px;
   transition:
-    transform 0.12s ease,
-    filter 0.15s ease,
-    box-shadow 0.15s ease;
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .evento-popup--evento:not(.evento-popup--edit) .evento-popup__actions .evento-popup__btn:not(.evento-popup__btn--danger) {
-  border: none;
-  color: #042f2e;
-  background: linear-gradient(180deg, #5eead4 0%, #14b8a6 45%, #0d9488 100%);
-  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.42);
+  border: 1px solid #1d4ed8;
+  color: #ffffff;
+  background: #2563eb;
+  box-shadow: none;
 }
 
 .evento-popup--evento:not(.evento-popup--edit) .evento-popup__actions .evento-popup__btn:not(.evento-popup__btn--danger):hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
+  background: #1d4ed8;
+  border-color: #1e40af;
 }
 
 .evento-popup--evento:not(.evento-popup--edit) .evento-popup__actions .evento-popup__btn--danger {
-  border: none;
-  color: #881337;
-  background: linear-gradient(180deg, #ffe4e6 0%, #fda4af 100%);
-  box-shadow: 0 6px 18px rgba(190, 18, 60, 0.22);
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  background: #ffffff;
+  box-shadow: none;
 }
 
 .evento-popup--evento:not(.evento-popup--edit) .evento-popup__actions .evento-popup__btn--danger:hover {
-  filter: brightness(1.04);
-  transform: translateY(-1px);
+  background: #f1f5f9;
+  border-color: #94a3b8;
 }
 
 .evento-popup--evento.evento-popup--edit .evento-popup__edit-grid {
   margin-top: 0;
-  padding: 16px 18px 8px;
-  background: transparent;
+  padding: 10px 10px 6px;
+  background: #f8fafc;
 }
 
 .evento-popup--evento.evento-popup--edit .evento-popup__actions {
-  padding-top: 14px;
+  padding-top: 8px;
 }
 
 .evento-popup--evento.evento-popup--edit .evento-popup__actions .evento-popup__btn:not(.evento-popup__btn--primary) {
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgba(148, 163, 184, 0.5);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   color: #334155;
 }
 
 .evento-popup--evento.evento-popup--edit .evento-popup__actions .evento-popup__btn--primary {
-  border: none;
-  color: #042f2e;
-  background: linear-gradient(180deg, #5eead4 0%, #14b8a6 45%, #0d9488 100%);
-  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.42);
+  border: 1px solid #166534;
+  color: #ffffff;
+  background: #15803d;
+  box-shadow: none;
 }
 
 .evento-popup--evento.evento-popup--edit .evento-popup__actions .evento-popup__btn--primary:hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
+  background: #166534;
 }
 
 @media (max-width: 420px) {
   .evento-popup--evento .evento-popup__actions {
     grid-template-columns: 1fr;
-    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   }
 
   .evento-popup--evento .evento-popup__actions .evento-popup__btn {
-    min-height: 50px;
-    border-radius: 16px;
+    min-height: 38px;
+    border-radius: 8px;
   }
 }
 
@@ -9088,12 +9092,10 @@ body.editor-body .evento-popup-wrap .mapboxgl-popup-close-button:hover {
 }
 
 body.editor-body .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-content {
-  border-color: transparent;
+  border-color: #e2e8f0;
   box-shadow:
-    0 14px 44px -10px rgba(15, 23, 42, 0.32),
-    0 6px 16px rgba(15, 23, 42, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.55) inset,
-    0 0 48px rgba(59, 130, 246, 0.14);
+    0 4px 24px rgba(15, 23, 42, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
 }
 
 body.editor-body .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-close-button {
@@ -9117,12 +9119,12 @@ body.editor-body .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-c
   }
 
   .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-content {
-    border-radius: 20px;
-    max-height: min(62vh, 420px);
+    border-radius: 11px;
+    max-height: min(58vh, 320px);
   }
 
   .evento-popup-wrap:has(.evento-popup--evento).mapboxgl-popup {
-    max-width: min(calc(100vw - 12px), 340px) !important;
+    max-width: min(calc(100vw - 20px), 288px) !important;
   }
 
   .evento-popup-wrap .mapboxgl-popup-close-button {
@@ -9130,6 +9132,13 @@ body.editor-body .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-c
     height: 28px;
     font-size: 15px;
     line-height: 28px;
+  }
+
+  .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-close-button {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+    line-height: 24px;
   }
 
   .evento-popup {
@@ -9140,67 +9149,67 @@ body.editor-body .evento-popup-wrap:has(.evento-popup--evento) .mapboxgl-popup-c
 
   .evento-popup--evento {
     padding: 0;
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .evento-popup--evento .evento-popup__head {
-    padding: 14px 40px 14px 14px;
+    padding: 8px 34px 8px 10px;
   }
 
   .evento-popup--evento .evento-popup__eyebrow {
-    font-size: 0.55rem;
-    margin-bottom: 4px;
+    font-size: 0.48rem;
+    margin-bottom: 2px;
   }
 
   .evento-popup--evento .evento-popup__head .evento-popup__title {
-    font-size: 1.12rem;
-    margin: 0 26px 0 0;
+    font-size: 0.95rem;
+    margin: 0 24px 0 0;
   }
 
   .evento-popup--evento .evento-popup__summary {
-    padding: 10px 14px 12px;
-    gap: 10px;
+    padding: 8px 10px 6px;
+    gap: 6px;
   }
 
   .evento-popup--evento .evento-popup__date {
-    font-size: 0.76rem;
+    font-size: 0.68rem;
   }
 
   .evento-popup--evento .evento-popup__badges .evento-popup__pill {
-    font-size: 0.68rem;
-    padding: 5px 10px;
+    font-size: 0.58rem;
+    padding: 3px 7px;
   }
 
   .evento-popup--evento .evento-popup__stat {
-    padding: 9px 11px;
-    border-radius: 10px;
+    padding: 6px 8px;
+    border-radius: 7px;
   }
 
   .evento-popup--evento .evento-popup__stat-label {
-    font-size: 0.6rem;
+    font-size: 0.54rem;
   }
 
   .evento-popup--evento .evento-popup__stat-value {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
   }
 
   .evento-popup--evento .evento-popup__desc {
-    margin: 0 14px 12px;
-    padding: 10px 11px;
+    margin: 0 8px 8px;
+    padding: 8px 9px;
   }
 
   .evento-popup--evento .evento-popup__desc-text {
-    font-size: 0.8rem;
-    line-height: 1.48;
+    font-size: 0.74rem;
+    line-height: 1.45;
   }
 
   .evento-popup--evento .evento-popup__actions {
-    padding: 10px 14px 14px;
-    gap: 8px;
+    padding: 6px 8px 8px;
+    gap: 6px;
   }
 
   .evento-popup--evento.evento-popup--edit .evento-popup__edit-grid {
-    padding: 10px 14px 4px;
+    padding: 8px 10px 4px;
   }
 
   .evento-popup__title {
