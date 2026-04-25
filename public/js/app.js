@@ -464,20 +464,10 @@ function htmlEventoMapPopup(p) {
   const id = p.id != null ? String(p.id) : '?';
   const tipo = escapeHtml(p.tipo_evento);
   const estado = escapeHtml(p.estado);
-  const accion = escapeHtml(p.accion);
-  const nom = escapeHtml(p.nombre_tendido ?? '');
   const desc = escapeHtml(p.descripcion ?? '');
   const fecha = escapeHtml(formatEventoFechaEs(p.created_iso));
   const d = p.dist_odf != null ? Number(p.dist_odf) : NaN;
   const dist = Number.isFinite(d) ? escapeHtml(String(d)) : '—';
-  const r = p.ruta_id != null ? Number(p.ruta_id) : NaN;
-  const ruta = Number.isFinite(r) && r > 0 ? escapeHtml(String(r)) : '—';
-  let coords = '—';
-  const lo = p.lng != null ? Number(p.lng) : NaN;
-  const la = p.lat != null ? Number(p.lat) : NaN;
-  if (Number.isFinite(lo) && Number.isFinite(la)) {
-    coords = escapeHtml(`${lo.toFixed(6)}, ${la.toFixed(6)}`);
-  }
   const stMod = eventoEstadoPillModifier(p.estado);
   const canEventoAdmin = isEventoReporteIdAdmin(p.id);
   const eventoActions = canEventoAdmin
@@ -492,11 +482,7 @@ function htmlEventoMapPopup(p) {
     <dt>Fecha</dt><dd><span class="evento-popup__value">${fecha}</span></dd>
     <dt>Tipo</dt><dd><span class="evento-popup__pill evento-popup__pill--tipo">${tipo || '—'}</span></dd>
     <dt>Estado</dt><dd><span class="evento-popup__pill evento-popup__pill--estado ${stMod}">${estado || '—'}</span></dd>
-    <dt>Acción</dt><dd><span class="evento-popup__pill evento-popup__pill--accion">${accion || '—'}</span></dd>
-    <dt>Molécula / tendido</dt><dd><span class="evento-popup__value evento-popup__value--tendido">${nom || '—'}</span></dd>
     <dt>Dist. ODF</dt><dd><span class="evento-popup__value evento-popup__value--mono">${dist}</span></dd>
-    <dt>Ruta ID</dt><dd><span class="evento-popup__value evento-popup__value--mono">${ruta}</span></dd>
-    <dt>Coordenadas (WGS84)</dt><dd><span class="evento-popup__value evento-popup__value--mono">${coords}</span></dd>
   </dl>
   <div class="evento-popup__desc">
     <span class="evento-popup__desc-label">Descripción</span>
