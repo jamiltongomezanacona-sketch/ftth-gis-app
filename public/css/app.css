@@ -4354,6 +4354,71 @@ body.editor-body #sidebar {
   resize: vertical;
 }
 
+/* Editar incidencia (mapa): más compacto, selects sin texto bajo la flecha */
+.evento-popup--evento.evento-popup--edit .evento-popup__head {
+  padding: 8px 36px 8px 11px;
+}
+
+.evento-popup--evento.evento-popup--edit .evento-popup__eyebrow {
+  margin-bottom: 2px;
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+}
+
+.evento-popup--evento.evento-popup--edit .evento-popup__head .evento-popup__title {
+  font-size: 0.98rem;
+  line-height: 1.18;
+}
+
+.evento-popup--evento.evento-popup--edit .evento-popup__edit-grid {
+  grid-template-columns: minmax(4.75rem, 28%) 1fr;
+  gap: 5px 10px;
+  margin-top: 0;
+  padding: 7px 9px 5px;
+}
+
+.evento-popup--evento.evento-popup--edit .evento-popup__edit-lab {
+  margin-bottom: 0;
+  align-self: center;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.evento-popup--evento.evento-popup--edit .evento-popup__edit-ctl {
+  padding: 5px 8px;
+  font-size: 0.78rem;
+  line-height: 1.28;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.evento-popup--evento.evento-popup--edit select.evento-popup__edit-ctl {
+  padding-right: 2.35rem;
+  cursor: pointer;
+}
+
+.evento-popup--evento.evento-popup--edit textarea.evento-popup__edit-ctl {
+  min-height: 52px;
+  align-self: stretch;
+  line-height: 1.35;
+}
+
+.evento-popup--evento.evento-popup--edit .evento-popup__actions {
+  padding: 6px 8px 8px;
+  gap: 6px;
+}
+
+.evento-popup--evento.evento-popup--edit .evento-popup__actions .evento-popup__btn {
+  min-height: 32px;
+  padding: 5px 10px;
+  font-size: 0.74rem;
+  border-radius: 6px;
+}
+
 .evento-popup__hint {
   margin: 10px 0 0;
   font-size: 0.75rem;
@@ -9219,6 +9284,28 @@ body.editor-body .evento-popup-wrap:has(:is(.evento-popup--evento, .evento-popup
 
   :is(.evento-popup--evento, .evento-popup--cierre-sheet).evento-popup--edit .evento-popup__edit-grid {
     padding: 8px 10px 4px;
+  }
+
+  .evento-popup--evento.evento-popup--edit .evento-popup__edit-grid {
+    grid-template-columns: 1fr;
+    padding: 6px 8px 4px;
+    gap: 3px 0;
+  }
+
+  .evento-popup--evento.evento-popup--edit .evento-popup__edit-lab {
+    margin-top: 3px;
+  }
+
+  .evento-popup--evento.evento-popup--edit .evento-popup__edit-lab:first-of-type {
+    margin-top: 0;
+  }
+
+  .evento-popup--evento.evento-popup--edit .evento-popup__head {
+    padding: 6px 32px 6px 9px;
+  }
+
+  .evento-popup--evento.evento-popup--edit textarea.evento-popup__edit-ctl {
+    min-height: 46px;
   }
 
   :is(.evento-popup--evento, .evento-popup--cierre-sheet).evento-popup--edit .evento-popup__cierre-edit-meta {

@@ -472,7 +472,7 @@ function htmlEventoMapPopupEditForm(p) {
     <label class="evento-popup__edit-lab">Dist. ODF (m)</label>
     <input class="evento-popup__edit-ctl" type="number" min="0" step="0.1" data-f="dist_odf" value="${escapeHtml(dist)}" />
     <label class="evento-popup__edit-lab">Descripción</label>
-    <textarea class="evento-popup__edit-ctl evento-popup__edit-ta" rows="5" maxlength="8000" data-f="desc">${escapeHtml(stripEventoLegacyDescripcionSuffix(p.descripcion ?? ''))}</textarea>
+    <textarea class="evento-popup__edit-ctl evento-popup__edit-ta" rows="3" maxlength="8000" data-f="desc">${escapeHtml(stripEventoLegacyDescripcionSuffix(p.descripcion ?? ''))}</textarea>
   </div>
   <div class="evento-popup__actions">
     <button type="button" class="evento-popup__btn" data-admin="ev-cancel">Volver</button>
