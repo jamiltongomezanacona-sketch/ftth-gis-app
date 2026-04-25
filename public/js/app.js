@@ -1541,6 +1541,15 @@ export async function boot() {
           const li = document.createElement('li');
           li.className = 'reporte-ev-li reporte-ev-li--empty';
           if (molFilt) {
+            let totalRed = null;
+            try {
+              const allRes = await api.listEventosReporte(null, { signal: abortCtrl.signal });
+              if (abortCtrl.signal.aborted || eventosDisplayAbortCtrl !== abortCtrl) return;
+              const allItems = Array.isArray(allRes?.items) ? allRes.items : [];
+              totalRed = allItems.length;
+            } catch {
+              totalRed = null;
+            }
             const wrap = document.createElement('div');
             wrap.style.display = 'flex';
             wrap.style.flexDirection = 'column';
@@ -1568,6 +1577,14 @@ export async function boot() {
             hint.textContent =
               'Alternativa: pulsa × en el buscador para quitar el cable del mapa y volver a solo centrales.';
             wrap.appendChild(hint);
+            if (Number.isInteger(totalRed) && totalRed > 0) {
+              const warn = document.createElement('p');
+              warn.style.margin = '0';
+              warn.style.fontSize = '12px';
+              warn.style.color = '#fcd34d';
+              warn.textContent = `Hay ${totalRed} evento(s) en esta red, pero ninguno coincide con la molécula filtrada.`;
+              wrap.appendChild(warn);
+            }
             li.appendChild(wrap);
           } else {
             li.textContent =
