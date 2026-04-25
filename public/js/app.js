@@ -74,6 +74,13 @@ function escapeHtml(text) {
     .replace(/"/g, '&quot;');
 }
 
+/** Sufijo añadido en import SQL (`sql/08_…`) para deduplicar; no hace falta mostrarlo en UI. */
+function stripEventoLegacyDescripcionSuffix(raw) {
+  return String(raw ?? '')
+    .replace(/\s*\[legacy:[^\]]+\]\s*$/i, '')
+    .trim();
+}
+
 function formatEventoFechaEs(iso) {
   if (!iso || String(iso).trim() === '') return '—';
   try {
@@ -419,7 +426,7 @@ function htmlEventoMapPopupEditForm(p) {
     <label class="evento-popup__edit-lab">Dist. ODF (m)</label>
     <input class="evento-popup__edit-ctl" type="number" min="0" step="0.1" data-f="dist_odf" value="${escapeHtml(dist)}" />
     <label class="evento-popup__edit-lab">Descripción</label>
-    <textarea class="evento-popup__edit-ctl evento-popup__edit-ta" rows="5" maxlength="8000" data-f="desc">${escapeHtml(String(p.descripcion ?? ''))}</textarea>
+    <textarea class="evento-popup__edit-ctl evento-popup__edit-ta" rows="5" maxlength="8000" data-f="desc">${escapeHtml(stripEventoLegacyDescripcionSuffix(p.descripcion ?? ''))}</textarea>
   </div>
   <div class="evento-popup__actions">
     <button type="button" class="evento-popup__btn" data-admin="ev-cancel">Volver</button>
@@ -467,7 +474,7 @@ function htmlEventoMapPopup(p) {
   const id = p.id != null ? String(p.id) : '?';
   const tipo = escapeHtml(p.tipo_evento);
   const estado = escapeHtml(p.estado);
-  const desc = escapeHtml(p.descripcion ?? '');
+  const desc = escapeHtml(stripEventoLegacyDescripcionSuffix(p.descripcion ?? ''));
   const fecha = escapeHtml(formatEventoFechaEs(p.created_iso));
   const isoEsc =
     p.created_iso != null && String(p.created_iso).trim() !== ''
@@ -1669,7 +1676,7 @@ export async function boot() {
             li.appendChild(l1);
             li.appendChild(l2);
             li.addEventListener('click', () => {
-              const desc = String(it.descripcion ?? '').slice(0, 500);
+              const desc = stripEventoLegacyDescripcionSuffix(String(it.descripcion ?? '')).slice(0, 500);
               setStatus(
                 `Evento #${it.id}: ${it.tipo_evento} · ${it.estado} · ${it.accion}. ${desc}${desc.length >= 500 ? '…' : ''}`
               );
@@ -3222,7 +3229,7 @@ export async function boot() {
       const f = e.features?.[0];
       if (!f?.properties) return;
       const p = /** @type {Record<string, unknown>} */ (f.properties);
-      const descShort = String(p.descripcion ?? '').slice(0, 420);
+      const descShort = stripEventoLegacyDescripcionSuffix(String(p.descripcion ?? '')).slice(0, 420);
       setStatus(
         `Evento #${p.id}: ${p.tipo_evento} · ${p.estado} · ${p.accion}. ${descShort}${descShort.length >= 420 ? '…' : ''}`
       );
