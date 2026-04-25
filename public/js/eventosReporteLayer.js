@@ -53,11 +53,11 @@ export class EventosReporteLayer {
           ['linear'],
           ['zoom'],
           10,
-          0.42,
+          0.48,
           14,
-          0.58,
+          0.66,
           18,
-          0.72
+          0.82
         ],
         'icon-anchor': 'center',
         'icon-allow-overlap': true,
@@ -80,7 +80,7 @@ export class EventosReporteLayer {
         visibility: this._desiredVisibility ? 'visible' : 'none'
       },
       paint: {
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 7, 18, 9],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5.5, 14, 8, 18, 10],
         'circle-color': '#dc2626',
         'circle-stroke-width': 2,
         'circle-stroke-color': '#fef2f2',

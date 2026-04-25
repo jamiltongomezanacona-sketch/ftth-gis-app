@@ -5,7 +5,7 @@ import { CentralesEtBLayer } from './centralesLayer.js';
 import {
   EventosReporteLayer,
   EVENTOS_REPORTE_INTERACTIVE_LAYER_IDS
-} from './eventosReporteLayer.js?v=20260420c';
+} from './eventosReporteLayer.js?v=20260427eventoIconSize';
 import { snapEventPointsToRouteCatalog } from './eventosReporteSnap.js';
 import { RouteDrawEditor } from './routeDrawEditor.js';
 import { createCableSearchBar } from './cableSearchBar.js';
