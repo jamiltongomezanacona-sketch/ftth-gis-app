@@ -1,5 +1,5 @@
 import { parseWgs84SearchQuery } from './coordSearchParse.js';
-import { searchRouteFeatures } from './matchRutas.js';
+import { searchCentralesFeatures, searchRouteFeatures } from './matchRutas.js';
 import {
   FTTH_ICON_CIERRE_E1,
   FTTH_ICON_CIERRE_E2,
@@ -11,6 +11,7 @@ const DEBOUNCE_MS = 200;
 const MAX_RESULTS = 18;
 const MAX_MOLECULE_ROWS = 40;
 const MAX_CIERRE_ROWS = 10;
+const MAX_CENTRALE_ROWS = 10;
 
 /**
  * Barra de búsqueda de cables sobre el mapa (listbox, teclado, debounce).
@@ -21,6 +22,8 @@ const MAX_CIERRE_ROWS = 10;
  *   onClearCable: () => void,
  *   isInteractionLocked: () => boolean,
  *   networkRed: 'ftth'|'corporativa',
+ *   getCentralesCollection?: () => GeoJSON.FeatureCollection,
+ *   onSelectCentral?: (feature: GeoJSON.Feature, meta?: { searchQuery: string }) => void,
  *   getMoleculeBrowseHits?: (query: string) => { central: string, molecula: string, label: string, paths: string[] }[],
  *   onSelectMoleculeBrowse?: (hit: { central: string, molecula: string, label: string, paths: string[] }) => void,
  *   getCierreBrowseHits?: (query: string) => Promise<GeoJSON.Feature[]>,
@@ -39,20 +42,17 @@ export function createCableSearchBar(mapWrap, opts) {
     throw new Error('createCableSearchBar: opts.networkRed debe ser "ftth" o "corporativa".');
   }
   const redEtiqueta = opts.networkRed === 'corporativa' ? 'red corporativa' : 'red FTTH';
-  const redCorta = opts.networkRed === 'corporativa' ? 'corporativos' : 'FTTH';
 
   const netClass = opts.networkRed === 'corporativa' ? 'cable-search--corp' : 'cable-search--ftth';
 
-  const searchHint =
-    opts.networkRed === 'ftth'
-      ? 'Tras cargar un tendido: al medir, pin de evento en el cable. Trazar desde el menú Campo (☰).'
-      : 'Tras cargar un cable: al medir, pin de evento en el cable.';
+  const searchTitle = 'Buscador general';
+  const searchTitleEsc = searchTitle.replace(/"/g, '&quot;');
 
   mount.innerHTML = `
     <div class="cable-search-wrap ${netClass}">
       <div class="cable-search-col">
         <div class="cable-search-toolbar">
-          <div class="cable-search ${netClass}" role="search" title="${searchHint.replace(/"/g, '&quot;')}">
+          <div class="cable-search ${netClass}" role="search" title="${searchTitleEsc}">
             <div class="cable-search-row">
               <input
                 id="cable-search-input"
@@ -60,10 +60,10 @@ export function createCableSearchBar(mapWrap, opts) {
                 type="text"
                 enterkeyhint="search"
                 role="searchbox"
-                aria-label="Buscar tendido en ${redEtiqueta}. ${searchHint}"
+                aria-label="${searchTitleEsc}"
                 autocomplete="off"
                 spellcheck="false"
-                placeholder=""
+                placeholder="${searchTitleEsc}"
                 aria-autocomplete="list"
                 aria-controls="cable-search-listbox"
                 aria-expanded="false"
@@ -94,15 +94,7 @@ export function createCableSearchBar(mapWrap, opts) {
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 900px)') : { matches: false };
 
   function syncSearchPlaceholder() {
-    const compact = mqCompact.matches;
-    input.placeholder =
-      opts.networkRed === 'ftth'
-        ? compact
-          ? 'Buscar tendido, molécula o coordenadas…'
-          : 'Tendido, molécula, cierre o coord. WGS84 (ej. 4.57, -74.23 o 4°34′29.5″N…)…'
-        : compact
-          ? 'Cable o coordenadas (lat, lng)…'
-          : `Cable ${redCorta}: nombre, ID o coord. (lat, lng / DMS)…`;
+    input.placeholder = searchTitle;
   }
 
   syncSearchPlaceholder();
@@ -118,6 +110,7 @@ export function createCableSearchBar(mapWrap, opts) {
    *   | { type: 'coords'; lng: number; lat: number; labelDec: string; labelDms: string }
    *   | { type: 'molecule'; hit: { central: string; molecula: string; label: string; paths: string[] } }
    *   | { type: 'cierre'; feature: GeoJSON.Feature }
+   *   | { type: 'central'; feature: GeoJSON.Feature }
    *   | { type: 'route'; feature: GeoJSON.Feature }
    * )[]}
    */
@@ -141,13 +134,15 @@ export function createCableSearchBar(mapWrap, opts) {
   /**
    * @param {{ central: string, molecula: string, label: string, paths: string[] }[]} molHits
    * @param {GeoJSON.Feature[]} cierreHits
+   * @param {GeoJSON.Feature[]} centralHits
    * @param {GeoJSON.Feature[]} routeHits
    * @param {ReturnType<typeof parseWgs84SearchQuery>} coordHit
    */
-  function renderCombinedList(molHits, cierreHits, routeHits, coordHit) {
+  function renderCombinedList(molHits, cierreHits, centralHits, routeHits, coordHit) {
     const cierreSlice = cierreHits.slice(0, MAX_CIERRE_ROWS);
+    const centSlice = centralHits.slice(0, MAX_CENTRALE_ROWS);
     const used =
-      molHits.slice(0, MAX_MOLECULE_ROWS).length + cierreSlice.length + (coordHit ? 1 : 0);
+      molHits.slice(0, MAX_MOLECULE_ROWS).length + cierreSlice.length + centSlice.length + (coordHit ? 1 : 0);
     const maxRoutes = Math.max(0, MAX_RESULTS - used);
     const routes = routeHits.slice(0, maxRoutes);
     activeRows = [
@@ -164,6 +159,7 @@ export function createCableSearchBar(mapWrap, opts) {
         : []),
       ...molHits.slice(0, MAX_MOLECULE_ROWS).map((hit) => ({ type: /** @type {const} */ ('molecule'), hit })),
       ...cierreSlice.map((feature) => ({ type: /** @type {const} */ ('cierre'), feature })),
+      ...centSlice.map((feature) => ({ type: /** @type {const} */ ('central'), feature })),
       ...routes.map((feature) => ({ type: /** @type {const} */ ('route'), feature }))
     ];
     activeIndex = activeRows.length ? 0 : -1;
@@ -181,9 +177,11 @@ export function createCableSearchBar(mapWrap, opts) {
           ? 'cable-search-item cable-search-item-molecule'
           : row.type === 'cierre'
             ? 'cable-search-item cable-search-item-cierre'
-            : row.type === 'coords'
-              ? 'cable-search-item cable-search-item-coords'
-              : 'cable-search-item';
+            : row.type === 'central'
+              ? 'cable-search-item cable-search-item-central'
+              : row.type === 'coords'
+                ? 'cable-search-item cable-search-item-coords'
+                : 'cable-search-item';
       opt.setAttribute('role', 'option');
       opt.setAttribute('id', `cable-search-opt-${i}`);
       opt.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
@@ -218,6 +216,17 @@ export function createCableSearchBar(mapWrap, opts) {
         if (labelEl) {
           labelEl.textContent = `${String(p.nombre ?? p.name ?? 'Sin nombre')}${tipoBit ? ` · ${tipoBit}` : ''}`;
         }
+      } else if (row.type === 'central') {
+        const centralAction = opts.networkRed === 'corporativa' ? 'IR A NODO' : 'IR A CENTRAL';
+        const centralDefault = opts.networkRed === 'corporativa' ? 'Nodo' : 'Central';
+        opt.innerHTML = `<span class="cable-search-item-label"></span><span class="cable-search-item-action" aria-hidden="true">${centralAction}</span>`;
+        const f = row.feature;
+        const labelEl = opt.querySelector('.cable-search-item-label');
+        if (labelEl) {
+          labelEl.textContent = String(
+            f.properties?.nombre ?? f.properties?.name ?? centralDefault
+          ).trim();
+        }
       } else if (row.type === 'coords') {
         opt.innerHTML =
           '<span class="cable-search-item-main cable-search-item-main--coords"><span class="cable-search-item-label cable-search-item-label--coords-dec"></span><span class="cable-search-item-id cable-search-item-id--coords-dms" aria-hidden="false"></span></span><span class="cable-search-item-action" aria-hidden="true">CENTRAR MAPA</span>';
@@ -229,10 +238,9 @@ export function createCableSearchBar(mapWrap, opts) {
         opt.innerHTML =
           '<span class="cable-search-item-label"></span><span class="cable-search-item-action" aria-hidden="true">VER TENDIDO</span>';
         const f = row.feature;
-        const id = f.id != null ? String(f.id) : '—';
         const labelEl = opt.querySelector('.cable-search-item-label');
         if (labelEl) {
-          labelEl.textContent = `${String(f.properties?.nombre ?? 'Sin nombre')} · #${id}`;
+          labelEl.textContent = String(f.properties?.nombre ?? 'Sin nombre').trim();
         }
       }
       listbox.appendChild(opt);
@@ -269,6 +277,13 @@ export function createCableSearchBar(mapWrap, opts) {
       opts.onSelectCierre?.(row.feature, { searchQuery: searchQueryBeforePick });
       return;
     }
+    if (row.type === 'central') {
+      input.value = String(
+        row.feature.properties?.nombre ?? row.feature.properties?.name ?? row.feature.id ?? ''
+      );
+      opts.onSelectCentral?.(row.feature, { searchQuery: searchQueryBeforePick });
+      return;
+    }
     if (row.type === 'coords') {
       input.value = `${row.labelDec} · ${row.labelDms}`;
       opts.onSelectCoordinates?.({ lng: row.lng, lat: row.lat }, { searchQuery: searchQueryBeforePick });
@@ -284,6 +299,11 @@ export function createCableSearchBar(mapWrap, opts) {
     const currentSeq = ++searchSeq;
     const q = input.value;
     const trimmed = q.trim();
+    /* Sin texto no se abre el listado (evita el catálogo completo al cargar / refresh / focus). */
+    if (!trimmed) {
+      closeList();
+      return;
+    }
     const fc = opts.getRouteCollection();
     const coordHit = parseWgs84SearchQuery(trimmed);
     const molQ = trimmed.length >= 2 ? trimmed : '';
@@ -306,11 +326,19 @@ export function createCableSearchBar(mapWrap, opts) {
     }
     if (currentSeq !== searchSeq) return;
     const cierreSlice = cierreHits.slice(0, MAX_CIERRE_ROWS);
-    const used = molHits.length + cierreSlice.length + (coordHit ? 1 : 0);
+    const usedBase = molHits.length + cierreSlice.length + (coordHit ? 1 : 0);
+    const maxCentrSlot = Math.max(0, Math.min(MAX_CENTRALE_ROWS, MAX_RESULTS - usedBase));
+    const fcCen =
+      typeof opts.getCentralesCollection === 'function' ? opts.getCentralesCollection() : null;
+    const centralHits =
+      maxCentrSlot > 0 && fcCen
+        ? searchCentralesFeatures(fcCen, q, maxCentrSlot, opts.networkRed)
+        : [];
+    const used = usedBase + Math.min(centralHits.length, maxCentrSlot);
     const routeLimit = Math.max(0, MAX_RESULTS - used);
     const routeHits = searchRouteFeatures(fc, q, routeLimit, opts.networkRed);
 
-    if (!molHits.length && !cierreSlice.length && !routeHits.length && !coordHit) {
+    if (!molHits.length && !cierreSlice.length && !routeHits.length && !coordHit && !centralHits.length) {
       closeList();
       if (!trimmed) {
         return;
@@ -319,8 +347,8 @@ export function createCableSearchBar(mapWrap, opts) {
       empty.className = 'cable-search-empty';
       empty.textContent =
         opts.networkRed === 'corporativa'
-          ? `Sin coincidencias en ${redEtiqueta}. Prueba «Troncal», «Ruta», ID numérico o coordenadas WGS84 (lat, lng o DMS).`
-          : `Sin coincidencias en ${redEtiqueta}. Prueba cierre, tendido, molécula o coordenadas (ej. 4.57, -74.23 o 4°34′29.5″N 74°13′36″W).`;
+          ? `Sin coincidencias en ${redEtiqueta}. Prueba nodo, cable, «Troncal»/ID o coordenadas WGS84.`
+          : `Sin coincidencias en ${redEtiqueta}. Prueba central, cierre, tendido, molécula o coordenadas.`;
       listbox.appendChild(empty);
       listbox.hidden = false;
       setExpanded(true);
@@ -334,7 +362,7 @@ export function createCableSearchBar(mapWrap, opts) {
       }
       return;
     }
-    renderCombinedList(molHits, cierreHits, routeHits, coordHit);
+    renderCombinedList(molHits, cierreHits, centralHits, routeHits, coordHit);
     const perfPush = /** @type {any} */ (window).__FTTH_PERF_PUSH__;
     if (typeof perfPush === 'function') {
       perfPush('search.routes', perfNow() - t0, {

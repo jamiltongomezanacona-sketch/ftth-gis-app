@@ -29,11 +29,13 @@ const MAX_DESC = 8000;
 
 /**
  * @param {import('pg').Pool} pool
+ * @param {{ requireBearerAuth: import('express').RequestHandler }} opts
  */
-export function createEventosReporteRouter(pool) {
+export function createEventosReporteRouter(pool, opts) {
+  const { requireBearerAuth } = opts;
   const r = Router();
 
-  r.delete('/:id', async (req, res, next) => {
+  r.delete('/:id', requireBearerAuth, async (req, res, next) => {
     try {
       const rRed = redTipoDesdePeticionLectura(req);
       if (!rRed.ok) {
@@ -56,7 +58,7 @@ export function createEventosReporteRouter(pool) {
     }
   });
 
-  r.patch('/:id', async (req, res, next) => {
+  r.patch('/:id', requireBearerAuth, async (req, res, next) => {
     try {
       const rRed = redTipoDesdePeticionLectura(req);
       if (!rRed.ok) {
@@ -203,7 +205,7 @@ export function createEventosReporteRouter(pool) {
     }
   });
 
-  r.post('/', async (req, res, next) => {
+  r.post('/', requireBearerAuth, async (req, res, next) => {
     try {
       const rRed = redTipoDesdePeticionLectura(req);
       if (!rRed.ok) {

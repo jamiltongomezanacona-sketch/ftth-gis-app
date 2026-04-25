@@ -128,7 +128,7 @@ function initMobileSidebar() {
   });
 }
 
-/** Simula ping API; sustituir por fetch('/api/db-check') o similar */
+/** Ping ligero del servidor (público). El diagnóstico PostgreSQL está en GET /api/db-check (JWT en producción). */
 async function checkApiHealth() {
   const statusEl = document.getElementById('dash-api-status');
   if (!statusEl) return;
@@ -145,7 +145,7 @@ async function checkApiHealth() {
 
   try {
     const base = window.location.origin;
-    const res = await fetch(`${base}/api/db-check`, { method: 'GET', cache: 'no-store' });
+    const res = await fetch(`${base}/health`, { method: 'GET', cache: 'no-store' });
     if (res.ok) setOnline();
     else setOffline();
   } catch {

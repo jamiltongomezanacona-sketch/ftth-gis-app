@@ -1,6 +1,9 @@
-import crypto from 'node:crypto';
 import express from 'express';
 import { verifyPassword } from './authPassword.js';
+import { signSessionJwt } from './authJwt.js';
+import { loginRateLimitMiddleware } from './loginRateLimit.js';
+import { attachSessionCookie, clearSessionCookie } from './authCookie.js';
+import { requireBearerAuth } from './authBearerMiddleware.js';
 
 function validEmail(s) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s).trim());
@@ -8,6 +11,28 @@ function validEmail(s) {
 
 function isProductionLike() {
   return process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+}
+
+/**
+ * Cookie httpOnly con el JWT; el cuerpo JSON no incluye el token (reduce impacto de XSS).
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {string} emailLower para el claim `sub` del JWT
+ * @param {string} emailRaw mismo correo para la respuesta JSON (casing original)
+ */
+function sendLoginOk(req, res, emailLower, emailRaw) {
+  try {
+    const token = signSessionJwt(emailLower);
+    attachSessionCookie(req, res, token);
+    res.json({ ok: true, email: emailRaw });
+  } catch (e) {
+    console.error('[auth] signSessionJwt:', e?.message || e);
+    res.status(503).json({
+      error:
+        'No se pudo crear la sesión. En producción define GIS_SESSION_SECRET (mínimo 16 caracteres) en el entorno del servidor (Vercel / .env).'
+    });
+  }
 }
 
 /**
@@ -23,7 +48,18 @@ function isProductionLike() {
 export function createAuthRouter(pool) {
   const r = express.Router();
 
-  r.post('/login', async (req, res) => {
+  /** Sesión actual (cookie httpOnly o Bearer en la misma petición). */
+  r.get('/me', requireBearerAuth, (req, res) => {
+    res.json({ ok: true, email: req.authUser.email });
+  });
+
+  /** Borra la cookie de sesión (siempre 200). */
+  r.post('/logout', (req, res) => {
+    clearSessionCookie(req, res);
+    res.json({ ok: true });
+  });
+
+  r.post('/login', loginRateLimitMiddleware, async (req, res) => {
     const emailRaw = String(req.body?.email ?? '').trim();
     const password = String(req.body?.password ?? '');
     const fixedEmail = process.env.GIS_AUTH_EMAIL?.trim();
@@ -59,8 +95,7 @@ export function createAuthRouter(pool) {
 
     if (storedHash) {
       if (verifyPassword(password, storedHash)) {
-        const token = crypto.randomBytes(24).toString('hex');
-        res.json({ ok: true, token, email: emailRaw });
+        sendLoginOk(req, res, emailLower, emailRaw);
         return;
       }
       res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
@@ -69,8 +104,7 @@ export function createAuthRouter(pool) {
 
     if (fixedEmail && fixedPass != null && String(fixedPass).length > 0) {
       if (emailLower === fixedEmail.toLowerCase() && password === String(fixedPass)) {
-        const token = crypto.randomBytes(24).toString('hex');
-        res.json({ ok: true, token, email: emailRaw });
+        sendLoginOk(req, res, emailLower, emailRaw);
         return;
       }
       res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
@@ -85,8 +119,7 @@ export function createAuthRouter(pool) {
         });
         return;
       }
-      const token = crypto.randomBytes(24).toString('hex');
-      res.json({ ok: true, token, email: emailRaw });
+      sendLoginOk(req, res, emailLower, emailRaw);
       return;
     }
 

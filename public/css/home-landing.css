@@ -932,7 +932,93 @@ body.home-body {
   box-shadow: var(--hover-glow-mix);
 }
 
+/* ——— Barra inicio rápido (panel /) ——— */
+.home-quickbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 20px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: sticky;
+  top: max(8px, env(safe-area-inset-top, 0px));
+  z-index: 5;
+}
+
+.home-quickbar__title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.95);
+  flex-shrink: 0;
+}
+
+.home-quickbar__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.home-quickbar__links a {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(30, 41, 59, 0.5);
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.home-quickbar__links a:hover {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: rgba(96, 165, 250, 0.45);
+  color: #fff;
+}
+
+.home-quickbar__links a:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.home-quickbar__sep {
+  width: 1px;
+  height: 18px;
+  background: rgba(148, 163, 184, 0.28);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
 @media (max-width: 640px) {
+  .home-quickbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-quickbar__links {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
   .home-shell {
     padding-left: 16px;
     padding-right: 16px;

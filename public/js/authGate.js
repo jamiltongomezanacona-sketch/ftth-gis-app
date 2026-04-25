@@ -1,12 +1,5 @@
-import { isAuthenticated, setAuthSession } from './authSession.js';
-
-let deferredInstallPrompt = null;
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-  });
-}
+import { getAuthSession, setAuthSession } from './authSession.js';
+import { runPwaInstallPrompt } from './pwaInstall.js';
 
 function getOrCreateRoot() {
   let el = document.getElementById('auth-gate-root');
@@ -25,14 +18,29 @@ function dismiss(root) {
 }
 
 /**
- * Muestra la tarjeta de acceso hasta login correcto (o sesión ya válida en sessionStorage).
+ * Muestra la tarjeta de acceso hasta login correcto.
+ * Comprueba primero cookie httpOnly (`GET /api/auth/me`); si hay token legado en sessionStorage, lo acepta hasta el próximo login.
  * @param {string} [apiBase]
  * @returns {Promise<void>}
  */
 export async function ensureAuthenticated(apiBase = '') {
-  if (isAuthenticated()) return;
-
   const base = String(apiBase ?? '').replace(/\/$/, '');
+  const meUrl = `${base}/api/auth/me`;
+  try {
+    const meRes = await fetch(meUrl, { credentials: 'include', cache: 'no-store' });
+    if (meRes.ok) {
+      const meData = await meRes.json().catch(() => ({}));
+      if (meData?.email) {
+        setAuthSession({ email: meData.email });
+        return;
+      }
+    }
+  } catch {
+    /* red / CORS: se sigue con legado o formulario */
+  }
+
+  const legacy = getAuthSession();
+  if (legacy?.token) return;
   const root = getOrCreateRoot();
   document.body.classList.add('auth-gate-open');
   root.classList.add('auth-gate-root', 'auth-gate-root--visible');
@@ -111,18 +119,18 @@ export async function ensureAuthenticated(apiBase = '') {
   });
 
   installBtn?.addEventListener('click', async () => {
-    const ev = deferredInstallPrompt;
-    if (!ev) {
-      setFootMsg('Instalación PWA no disponible en este navegador o la app ya está instalada.');
+    const r = await runPwaInstallPrompt();
+    if (r === 'no-prompt') {
+      setFootMsg('Instalación PWA no disponible en este navegador, ya instalada, o en iOS añade desde el menú «Compartir».');
       return;
     }
-    try {
-      ev.prompt();
-      await ev.userChoice;
-    } catch {
+    if (r === 'error') {
       setFootMsg('No se pudo abrir el instalador.');
+      return;
     }
-    deferredInstallPrompt = null;
+    if (r.outcome === 'accepted') {
+      setFootMsg('Instalación aceptada; sigue el diálogo del sistema.');
+    }
   });
 
   return new Promise((resolve) => {
@@ -135,6 +143,7 @@ export async function ensureAuthenticated(apiBase = '') {
       try {
         const res = await fetch(url, {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({ email, password }),
           cache: 'no-store'
@@ -149,11 +158,11 @@ export async function ensureAuthenticated(apiBase = '') {
           errEl.textContent = data?.error || `Error ${res.status}`;
           return;
         }
-        if (!data?.token || !data?.email) {
+        if (!data?.email) {
           errEl.textContent = 'Respuesta del servidor incompleta.';
           return;
         }
-        setAuthSession({ token: data.token, email: data.email });
+        setAuthSession({ email: data.email });
         dismiss(root);
         resolve();
       } catch {

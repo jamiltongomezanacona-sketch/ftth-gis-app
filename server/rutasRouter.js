@@ -14,8 +14,10 @@ import {
 
 /**
  * @param {import('pg').Pool} pool
+ * @param {{ requireBearerAuth: import('express').RequestHandler }} opts
  */
-export function createRutasRouter(pool) {
+export function createRutasRouter(pool, opts) {
+  const { requireBearerAuth } = opts;
   const r = Router();
 
   /** GET /api/rutas?red=ftth|corporativa — FeatureCollection */
@@ -63,7 +65,7 @@ export function createRutasRouter(pool) {
    * Body: { "geometry": { "type":"LineString", "coordinates": [...] } }
    *   o Feature completa: { "type":"Feature", "geometry": {...} }
    */
-  r.put('/:id', async (req, res, next) => {
+  r.put('/:id', requireBearerAuth, async (req, res, next) => {
     try {
       const rRed = redTipoDesdePeticionLectura(req);
       if (!rRed.ok) {

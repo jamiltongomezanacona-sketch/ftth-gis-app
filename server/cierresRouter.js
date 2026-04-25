@@ -28,11 +28,13 @@ export function buildMoleculaCodigoVariants(central, molecula) {
 
 /**
  * @param {import('pg').Pool} pool
+ * @param {{ requireBearerAuth: import('express').RequestHandler }} opts
  */
-export function createCierresRouter(pool) {
+export function createCierresRouter(pool, opts) {
+  const { requireBearerAuth } = opts;
   const r = Router();
 
-  r.delete('/:id', async (req, res, next) => {
+  r.delete('/:id', requireBearerAuth, async (req, res, next) => {
     try {
       const rRed = redTipoDesdePeticionLectura(req);
       if (!rRed.ok) {
@@ -59,7 +61,7 @@ export function createCierresRouter(pool) {
     }
   });
 
-  r.patch('/:id', async (req, res, next) => {
+  r.patch('/:id', requireBearerAuth, async (req, res, next) => {
     try {
       const rRed = redTipoDesdePeticionLectura(req);
       if (!rRed.ok) {

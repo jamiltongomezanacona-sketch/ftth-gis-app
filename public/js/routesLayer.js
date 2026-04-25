@@ -21,14 +21,14 @@ const PAINT_COLOR_WITH_SELECTION = [
 const PAINT_WIDTH_WITH_SELECTION = [
   'case',
   ['boolean', ['feature-state', 'selected'], false],
-  7,
-  4
+  9,
+  5
 ];
 
 /** Misma apariencia para todos los tendidos (p. ej. varios cables de una molécula). */
 const PAINT_COLOR_UNIFORM = FTTH_LINE_COLOR;
 
-const PAINT_WIDTH_UNIFORM = 4;
+const PAINT_WIDTH_UNIFORM = 5;
 
 export class RoutesLayer {
   /**
@@ -70,7 +70,9 @@ export class RoutesLayer {
 
     this.map.addSource(this.sourceId, {
       type: 'geojson',
-      data: { type: 'FeatureCollection', features: [] }
+      data: { type: 'FeatureCollection', features: [] },
+      /** Asegura `id` para `setFeatureState` (selección) aunque el API no envíe `id` en cada feature. */
+      generateId: true
     });
 
     this.map.addLayer({
@@ -94,6 +96,36 @@ export class RoutesLayer {
   setData(fc) {
     this.ensureLayer();
     this.map.getSource(this.sourceId).setData(fc);
+  }
+
+  /**
+   * Features actuales en el source GeoJSON (p. ej. hit test por distancia si el píxel no pilla la línea fina).
+   * Mapbox GL 2/3: `querySourceFeatures` es fiable; `_data` del source interno a veces viene vacío.
+   * @returns {GeoJSON.Feature[]}
+   */
+  getFeatureList() {
+    this.ensureLayer();
+    try {
+      if (this.map && typeof this.map.querySourceFeatures === 'function' && this.map.isStyleLoaded()) {
+        const all = this.map.querySourceFeatures(this.sourceId) || [];
+        const lines = all.filter(
+          (f) =>
+            f?.geometry &&
+            (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString')
+        );
+        if (lines.length) {
+          return lines;
+        }
+      }
+    } catch (e) {
+      console.warn('rutas getFeatureList (querySourceFeatures):', e);
+    }
+    const src = /** @type {any} */ (this.map.getSource(this.sourceId));
+    if (!src || !src._data) return [];
+    if (src._data.type === 'FeatureCollection' && Array.isArray(src._data.features)) {
+      return src._data.features;
+    }
+    return [];
   }
 
   /**

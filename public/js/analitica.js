@@ -3,6 +3,8 @@
  * Mapa Mapbox: superposición de tendidos y nodos FTTH vs corporativa.
  */
 
+import { getAuthSession } from './authSession.js';
+
 const turf = globalThis.turf;
 
 async function loadConfig() {
@@ -30,7 +32,11 @@ async function fetchJson(path, redHeader) {
     Accept: 'application/json',
     'X-Red-Tipo': redHeader
   };
-  const res = await fetch(path, { headers, cache: 'no-store' });
+  const sess = getAuthSession();
+  if (sess?.token) {
+    headers.Authorization = `Bearer ${sess.token}`;
+  }
+  const res = await fetch(path, { credentials: 'include', headers, cache: 'no-store' });
   const text = await res.text();
   let data;
   try {

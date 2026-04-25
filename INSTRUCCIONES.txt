@@ -14,7 +14,9 @@ FTTH GIS — Editor de rutas (PostGIS + Express + Mapbox + mapbox-gl-draw + Turf
    - En producción no deberías depender de config.local.js (evita 404 en CDN).
 
 3b) Si /api/rutas devuelve 500
-   - Abre en el navegador: http://127.0.0.1:3000/api/db-check
+   - Abre en el navegador: http://127.0.0.1:3000/api/db-check (en local sin protección extra)
+   - En Vercel/producción, /api/db-check requiere iniciar sesión en el visor y token Bearer, salvo GIS_DB_CHECK_PUBLIC=1
+   - Ping rápido del proceso Node (sin PostgreSQL): http://127.0.0.1:3000/health
    - rutas_table false → ejecuta sql/01_rutas.sql en tu base.
    - error de conexión → revisa .env (DATABASE_URL o PGHOST/PGUSER/PGPASSWORD).
    - Mira la consola donde corre "npm start": ahí sale el error completo de PostgreSQL.

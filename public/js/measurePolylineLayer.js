@@ -138,15 +138,16 @@ export function ensureMeasurePolylineLayers(map) {
     layout: {
       'text-field': deviceLabelTextFieldFromProp('text'),
       ...deviceLabelCollisionLayout(),
+      'text-font': ['DIN Offc Pro Bold', 'Open Sans Bold', 'Arial Unicode MS Bold'],
       'text-size': deviceLabelTextSizeLayout(18, 12),
       'text-anchor': 'center',
       'text-offset': [0, -0.9]
     },
     paint: {
       ...deviceLabelTextOpacityPaint(),
-      'text-color': '#9a3412',
-      'text-halo-color': 'rgba(255,255,255,0.94)',
-      'text-halo-width': 2
+      'text-color': '#000000',
+      'text-halo-color': 'rgba(255,255,255,0.92)',
+      'text-halo-width': 2.25
     }
   });
 }

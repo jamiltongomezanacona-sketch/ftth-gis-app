@@ -138,6 +138,12 @@
     padding: 16px 24px;
   }
 
+  .reporte-ev-btn--cta-verde,
+  .reporte-ev-btn--cta-verde-outline {
+    min-height: 56px;
+    padding: 14px 16px;
+  }
+
   .reporte-ev-btn--guardar {
     min-height: 56px;
     font-size: 1.05rem;
@@ -995,9 +1001,12 @@ body.editor-body .editor-field-sidebar-backdrop {
   position: fixed;
   inset: 0;
   z-index: 548;
-  background: rgba(2, 6, 23, 0.55);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  background:
+    radial-gradient(ellipse 100% 70% at 15% 25%, rgba(56, 189, 248, 0.1), transparent 52%),
+    radial-gradient(ellipse 90% 60% at 85% 75%, rgba(139, 92, 246, 0.08), transparent 48%),
+    rgba(2, 6, 23, 0.66);
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
   border: none;
   padding: 0;
   margin: 0;
@@ -1030,17 +1039,28 @@ body.editor-body .editor-field-sidebar {
   top: calc(env(safe-area-inset-top, 0px) + var(--editor-chrome-h, 48px));
   left: 0;
   bottom: 0;
-  width: min(300px, min(92vw, 100vw - 24px));
-  max-width: 100%;
+  width: fit-content;
+  max-width: min(92vw, 100vw - 24px);
+  min-width: 0;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   border: none;
-  border-right: 1px solid rgba(56, 189, 248, 0.22);
-  background: linear-gradient(175deg, rgba(15, 23, 42, 0.98), rgba(8, 12, 22, 0.99));
+  border-right: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 0 20px 20px 0;
+  background: linear-gradient(
+    168deg,
+    rgba(51, 65, 85, 0.62) 0%,
+    rgba(30, 41, 59, 0.78) 38%,
+    rgba(15, 23, 42, 0.9) 72%,
+    rgba(2, 6, 23, 0.96) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.35);
+  -webkit-backdrop-filter: blur(24px) saturate(1.35);
   box-shadow:
-    12px 0 40px rgba(0, 0, 0, 0.45),
-    inset -1px 0 0 rgba(255, 255, 255, 0.04);
+    18px 0 56px rgba(0, 0, 0, 0.38),
+    inset -1px 0 0 rgba(255, 255, 255, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transform: translateX(-105%);
   visibility: hidden;
   pointer-events: none;
@@ -1051,6 +1071,15 @@ body.editor-body .editor-field-sidebar {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Lista Campo: sin columna vacía hasta el borde inferior del viewport */
+body.editor-body .editor-field-sidebar {
+  bottom: auto;
+  height: fit-content;
+  max-height: calc(
+    100dvh - var(--editor-chrome-h, 48px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8px
+  );
+}
+
 body.editor-body .editor-field-sidebar.editor-field-sidebar--open {
   transform: translateX(0);
   visibility: visible;
@@ -1058,74 +1087,598 @@ body.editor-body .editor-field-sidebar.editor-field-sidebar--open {
 }
 
 body.editor-body .editor-field-sidebar__inner {
-  padding: 16px 14px calc(20px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  min-width: min(320px, calc(100vw - 24px));
+  padding: 12px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+}
+
+/** Menú Campo: ancho al contenido (títulos), sin huecos laterales grandes */
+body.editor-body #editor-field-view-main {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 100%;
 }
 
 body.editor-body .editor-field-sidebar__head {
-  margin: 0 0 14px;
-  padding: 0 4px 10px;
-  font-size: 0.68rem;
+  margin: 0 0 10px;
+  padding: 0 4px 8px;
+  font-size: 0.62rem;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #64748b;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.65);
+  text-align: center;
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 body.editor-body .editor-field-sidebar__nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 body.editor-body .editor-field-sidebar__item {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
   width: 100%;
   margin: 0;
-  padding: 12px 12px 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(71, 85, 105, 0.45);
-  background: linear-gradient(165deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.88));
-  color: #e2e8f0;
+  padding: 10px 14px;
+  white-space: nowrap;
+  border-radius: 11px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.035) 0%,
+    rgba(30, 41, 59, 0.58) 45%,
+    rgba(15, 23, 42, 0.82) 100%
+  );
+  color: #f1f5f9;
   text-align: left;
   font: inherit;
   cursor: pointer;
   transition:
-    border-color 0.18s ease,
-    background 0.18s ease,
-    box-shadow 0.18s ease;
+    border-color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.2s ease;
+}
+
+body.editor-body .editor-field-sidebar__item-ico {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: #5eead4;
+  opacity: 0.95;
+}
+
+body.editor-body .editor-field-sidebar__item-ico svg {
+  display: block;
+}
+
+body.editor-body .editor-field-sidebar__item:hover .editor-field-sidebar__item-ico {
+  color: #99f6e4;
+  opacity: 1;
 }
 
 body.editor-body .editor-field-sidebar__item:hover {
-  border-color: rgba(56, 189, 248, 0.45);
-  background: linear-gradient(165deg, rgba(30, 58, 95, 0.45), rgba(15, 23, 42, 0.92));
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.12);
+  border-color: rgba(34, 211, 238, 0.32);
+  background: linear-gradient(
+    168deg,
+    rgba(34, 211, 238, 0.1) 0%,
+    rgba(30, 58, 95, 0.52) 48%,
+    rgba(15, 23, 42, 0.86) 100%
+  );
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(34, 211, 238, 0.1);
+  transform: translateY(-1px);
 }
 
 body.editor-body .editor-field-sidebar__item:active {
-  transform: scale(0.99);
+  transform: scale(0.985) translateY(0);
 }
 
 body.editor-body .editor-field-sidebar__item-title {
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #f8fafc;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
 }
 
-body.editor-body .editor-field-sidebar__item-sub {
-  font-size: 0.68rem;
-  line-height: 1.35;
+/* Trazar: overlay a pantalla (móvil centrado; ≥901px alineado a la izquierda vía @media). */
+#editor-trazar-modal.editor-trazar-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+#editor-trazar-modal.editor-trazar-modal[hidden] {
+  display: none !important;
+}
+
+#editor-trazar-modal.editor-trazar-modal:not([hidden]) {
+  pointer-events: auto;
+}
+
+.editor-trazar-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  /* Sin backdrop-filter: el mapa debe verse nítido (no “nublado”). Tinte muy suave solo para contraste del panel. */
+  background: rgba(2, 6, 23, 0.12);
+  cursor: pointer;
+  z-index: 0;
+}
+
+.editor-trazar-modal__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(400px, calc(100vw - 20px));
+  max-height: min(88dvh, calc(100dvh - var(--editor-chrome-h, 48px) - 20px));
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  background:
+    linear-gradient(175deg, rgba(15, 23, 42, 0.95) 0%, rgba(17, 24, 39, 0.97) 62%, rgba(30, 41, 59, 0.96) 100%);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 44px -10px rgba(34, 197, 94, 0.2);
+}
+
+/* Escritorio: panel Trazar pegado a la izquierda, bajo la barra superior (no centrado). */
+@media (min-width: 901px) {
+  body.editor-body #editor-trazar-modal.editor-trazar-modal {
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: 12px;
+    padding-top: calc(var(--editor-chrome-stack) + 10px);
+    padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  }
+
+  body.editor-body .editor-trazar-modal__panel {
+    max-height: min(88dvh, calc(100dvh - var(--editor-chrome-stack) - 24px));
+  }
+}
+
+/* Cabecera alineada con «Montar evento» (verde + cierre ×). */
+body.editor-body .editor-trazar-modal__titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(34, 197, 94, 0.28);
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.24), rgba(15, 23, 42, 0.55));
+  border-radius: 16px 16px 0 0;
+}
+
+body.editor-body .editor-trazar-modal__title.editor-float-panel__title {
+  margin: 0;
+  text-align: left;
+}
+
+/* ——— Trazar: cuerpo y formulario (estilo compartido con reporte) ——— */
+.editor-trazar-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  padding: 6px 8px 8px;
+}
+
+.editor-trazar-card {
+  margin: 0 0 10px;
+  padding: 9px 10px 11px;
+  border-radius: 11px;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(71, 85, 105, 0.4);
+}
+.editor-trazar-card__title {
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: left;
+  color: #f8fafc;
+}
+/* Flujo «punto en tendido»: pin + dirección + fibra */
+.editor-trazar-punto-workspace {
+  margin: 0 0 12px;
+  padding: 12px 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  background: linear-gradient(165deg, rgba(22, 101, 52, 0.22), rgba(15, 23, 42, 0.72));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+.editor-trazar-punto-workspace[hidden] {
+  display: none !important;
+}
+.editor-trazar-punto-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+}
+.editor-trazar-punto-badge {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ecfdf5;
+  background: linear-gradient(135deg, #22c55e 0%, #0e7490 100%);
+  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.35);
+}
+.editor-trazar-punto-head__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+.editor-trazar-punto-workspace .editor-trazar-dir-block {
+  margin: 0;
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  background: rgba(2, 6, 23, 0.35);
+}
+.editor-trazar-step-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin-right: 6px;
+  padding: 0 5px;
+  border-radius: 7px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #ecfdf5;
+  background: linear-gradient(135deg, #16a34a, #0e7490);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset;
+  vertical-align: middle;
+}
+.editor-trazar-step-pill--ghost {
+  background: rgba(15, 23, 42, 0.65);
   color: #94a3b8;
+  box-shadow: none;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+.editor-trazar-seg__kicker {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5eead4;
+}
+.editor-trazar-seg__face--dir {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 48px;
+}
+.editor-trazar-seg__face--dir .editor-trazar-seg__t {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.editor-trazar-seg__dir-ico {
+  font-size: 0.95rem;
+  opacity: 0.85;
+  font-weight: 700;
+}
+.editor-trazar-ref--waiting {
+  color: #c4b5fd !important;
+  border-color: rgba(139, 92, 246, 0.45) !important;
+  background: rgba(49, 46, 129, 0.35) !important;
+}
+.editor-trazar-ref--ok {
+  color: #a7f3d0 !important;
+  border-color: rgba(45, 212, 191, 0.45) !important;
+  background: rgba(6, 78, 59, 0.28) !important;
+}
+
+.editor-trazar-seg-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.editor-trazar-seg-grid--2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.editor-trazar-seg {
+  display: block;
+  margin: 0;
+  cursor: pointer;
+}
+.editor-trazar-seg--wide {
+  margin-top: 0;
+}
+.editor-trazar-seg__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.editor-trazar-seg__face {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 14px;
+  min-height: 52px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  background: linear-gradient(160deg, rgba(34, 197, 94, 0.12) 0%, rgba(15, 23, 42, 0.9) 72%);
+  color: #ecfdf5;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s, filter 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.editor-trazar-seg__t {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #f8fafc;
+}
+.editor-trazar-seg__sub {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(236, 253, 245, 0.72);
+}
+.editor-trazar-seg__input:checked + .editor-trazar-seg__face {
+  border: 1px solid rgba(34, 197, 94, 0.6);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 55%, #0e7490 100%);
+  color: #ffffff;
+  box-shadow:
+    0 10px 24px rgba(22, 163, 74, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  filter: none;
+}
+.editor-trazar-seg__input:checked + .editor-trazar-seg__face .editor-trazar-seg__t,
+.editor-trazar-seg__input:checked + .editor-trazar-seg__face {
+  color: #ffffff;
+}
+.editor-trazar-seg__input:checked + .editor-trazar-seg__face .editor-trazar-seg__sub {
+  color: rgba(255, 255, 255, 0.9);
+}
+.editor-trazar-seg__input:focus-visible + .editor-trazar-seg__face {
+  outline: 2px solid rgba(52, 211, 153, 0.7);
+  outline-offset: 2px;
+}
+
+.editor-trazar-ref {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #a5b4fc;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(49, 46, 129, 0.25);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.editor-trazar-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(71, 85, 105, 0.6);
+  background: rgba(2, 6, 23, 0.5);
+  color: #f1f5f9;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.16s, box-shadow 0.16s;
+}
+.editor-trazar-input::placeholder {
+  color: #475569;
+  font-weight: 500;
+}
+.editor-trazar-input:focus {
+  outline: none;
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+.editor-trazar-sticky-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 8px 0 0;
+  border-top: 1px solid rgba(34, 197, 94, 0.14);
+}
+/* «Fijar en mapa» = mismo botón claro que «Cancelar modo mapa» (reporte-ev + ghost en body). */
+body.editor-body .editor-trazar-apply-btn.reporte-ev-btn--ghost-sm {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+body.editor-body .editor-trazar-apply-btn.reporte-ev-btn--ghost-sm:active {
+  transform: scale(0.99);
+}
+
+/* Mapbox marker pin Trazar (animado) */
+#map .mapboxgl-marker .editor-trazar-cut-pin-wrap,
+.mapboxgl-marker .editor-trazar-cut-pin-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 8px rgba(15, 23, 42, 0.28));
+  animation: editor-trazar-pin-bob 1.6s ease-in-out infinite;
+}
+.editor-trazar-cut-pin-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.editor-trazar-cut-pin-label {
+  max-width: 156px;
+  padding: 6px 10px 6px 11px;
+  margin-top: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.28;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: #e2e8f0;
+  background: linear-gradient(165deg, rgba(51, 65, 85, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 10px;
+  border-left: 3px solid #ef4444;
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  white-space: normal;
+  backdrop-filter: blur(6px);
+}
+.editor-trazar-cut-pin-label--split {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  text-align: left;
+}
+.editor-trazar-cut-pin-label__primary {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
+}
+.editor-trazar-cut-pin-label__row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.editor-trazar-cut-pin-label__dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 1.5px rgba(254, 242, 242, 0.55);
+}
+.editor-trazar-cut-pin-label__secondary {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+#map .mapboxgl-marker .editor-trazar-cut-pin-svg,
+.mapboxgl-marker .editor-trazar-cut-pin-svg {
+  display: block;
+  width: 28px;
+  height: 37px;
+}
+#map .mapboxgl-marker .editor-trazar-cut-pin-body,
+.mapboxgl-marker .editor-trazar-cut-pin-body,
+#map .mapboxgl-marker .editor-trazar-cut-pin-dot,
+.mapboxgl-marker .editor-trazar-cut-pin-dot {
+  pointer-events: none;
+}
+@keyframes editor-trazar-pin-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Referencia en cable (modo punto): disco violeta, distinto del pin de corte */
+.mapboxgl-marker .editor-trazar-ref-pin-wrap,
+#map .mapboxgl-marker .editor-trazar-ref-pin-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.editor-trazar-ref-pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #a78bfa 0%, #6366f1 100%);
+  border: 2px solid rgba(248, 250, 252, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.35),
+    0 2px 10px rgba(99, 102, 241, 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {
   body.editor-body .editor-field-sidebar,
   body.editor-body .editor-field-sidebar-backdrop {
     transition: none;
+  }
+  body.editor-body .editor-field-sidebar__item,
+  body.editor-body .editor-field-sidebar__item:hover,
+  body.editor-body .editor-field-sidebar__item:active {
+    transition: none;
+    transform: none;
+  }
+  .editor-trazar-cut-pin-wrap {
+    animation: none !important;
   }
 }
 
@@ -2122,17 +2675,17 @@ body.editor-body #sidebar {
 /* Panel REPORTE EVENTO (sidebar) */
 .panel-reporte-evento.reporte-ev--armed > summary,
 .panel-reporte-evento.reporte-ev--armed .editor-float-panel__titlebar {
-  border-color: rgba(251, 146, 60, 0.65);
-  background: linear-gradient(180deg, rgba(251, 146, 60, 0.22), rgba(30, 41, 59, 0.75));
+  border-color: rgba(34, 197, 94, 0.55);
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.28), rgba(15, 23, 42, 0.82));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(251, 146, 60, 0.25);
-  color: #fff7ed;
+    0 0 0 1px rgba(34, 197, 94, 0.28);
+  color: #ecfdf5;
 }
 
 .panel-reporte-evento.reporte-ev--armed .reporte-ev-ico-wrap {
-  border-color: rgba(251, 146, 60, 0.55);
-  color: #fdba74;
+  border-color: rgba(52, 211, 153, 0.5);
+  color: #6ee7b7;
 }
 
 .reporte-ev-phase-wait {
@@ -2146,8 +2699,9 @@ body.editor-body #sidebar {
   color: #cbd5e1;
 }
 
-/* Botón grande «Usar mi GPS» — flujo principal del técnico en campo. */
-.reporte-ev-btn--gps {
+/* CTA verde compartido: «Usar mi GPS», «Sobre el tendido», etc. */
+.reporte-ev-btn--gps,
+.reporte-ev-btn--cta-verde {
   width: 100%;
   min-height: 50px;
   display: inline-flex;
@@ -2169,15 +2723,70 @@ body.editor-body #sidebar {
   transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
-.reporte-ev-btn--gps:hover:not(:disabled) {
+#reporte-ev-placement-row .reporte-ev-btn--cta-verde {
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 52px;
+  text-align: left;
+}
+
+.reporte-ev-btn--gps:hover:not(:disabled),
+.reporte-ev-btn--cta-verde:hover:not(:disabled) {
   filter: brightness(1.06);
   box-shadow:
     0 12px 28px rgba(22, 163, 74, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.reporte-ev-btn--gps:active:not(:disabled) {
+.reporte-ev-btn--gps:active:not(:disabled),
+.reporte-ev-btn--cta-verde:active:not(:disabled) {
   transform: translateY(1px);
+}
+
+/* Variante secundaria al mismo verde (p. ej. «Punto libre»): relleno suave + borde. */
+.reporte-ev-btn--cta-verde-outline {
+  width: 100%;
+  min-height: 50px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #ecfdf5;
+  text-align: left;
+  font-family: inherit;
+  background: linear-gradient(160deg, rgba(34, 197, 94, 0.22) 0%, rgba(15, 23, 42, 0.9) 72%);
+  border: 1px solid rgba(34, 197, 94, 0.48);
+  box-shadow:
+    0 8px 20px rgba(22, 163, 74, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+}
+
+.reporte-ev-btn--cta-verde-outline:hover:not(:disabled) {
+  filter: brightness(1.05);
+  border-color: rgba(52, 211, 153, 0.58);
+  box-shadow:
+    0 10px 24px rgba(22, 163, 74, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.reporte-ev-btn--cta-verde-outline:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+#reporte-ev-placement-row .reporte-ev-btn--cta-verde .reporte-ev-preset__sub,
+#reporte-ev-placement-row .reporte-ev-btn--cta-verde-outline .reporte-ev-preset__sub {
+  color: rgba(236, 253, 245, 0.72);
+  font-weight: 500;
 }
 
 .reporte-ev-btn--gps:disabled,
@@ -2242,80 +2851,27 @@ body.editor-body #sidebar {
   line-height: 1.35;
 }
 
-/* ——— Tarjeta de ubicación fijada (arriba del formulario) ——— */
+/* ——— Tarjeta: solo el botón para volver a fijar ubicación ——— */
 .reporte-ev-pin-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   margin: 2px 0 14px;
-  padding: 12px 12px 10px;
+  padding: 10px;
   border-radius: 12px;
   border: 1px solid rgba(248, 113, 113, 0.4);
   background: linear-gradient(155deg, rgba(127, 29, 29, 0.22), rgba(15, 23, 42, 0.55));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  align-items: stretch;
 }
-
-.reporte-ev-pin-card__head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.reporte-ev-pin-card__ico {
-  flex: 0 0 30px;
-  width: 30px;
-  height: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: rgba(127, 29, 29, 0.45);
-  border: 1px solid rgba(248, 113, 113, 0.45);
-}
-
-.reporte-ev-pin-card__txt {
-  flex: 1;
-  min-width: 0;
-}
-
-.reporte-ev-pin-card__title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #f1f5f9;
-  letter-spacing: 0.01em;
-  font-variant-numeric: tabular-nums;
-}
-
-.reporte-ev-pin-card__sub {
-  margin-top: 2px;
-  font-size: 0.74rem;
-  color: #cbd5e1;
-}
-
-.reporte-ev-acc-pill {
-  flex-shrink: 0;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  border: 1px solid currentColor;
-  background: rgba(15, 23, 42, 0.7);
-}
-
-.reporte-ev-acc-pill[data-level="ok"] { color: #6ee7b7; }
-.reporte-ev-acc-pill[data-level="warn"] { color: #fbbf24; }
-.reporte-ev-acc-pill[data-level="bad"] { color: #fca5a5; }
 
 .reporte-ev-pin-card__actions {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .reporte-ev-pin-card__actions .reporte-ev-btn {
-  flex: 1;
-  min-width: 120px;
+  width: 100%;
+  min-width: 0;
 }
 
 /* ——— Plantillas rápidas (chips) ——— */
@@ -2433,7 +2989,7 @@ body.editor-body #sidebar {
   margin: 16px -12px -10px;
   padding: 10px 12px 12px;
   background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0%, rgba(8, 12, 22, 0.95) 45%);
-  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  border-top: 1px solid rgba(34, 197, 94, 0.14);
 }
 
 .reporte-ev-btn--guardar .reporte-ev-save-ico {
@@ -2476,12 +3032,12 @@ body.editor-body #sidebar {
 }
 
 .panel-reporte-evento {
-  border-color: rgba(148, 163, 184, 0.24);
+  border-color: rgba(34, 197, 94, 0.22);
   background:
     linear-gradient(175deg, rgba(15, 23, 42, 0.95) 0%, rgba(17, 24, 39, 0.97) 62%, rgba(30, 41, 59, 0.96) 100%);
   box-shadow:
     0 20px 42px rgba(2, 6, 23, 0.5),
-    0 0 0 1px rgba(148, 163, 184, 0.14) inset;
+    0 0 0 1px rgba(34, 197, 94, 0.12) inset;
 }
 
 .sidebar-details.panel-reporte-evento > summary {
@@ -2840,6 +3396,16 @@ body.editor-body #sidebar {
     background 0.2s ease;
 }
 
+/* `.reporte-ev-btn { border: none }` va después en la hoja que los bloques --gps / --cta-*: reponer borde. */
+.reporte-ev-btn.reporte-ev-btn--gps,
+.reporte-ev-btn.reporte-ev-btn--cta-verde {
+  border: 1px solid rgba(34, 197, 94, 0.55);
+}
+
+.reporte-ev-btn.reporte-ev-btn--cta-verde-outline {
+  border: 1px solid rgba(34, 197, 94, 0.48);
+}
+
 .reporte-ev-btn:hover:not(:disabled) {
   transform: translateY(-1px);
 }
@@ -2850,19 +3416,19 @@ body.editor-body #sidebar {
 }
 
 .reporte-ev-btn--guardar {
-  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 55%, #0e7490 100%);
   color: #ffffff;
-  border: 1px solid rgba(147, 197, 253, 0.5);
+  border: 1px solid rgba(34, 197, 94, 0.55);
   box-shadow:
-    0 10px 24px rgba(37, 99, 235, 0.34),
+    0 10px 24px rgba(22, 163, 74, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .reporte-ev-btn--guardar:hover:not(:disabled) {
-  border-color: rgba(191, 219, 254, 0.65);
+  border-color: rgba(74, 222, 128, 0.65);
   color: #fff;
   box-shadow:
-    0 12px 28px rgba(37, 99, 235, 0.42),
+    0 12px 28px rgba(22, 163, 74, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
@@ -4784,6 +5350,17 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
   padding-left: 12px;
 }
 
+.cable-search-item-central {
+  border-left: none;
+  padding-left: 12px;
+}
+
+.cable-search-item-central:hover,
+.cable-search-item-central.cable-search-item-active {
+  background: linear-gradient(90deg, rgba(22, 163, 74, 0.14), rgba(22, 163, 74, 0.04));
+  box-shadow: inset 2px 0 0 rgba(22, 163, 74, 0.85);
+}
+
 .cable-search-item-cierre:hover,
 .cable-search-item-cierre.cable-search-item-active {
   background: linear-gradient(90deg, rgba(167, 139, 250, 0.12), rgba(167, 139, 250, 0.03));
@@ -5017,8 +5594,7 @@ body.editor-body #editor-gps-dock.editor-gps-compass {
   pointer-events: none;
 }
 
-body.editor-body:has(#measure-polyline-dock:not([hidden])) #editor-gps-dock.editor-gps-compass,
-body.editor-body:has(#editor-trazar-sheet:not([hidden])) #editor-gps-dock.editor-gps-compass {
+body.editor-body:has(#measure-polyline-dock:not([hidden])) #editor-gps-dock.editor-gps-compass {
   bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 108px));
 }
 
@@ -5027,169 +5603,78 @@ body.editor-body #map-wrap #map-fab-row-measure {
   display: none !important;
 }
 
+/* Botón GPS: apariencia plana (sin resplandores/gradientes que se confundan con un halo). */
 body.editor-body .editor-gps-compass__btn {
   pointer-events: auto;
   position: relative;
   isolation: isolate;
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid rgba(56, 189, 248, 0.38);
-  background:
-    radial-gradient(circle at 28% 22%, rgba(56, 189, 248, 0.32) 0%, transparent 42%),
-    radial-gradient(circle at 78% 88%, rgba(167, 139, 250, 0.22) 0%, transparent 38%),
-    radial-gradient(circle at 50% 120%, rgba(52, 211, 153, 0.12) 0%, transparent 45%),
-    linear-gradient(155deg, rgba(30, 41, 59, 0.55) 0%, rgba(15, 23, 42, 0.92) 48%, rgba(2, 6, 23, 0.98) 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.14),
-    inset 0 -8px 18px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 10px 28px rgba(0, 0, 0, 0.45),
-    0 0 32px -8px rgba(34, 211, 238, 0.28);
+  border: 1px solid rgba(100, 116, 139, 0.5);
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   transition:
-    border-color 0.28s ease,
-    box-shadow 0.28s ease,
-    transform 0.15s ease;
-}
-
-body.editor-body .editor-gps-compass__aura {
-  position: absolute;
-  z-index: 0;
-  inset: -10px;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 210deg,
-    rgba(34, 211, 238, 0.45),
-    rgba(167, 139, 250, 0.35),
-    rgba(52, 211, 153, 0.4),
-    rgba(251, 191, 36, 0.25),
-    rgba(34, 211, 238, 0.45)
-  );
-  opacity: 0.65;
-  filter: blur(10px);
-  pointer-events: none;
-  animation: editorGpsAuraIdle 3.8s ease-in-out infinite;
-}
-
-@keyframes editorGpsAuraIdle {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(0.96);
-  }
-  50% {
-    opacity: 0.82;
-    transform: scale(1.04);
-  }
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.12s ease;
 }
 
 body.editor-body .editor-gps-compass__btn:hover:not(:disabled) {
-  border-color: rgba(56, 189, 248, 0.55);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.16),
-    inset 0 -8px 18px rgba(0, 0, 0, 0.32),
-    0 0 0 1px rgba(34, 211, 238, 0.2),
-    0 12px 32px rgba(0, 0, 0, 0.48),
-    0 0 40px -6px rgba(34, 211, 238, 0.38);
+  border-color: rgba(148, 163, 184, 0.65);
+  background: #0f172a;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 body.editor-body .editor-gps-compass__btn:active:not(:disabled) {
-  transform: scale(0.96);
+  transform: scale(0.97);
 }
 
 body.editor-body .editor-gps-compass__btn:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px rgba(56, 189, 248, 0.55),
-    inset 0 1px 1px rgba(255, 255, 255, 0.14),
-    0 10px 28px rgba(0, 0, 0, 0.45);
+  outline: 2px solid rgba(56, 189, 248, 0.75);
+  outline-offset: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
+/* Activo: verde esmeralda */
 body.editor-body .editor-gps-dock--active .editor-gps-compass__btn {
-  border-color: rgba(74, 222, 128, 0.65);
-  background:
-    radial-gradient(circle at 30% 20%, rgba(74, 222, 128, 0.42) 0%, transparent 45%),
-    radial-gradient(circle at 80% 85%, rgba(52, 211, 153, 0.2) 0%, transparent 40%),
-    linear-gradient(155deg, rgba(22, 101, 52, 0.35) 0%, rgba(15, 23, 42, 0.95) 55%, rgba(2, 6, 23, 0.98) 100%);
+  border-color: #047857;
+  background: linear-gradient(165deg, #34d399 0%, #10b981 38%, #047857 100%);
   box-shadow:
-    inset 0 1px 1px rgba(187, 247, 208, 0.18),
-    inset 0 -8px 18px rgba(0, 0, 0, 0.38),
-    0 0 0 1px rgba(34, 197, 94, 0.35),
-    0 0 36px -4px rgba(74, 222, 128, 0.45),
-    0 10px 28px rgba(0, 0, 0, 0.42);
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-body.editor-body .editor-gps-dock--active .editor-gps-compass__aura {
-  background: conic-gradient(
-    from 180deg,
-    rgba(74, 222, 128, 0.55),
-    rgba(52, 211, 153, 0.4),
-    rgba(16, 185, 129, 0.5),
-    rgba(74, 222, 128, 0.55)
-  );
-  animation: editorGpsAuraActive 2.2s ease-in-out infinite;
+body.editor-body .editor-gps-dock--active .editor-gps-compass__btn:hover:not(:disabled) {
+  border-color: #065f46;
+  background: linear-gradient(165deg, #6ee7b7 0%, #34d399 40%, #059669 100%);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-@keyframes editorGpsAuraActive {
-  0%,
-  100% {
-    opacity: 0.62;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.95;
-    transform: scale(1.06);
-  }
+body.editor-body .editor-gps-dock--active .editor-gps-compass__svg {
+  filter: brightness(0) invert(1);
+  opacity: 0.98;
 }
 
 body.editor-body .editor-gps-dock--error .editor-gps-compass__btn {
-  border-color: rgba(248, 113, 113, 0.6);
-  background:
-    radial-gradient(circle at 35% 30%, rgba(248, 113, 113, 0.28) 0%, transparent 50%),
-    linear-gradient(155deg, rgba(127, 29, 29, 0.35) 0%, rgba(15, 23, 42, 0.96) 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(254, 226, 226, 0.1),
-    0 0 28px -4px rgba(248, 113, 113, 0.4),
-    0 10px 28px rgba(0, 0, 0, 0.45);
-}
-
-body.editor-body .editor-gps-dock--error .editor-gps-compass__aura {
-  background: conic-gradient(from 90deg, rgba(248, 113, 113, 0.5), rgba(251, 113, 133, 0.35), rgba(248, 113, 113, 0.5));
-  animation: none;
-  opacity: 0.75;
+  border-color: rgba(252, 165, 165, 0.5);
+  background: #0f1218;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 body.editor-body .editor-gps-dock--syncing .editor-gps-compass__btn {
-  border-color: rgba(56, 189, 248, 0.65);
-  box-shadow:
-    inset 0 1px 1px rgba(224, 242, 254, 0.12),
-    0 0 0 1px rgba(14, 165, 233, 0.25),
-    0 0 34px -2px rgba(56, 189, 248, 0.42),
-    0 10px 28px rgba(0, 0, 0, 0.45);
-}
-
-body.editor-body .editor-gps-dock--syncing .editor-gps-compass__aura {
-  /* El dial ya gira; la aura solo pulsa para no duplicar rotación. */
-  animation: editorGpsAuraSyncPulse 0.75s ease-in-out infinite;
-  opacity: 0.88;
-}
-
-@keyframes editorGpsAuraSyncPulse {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(0.98);
-  }
-  50% {
-    opacity: 0.95;
-    transform: scale(1.07);
-  }
+  border-color: rgba(56, 189, 248, 0.55);
+  background: #0f1729;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 body.editor-body .editor-gps-compass__dial {
@@ -5199,7 +5684,7 @@ body.editor-body .editor-gps-compass__dial {
   align-items: center;
   justify-content: center;
   transform-origin: 50% 50%;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  filter: none;
 }
 
 body.editor-body .editor-gps-dock--syncing .editor-gps-compass__dial {
@@ -5215,18 +5700,20 @@ body.editor-body .editor-gps-dock--syncing .editor-gps-compass__dial {
 body.editor-body .editor-gps-compass__svg {
   display: block;
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
 }
 
 @media (pointer: coarse) {
   body.editor-body .editor-gps-compass__btn {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     touch-action: manipulation;
   }
 
   body.editor-body .editor-gps-compass__svg {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
   }
 }
 
@@ -5296,11 +5783,6 @@ body.editor-body #map .mapboxgl-ctrl-top-right {
   margin: calc(var(--editor-chrome-stack) + 8px) 12px 0 0;
 }
 
-/* Icono GPS y regla: un poco más grandes que el FAB base (32px / 42px). */
-body.editor-body #map .mapboxgl-ctrl-top-right button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-  background-size: 28px 28px !important;
-}
-
 body.editor-body #map .measure-fab .measure-fab-ico {
   width: 24px;
   height: 24px;
@@ -5347,7 +5829,6 @@ body.editor-body #map .map-widget-stack--arcgis .map-fab-row--navigate .mapboxgl
 }
 
 body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-  background-size: 30px 30px !important;
   filter: none !important;
   opacity: 0.95 !important;
 }
@@ -5403,6 +5884,7 @@ body.editor-body.editor-network-corporativa #map .map-widget-stack--arcgis {
 
 body.editor-body.editor-network-corporativa #map .map-widget-stack--arcgis .map-fab-row--navigate .mapboxgl-ctrl-group button.mapboxgl-ctrl-geolocate:hover:not(:disabled) {
   background: rgba(30, 64, 175, 0.25) !important;
+}
 
 body.editor-body.editor-network-corporativa #map .map-widget-stack--arcgis .measure-fab:hover:not(:disabled) {
   background: rgba(30, 64, 175, 0.12) !important;
@@ -5581,26 +6063,6 @@ body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.m
   border-top: 1px solid var(--border) !important;
 }
 
-/* Icono personalizado (alto contraste sobre botón oscuro). Misma imagen en todos los estados Mapbox. */
-#map button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon,
-#map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active .mapboxgl-ctrl-icon,
-#map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-background .mapboxgl-ctrl-icon,
-#map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active-error .mapboxgl-ctrl-icon {
-  background-image: url("/icons/editor/gps-compass-premium.svg") !important;
-  background-size: 28px 28px !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  opacity: 1 !important;
-  filter: none !important;
-}
-
-body.editor-body #map button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon,
-body.editor-body #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active .mapboxgl-ctrl-icon,
-body.editor-body #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-background .mapboxgl-ctrl-icon,
-body.editor-body #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active-error .mapboxgl-ctrl-icon {
-  background-image: url("/icons/editor/gps-compass-premium.svg") !important;
-}
-
 #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
   /* Antes: brightness(0)+invert rompía iconos a color sobre fondo oscuro; sombra suave sobre blanco ArcGIS */
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18)) !important;
@@ -5610,12 +6072,6 @@ body.editor-body #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-act
 #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active:not(.mapboxgl-ctrl-geolocate-waiting) .mapboxgl-ctrl-icon,
 #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-background:not(.mapboxgl-ctrl-geolocate-waiting) .mapboxgl-ctrl-icon {
   filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.45)) !important;
-}
-
-#map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-active:not(.mapboxgl-ctrl-geolocate-waiting) .mapboxgl-ctrl-icon,
-#map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-background:not(.mapboxgl-ctrl-geolocate-waiting) .mapboxgl-ctrl-icon {
-  filter: brightness(0) invert(1) !important;
-  opacity: 1 !important;
 }
 
 #map button.mapboxgl-ctrl-geolocate.mapboxgl-ctrl-geolocate-background:not(.mapboxgl-ctrl-geolocate-waiting) .mapboxgl-ctrl-icon {
@@ -5989,27 +6445,22 @@ body.editor-body #map .map-widget-stack--arcgis .measure-fab--active:not(:disabl
   cursor: not-allowed;
 }
 
-/* Panel inferior derecha: medición polilínea compacta */
+/* Panel inferior centrado: medición polilínea compacta */
 .measure-polyline-dock {
   position: fixed;
   z-index: 640;
-  left: auto;
+  left: 0;
   right: 0;
   bottom: 0;
-  width: auto;
+  width: 100%;
   max-width: 100%;
-  padding: 0 calc(14px + env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) 0;
+  padding: 0 max(12px, env(safe-area-inset-left, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-right, 0px));
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: flex-end;
   pointer-events: none;
-  background: linear-gradient(
-    225deg,
-    transparent 0%,
-    transparent 50%,
-    rgba(8, 12, 22, 0.25) 78%,
-    rgba(8, 12, 22, 0.55) 100%
-  );
+  background: linear-gradient(to top, rgba(8, 12, 22, 0.35) 0%, rgba(8, 12, 22, 0) 100%);
+  box-sizing: border-box;
 }
 
 /* display:flex del bloque anterior anula el atributo [hidden] del UA; igual que .measure-float-panel[hidden]. */
@@ -7380,10 +7831,6 @@ body.editor-body .cable-search-mount--chrome .cable-search-wrap.cable-search--co
     background-size: 20px 20px !important;
   }
 
-  body.editor-body #map .map-widget-stack--arcgis button.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
-    background-size: 24px 24px !important;
-  }
-
   body.editor-body #sidebar h1,
   body.editor-body #sidebar .panel-block h2,
   body.editor-body #sidebar .sidebar-details > summary,
@@ -8026,10 +8473,10 @@ body.editor-body .panel-otdr .otdr-legend {
 
 /* Reporte evento */
 body.editor-body .panel-reporte-evento.reporte-ev--armed > summary {
-  border-color: rgba(251, 146, 60, 0.55);
-  background: linear-gradient(180deg, rgba(120, 53, 15, 0.65), rgba(15, 23, 42, 0.95));
-  color: #fed7aa;
-  box-shadow: 0 0 0 1px rgba(234, 88, 12, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+  background: linear-gradient(180deg, rgba(22, 101, 52, 0.45), rgba(15, 23, 42, 0.96));
+  color: #d1fae5;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.22);
 }
 
 body.editor-body .sidebar-details.panel-reporte-evento > summary {
@@ -8160,16 +8607,16 @@ body.editor-body .panel-reporte-evento .reporte-ev-textarea::placeholder {
 }
 
 body.editor-body .reporte-ev-btn--guardar {
-    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 55%, #0e7490 100%);
   color: #ffffff;
-    border: 1px solid rgba(147, 197, 253, 0.5);
-    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.34);
+  border: 1px solid rgba(34, 197, 94, 0.55);
+  box-shadow: 0 10px 22px rgba(22, 163, 74, 0.34);
 }
 
 body.editor-body .reporte-ev-btn--guardar:hover:not(:disabled) {
   filter: brightness(1.06);
   color: #ffffff;
-    border-color: rgba(191, 219, 254, 0.65);
+  border-color: rgba(74, 222, 128, 0.65);
 }
 
 /* Editor: mismo popup claro (legible sobre mapa); acento sutil en borde */
@@ -8579,34 +9026,34 @@ body.editor-body .sidebar-tool-btn__lbl {
   min-width: 0;
 }
 
-/* Variante Reporte evento: acento naranja/coral para diferenciarlo de Trazar */
+/* Variante Reporte evento: acento verde (misma familia que «Usar mi GPS») */
 body.editor-body .sidebar-tool-btn--reporte::before {
-  background: linear-gradient(180deg, rgba(251, 146, 60, 0.75), rgba(248, 113, 113, 0.2));
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.72), rgba(14, 116, 144, 0.22));
 }
 
 body.editor-body .sidebar-tool-btn--reporte:hover {
-  border-color: rgba(251, 146, 60, 0.32);
+  border-color: rgba(34, 197, 94, 0.32);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 0 0 1px rgba(251, 146, 60, 0.22),
+    0 0 0 1px rgba(34, 197, 94, 0.22),
     0 10px 26px rgba(0, 0, 0, 0.36),
-    0 0 22px rgba(251, 146, 60, 0.14);
+    0 0 22px rgba(22, 163, 74, 0.16);
 }
 
 body.editor-body .sidebar-tool-btn--reporte[aria-expanded='true'] {
-  border-color: rgba(251, 146, 60, 0.5);
-  background: linear-gradient(165deg, rgba(120, 53, 15, 0.6), rgba(15, 23, 42, 0.96));
+  border-color: rgba(34, 197, 94, 0.48);
+  background: linear-gradient(165deg, rgba(22, 101, 52, 0.55), rgba(15, 23, 42, 0.96));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(251, 146, 60, 0.32),
+    0 0 0 1px rgba(34, 197, 94, 0.28),
     0 12px 32px rgba(0, 0, 0, 0.42),
-    0 0 28px rgba(251, 146, 60, 0.2);
+    0 0 28px rgba(22, 163, 74, 0.22);
 }
 
 body.editor-body .sidebar-tool-btn--reporte .sidebar-tool-btn__ico {
-  background: linear-gradient(155deg, rgba(251, 146, 60, 0.2), rgba(154, 52, 18, 0.08));
-  border-color: rgba(251, 146, 60, 0.32);
-  color: #fdba74;
+  background: linear-gradient(155deg, rgba(34, 197, 94, 0.22), rgba(14, 116, 144, 0.1));
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #6ee7b7;
   padding: 0;
   overflow: hidden;
 }
@@ -8682,13 +9129,13 @@ body.editor-body .editor-float-panel--open {
 }
 
 /*
- * Montar evento: ventana modal compacta, centrada en el viewport.
- * (El modo pick chip mantiene sus reglas propias.)
+ * Montar evento: ventana modal compacta, alineada al borde izquierdo (viewport + safe area).
+ * (El modo pick chip: misma alineación arriba a la izquierda.)
  * !important: gana a reglas móviles de `.editor-float-panel` genérico o restos de `.panel-block` en el shell.
  */
 body.editor-body
   #reporte-evento-details.editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) {
-  left: 50% !important;
+  left: max(12px, env(safe-area-inset-left, 0px)) !important;
   right: auto !important;
   top: 50% !important;
   bottom: auto !important;
@@ -8700,13 +9147,13 @@ body.editor-body
     0 24px 48px rgba(0, 0, 0, 0.48),
     0 0 0 1px rgba(0, 0, 0, 0.38),
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 40px -10px rgba(251, 146, 60, 0.14);
-  transform: translate(-50%, calc(-50% + 8px)) !important;
+    0 0 44px -10px rgba(34, 197, 94, 0.2);
+  transform: translate(0, calc(-50% + 8px)) !important;
 }
 
 body.editor-body
   #reporte-evento-details.editor-float-panel.panel-reporte-evento.editor-float-panel--open:not(.editor-float-panel--pick-mode) {
-  transform: translate(-50%, -50%) !important;
+  transform: translate(0, -50%) !important;
 }
 
 body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-body {
@@ -8728,8 +9175,8 @@ body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-pane
 body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .editor-float-panel__titlebar {
   padding: 8px 10px;
   min-height: 0;
-  border-bottom: 1px solid rgba(251, 146, 60, 0.2);
-  background: linear-gradient(180deg, rgba(30, 25, 20, 0.45), rgba(15, 23, 42, 0.15));
+  border-bottom: 1px solid rgba(34, 197, 94, 0.28);
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.24), rgba(15, 23, 42, 0.55));
   border-radius: 16px 16px 0 0;
 }
 
@@ -8867,16 +9314,16 @@ body.editor-body .editor-float-panel .panel-block.panel-otdr {
 /* === MODO «pick chip» ============================================
    Cuando el usuario arma referencia en mapa o el clic en el cable
    para Reporte de evento, el panel flotante se encoge a una píldora
-   centrada en la parte superior, libera el mapa por completo y muestra
+   en la esquina superior izquierda, libera el mapa por completo y muestra
    un mensaje + botón Cancelar bien visible. */
 body.editor-body .editor-float-panel.editor-float-panel--pick-mode {
   width: min(360px, calc(100vw - 24px));
   max-height: none;
   height: auto;
   top: calc(var(--editor-chrome-stack, 80px) + 8px);
-  left: 50%;
+  left: max(8px, env(safe-area-inset-left, 0px));
   right: auto;
-  transform: translateX(-50%) translateY(0);
+  transform: translate(0, 0);
   border-radius: 999px;
   padding: 0;
   overflow: hidden;
@@ -8958,29 +9405,29 @@ body.editor-body .editor-float-panel.editor-float-panel--pick-mode .editor-float
   color: #fff;
 }
 
-/* Variante naranja para Reporte evento: distingue visualmente el modo activo. */
+/* Variante verde para Reporte evento: modo mapa activo (misma línea que GPS). */
 body.editor-body
   .editor-float-panel.editor-float-panel--pick-mode.editor-float-panel--pick-mode-reporte {
-  border-color: rgba(251, 146, 60, 0.55);
-  background: linear-gradient(95deg, rgba(120, 53, 15, 0.7), rgba(15, 23, 42, 0.97));
+  border-color: rgba(34, 197, 94, 0.52);
+  background: linear-gradient(95deg, rgba(22, 101, 52, 0.55), rgba(15, 23, 42, 0.97));
   box-shadow:
     0 16px 36px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(251, 146, 60, 0.45),
-    0 0 22px rgba(251, 146, 60, 0.3);
+    0 0 0 1px rgba(34, 197, 94, 0.4),
+    0 0 22px rgba(22, 163, 74, 0.28);
   animation: editorFloatPickPulseReporte 2.6s ease-in-out infinite;
 }
 
 body.editor-body
   .editor-float-panel.editor-float-panel--pick-mode.editor-float-panel--pick-mode-reporte
   .editor-float-panel__title {
-  color: #fed7aa;
+  color: #d1fae5;
 }
 
 body.editor-body
   .editor-float-panel.editor-float-panel--pick-mode.editor-float-panel--pick-mode-reporte
   .editor-float-panel__title::before {
-  background: #fb923c;
-  box-shadow: 0 0 10px rgba(251, 146, 60, 0.85);
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.75);
 }
 
 @keyframes editorFloatPickPulse {
@@ -9004,14 +9451,14 @@ body.editor-body
   100% {
     box-shadow:
       0 16px 36px rgba(0, 0, 0, 0.42),
-      0 0 0 1px rgba(251, 146, 60, 0.45),
-      0 0 22px rgba(251, 146, 60, 0.3);
+      0 0 0 1px rgba(34, 197, 94, 0.4),
+      0 0 22px rgba(22, 163, 74, 0.28);
   }
   50% {
     box-shadow:
       0 16px 36px rgba(0, 0, 0, 0.42),
-      0 0 0 1px rgba(251, 146, 60, 0.65),
-      0 0 30px rgba(251, 146, 60, 0.5);
+      0 0 0 1px rgba(52, 211, 153, 0.58),
+      0 0 30px rgba(22, 163, 74, 0.42);
   }
 }
 
@@ -9087,7 +9534,7 @@ body.editor-body
     grid-template-columns: minmax(120px, 0.9fr) minmax(160px, 1.1fr);
     gap: 8px;
     background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0%, rgba(8, 12, 22, 0.92) 42%);
-    border-top: 1px solid rgba(148, 163, 184, 0.2);
+    border-top: 1px solid rgba(34, 197, 94, 0.16);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
@@ -9124,319 +9571,8 @@ body.editor-body .mapboxgl-ctrl-bottom-right {
 
 /* Si la barra de medición inferior está visible, subir el GPS para evitar
    solape con ese dock fijo bottom-right. */
-body.editor-body:has(#measure-polyline-dock:not([hidden])) .mapboxgl-ctrl-bottom-right,
-body.editor-body:has(#editor-trazar-sheet:not([hidden])) .mapboxgl-ctrl-bottom-right {
+body.editor-body:has(#measure-polyline-dock:not([hidden])) .mapboxgl-ctrl-bottom-right {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 86px) !important;
-}
-
-/* ——— Trazar (OTDR) · panel flotante estilo campo ——— */
-.editor-trazar-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 720;
-  background: rgba(2, 6, 23, 0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  pointer-events: auto;
-}
-
-.editor-trazar-backdrop[hidden] {
-  display: none !important;
-}
-
-.editor-trazar-sheet {
-  position: fixed;
-  z-index: 730;
-  left: 50%;
-  bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  width: min(400px, calc(100vw - 20px));
-  max-height: min(78vh, 560px);
-  overflow: auto;
-  pointer-events: auto;
-  padding: 0 0 max(10px, env(safe-area-inset-bottom, 0px));
-}
-
-.editor-trazar-sheet[hidden] {
-  display: none !important;
-}
-
-.editor-trazar-sheet__inner {
-  font-family: Outfit, system-ui, sans-serif;
-  background: linear-gradient(165deg, #1a1d24 0%, #12151c 52%, #0d0f14 100%);
-  border: 1px solid rgba(100, 116, 139, 0.28);
-  border-radius: 18px;
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  padding: 16px 16px 14px;
-}
-
-.editor-trazar-sheet__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.editor-trazar-sheet__title {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #f8fafc;
-}
-
-.editor-trazar-close {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: rgba(30, 41, 59, 0.65);
-  color: #e2e8f0;
-  font-size: 1.35rem;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.12s ease;
-}
-
-.editor-trazar-close:hover {
-  background: rgba(51, 65, 85, 0.85);
-  border-color: rgba(148, 163, 184, 0.4);
-}
-
-.editor-trazar-close:active {
-  transform: scale(0.96);
-}
-
-.editor-trazar-fieldset {
-  border: none;
-  margin: 0 0 12px;
-  padding: 0;
-}
-
-.editor-trazar-fieldset--compact {
-  margin-bottom: 10px;
-}
-
-.editor-trazar-legend {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #64748b;
-  margin: 0 0 8px;
-  padding: 0;
-}
-
-.editor-trazar-seg-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.editor-trazar-seg {
-  display: block;
-  cursor: pointer;
-  margin: 0;
-}
-
-.editor-trazar-seg--wide {
-  margin-top: 8px;
-}
-
-.editor-trazar-seg__input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-.editor-trazar-seg__face {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 56px;
-  padding: 8px 6px;
-  border-radius: 10px;
-  border: 1px solid rgba(71, 85, 105, 0.55);
-  background: rgba(15, 23, 42, 0.55);
-  color: #94a3b8;
-  transition:
-    border-color 0.18s ease,
-    background 0.18s ease,
-    color 0.18s ease,
-    box-shadow 0.2s ease;
-}
-
-.editor-trazar-seg__ico {
-  display: flex;
-  color: currentColor;
-}
-
-.editor-trazar-seg__lbl {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.editor-trazar-seg__input:focus-visible + .editor-trazar-seg__face {
-  outline: 2px solid #2dd4bf;
-  outline-offset: 2px;
-}
-
-.editor-trazar-seg__input:checked + .editor-trazar-seg__face {
-  border-color: rgba(45, 212, 191, 0.75);
-  background: rgba(6, 95, 70, 0.22);
-  color: #5eead4;
-  box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.12);
-}
-
-.editor-trazar-seg:hover .editor-trazar-seg__face {
-  border-color: rgba(100, 116, 139, 0.55);
-}
-
-.editor-trazar-hint {
-  margin: 0 0 10px;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: #94a3b8;
-}
-
-.editor-trazar-fiber {
-  margin-bottom: 14px;
-}
-
-.editor-trazar-fiber__label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #64748b;
-  margin-bottom: 6px;
-}
-
-.editor-trazar-fiber__ico {
-  color: #94a3b8;
-  display: flex;
-}
-
-.editor-trazar-fiber__input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(71, 85, 105, 0.65);
-  background: rgba(2, 6, 23, 0.65);
-  color: #f1f5f9;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.editor-trazar-fiber__input::placeholder {
-  color: #475569;
-  font-weight: 500;
-}
-
-.editor-trazar-fiber__input:focus {
-  outline: none;
-  border-color: rgba(45, 212, 191, 0.55);
-  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.12);
-}
-
-.editor-trazar-fiber__hint {
-  margin: 6px 0 0;
-  font-size: 0.65rem;
-  line-height: 1.35;
-  color: #64748b;
-}
-
-.editor-trazar-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.editor-trazar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 48px;
-  padding: 0 14px;
-  border-radius: 12px;
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  border: none;
-  transition:
-    filter 0.16s ease,
-    transform 0.12s ease,
-    opacity 0.16s ease;
-}
-
-.editor-trazar-btn:active:not(:disabled) {
-  transform: scale(0.99);
-}
-
-.editor-trazar-btn--primary {
-  background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
-  color: #ecfdf5;
-  box-shadow:
-    0 4px 16px rgba(13, 148, 136, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-.editor-trazar-btn--primary:hover:not(:disabled) {
-  filter: brightness(1.06);
-}
-
-.editor-trazar-btn--primary:disabled {
-  opacity: 0.42;
-  cursor: not-allowed;
-  filter: grayscale(0.2);
-  box-shadow: none;
-}
-
-.editor-trazar-btn--ghost {
-  background: rgba(30, 41, 59, 0.55);
-  color: #cbd5e1;
-  border: 1px solid rgba(71, 85, 105, 0.5);
-}
-
-.editor-trazar-btn--ghost:hover {
-  background: rgba(51, 65, 85, 0.65);
-  border-color: rgba(100, 116, 139, 0.45);
-}
-
-.editor-trazar-btn__ico {
-  display: flex;
-  opacity: 0.95;
-}
-
-body.editor-body.editor-trazar-open {
-  overflow: hidden;
 }
 
 /* =============================================================================

@@ -34,9 +34,7 @@ import {
   lineLengthMeters,
   lengthWithReserve20Pct,
   snapLngLatToLine,
-  nearestCentralMeters,
-  cutPointFromOtdrFiberMeters,
-  distanceFromStartAlongLineMeters
+  nearestCentralMeters
 } from './measurements.js';
 import {
   ensureMeasurePolylineLayers,
@@ -45,13 +43,10 @@ import {
   lineLengthMetersSafe,
   fmtTotalHuman
 } from './measurePolylineLayer.js';
-import {
-  setTrazarCutMarker,
-  clearTrazarCutMarker,
-  bringTrazarCutLayerToFront,
-  ensureTrazarCutLayers
-} from './trazarCutLayer.js';
 import { initEditorGpsDock } from './editorGpsDock.js';
+import { initReporteEventoSidebar } from './reporteEventoSidebar.js';
+import { createTrazarController } from './trazarTool.js';
+import { bringTrazarCutLayerToFront, bringTrazarRefLayerToFront } from './trazarCutLayer.js';
 async function loadConfig() {
   const deploy = await import('./config.deploy.js');
   const tok = String(deploy.MAPBOX_ACCESS_TOKEN ?? '').trim();
@@ -588,7 +583,7 @@ function initEditorChromeMapBridge(mapInstance, opts) {
 }
 
 /**
- * Menú ☰ (junto a la casita): panel lateral con Trazar, Medir, Montar evento/cierre/ruta.
+ * Menú ☰ (junto a la casita): panel con Trazar, Medir, Montar evento/cierre/ruta, etc.
  * @param {{
  *   scheduleMapResize?: () => void,
  *   setStatus: (msg: string) => void,
@@ -596,9 +591,15 @@ function initEditorChromeMapBridge(mapInstance, opts) {
  *   isEditing: () => boolean,
  *   btnNewRoute: HTMLButtonElement,
  *   isMeasurePolyDrawing: () => boolean,
- *   onOpenTrazar?: () => void,
- *   isTrazarSheetOpen?: () => boolean
+ *   isTrazarViewOpen: () => boolean,
+ *   onTrazarEnter: () => void,
+ *   onTrazarSidebarHide: () => void,
+ *   onTrazarDiscardMap: () => void,
+ *   onMontarEvento?: () => void,
+ *   isReporteEventoOpen?: () => boolean,
+ *   closeReporteEventoPanelUi?: () => void
  * }} opts
+ * @returns {{ leaveTrazarView: () => void }}
  */
 function initEditorFieldSidebarMenu(opts) {
   const {
@@ -608,13 +609,23 @@ function initEditorFieldSidebarMenu(opts) {
     isEditing,
     btnNewRoute,
     isMeasurePolyDrawing,
-    onOpenTrazar,
-    isTrazarSheetOpen
+    isTrazarViewOpen,
+    onTrazarEnter,
+    onTrazarSidebarHide,
+    onTrazarDiscardMap,
+    onMontarEvento,
+    isReporteEventoOpen,
+    closeReporteEventoPanelUi
   } = opts;
   const btn = document.getElementById('btn-editor-field-menu');
   const panel = document.getElementById('editor-field-sidebar');
   const backdrop = document.getElementById('editor-field-sidebar-backdrop');
-  if (!btn || !panel || !backdrop) return;
+  const trazarModal = document.getElementById('editor-trazar-modal');
+  const trazarModalBackdrop = document.getElementById('editor-trazar-modal-backdrop');
+  const trazarView = document.getElementById('editor-field-view-trazar');
+  if (!btn || !panel || !backdrop) {
+    return { leaveTrazarView: () => {} };
+  }
 
   function requestResize() {
     try {
@@ -625,6 +636,39 @@ function initEditorFieldSidebarMenu(opts) {
   }
 
   let menuOpen = false;
+
+  /** Cierra solo el menú ☰ Campo (no afecta al modal Trazar). */
+  function collapseFieldMenuUiOnly() {
+    menuOpen = false;
+    panel.classList.remove('editor-field-sidebar--open');
+    backdrop.classList.remove('editor-field-sidebar-backdrop--open');
+    btn.setAttribute('aria-expanded', 'false');
+    panel.setAttribute('aria-hidden', 'true');
+    backdrop.setAttribute('aria-hidden', 'true');
+    window.setTimeout(() => {
+      if (!menuOpen) {
+        backdrop.hidden = true;
+      }
+    }, 280);
+    requestResize();
+  }
+
+  function showTrazarModal() {
+    if (trazarModal) {
+      trazarModal.hidden = false;
+      trazarModal.setAttribute('aria-hidden', 'false');
+    }
+    document.body.classList.add('editor-trazar-side-open');
+    collapseFieldMenuUiOnly();
+  }
+
+  function leaveTrazarView() {
+    if (trazarModal) {
+      trazarModal.hidden = true;
+      trazarModal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('editor-trazar-side-open');
+  }
 
   function openMenu() {
     menuOpen = true;
@@ -640,18 +684,10 @@ function initEditorFieldSidebarMenu(opts) {
   }
 
   function closeMenu() {
-    menuOpen = false;
-    panel.classList.remove('editor-field-sidebar--open');
-    backdrop.classList.remove('editor-field-sidebar-backdrop--open');
-    btn.setAttribute('aria-expanded', 'false');
-    panel.setAttribute('aria-hidden', 'true');
-    backdrop.setAttribute('aria-hidden', 'true');
-    window.setTimeout(() => {
-      if (!menuOpen) {
-        backdrop.hidden = true;
-      }
-    }, 280);
-    requestResize();
+    collapseFieldMenuUiOnly();
+    if (!isTrazarViewOpen()) {
+      leaveTrazarView();
+    }
   }
 
   function toggleMenu() {
@@ -665,10 +701,53 @@ function initEditorFieldSidebarMenu(opts) {
   });
   backdrop.addEventListener('click', () => closeMenu());
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && menuOpen) {
+    if (e.key !== 'Escape') return;
+    if (isReporteEventoOpen?.()) {
       e.preventDefault();
-      closeMenu();
+      closeReporteEventoPanelUi?.();
+      requestResize();
+      return;
     }
+    if (trazarModal && !trazarModal.hidden && isTrazarViewOpen()) {
+      e.preventDefault();
+      onTrazarSidebarHide();
+      leaveTrazarView();
+      requestResize();
+      return;
+    }
+    if (!menuOpen) return;
+    e.preventDefault();
+    closeMenu();
+  });
+
+  trazarModalBackdrop?.addEventListener('click', () => {
+    if (!isTrazarViewOpen()) return;
+    onTrazarSidebarHide();
+    leaveTrazarView();
+    requestResize();
+  });
+
+  document.getElementById('btn-trazar-back')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    onTrazarSidebarHide();
+    leaveTrazarView();
+    requestResize();
+  });
+
+  document.getElementById('btn-sidebar-trazar')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (isEditing()) {
+      setStatus('Trazar: no disponible mientras editas un tendido.');
+      return;
+    }
+    if (isMeasurePolyDrawing()) {
+      setStatus('Trazar: desactiva primero la medición por trazo en el mapa.');
+      return;
+    }
+    if (!trazarView) return;
+    onTrazarEnter();
+    if (!isTrazarViewOpen()) return;
+    showTrazarModal();
   });
 
   /**
@@ -686,43 +765,37 @@ function initEditorFieldSidebarMenu(opts) {
     });
   }
 
-  wire('btn-sidebar-trazar', () => {
-    if (isEditing()) {
-      setStatus('Trazar: no disponible mientras editas una ruta.');
-      return;
-    }
-    if (isMeasurePolyDrawing()) {
-      setStatus('Trazar: termina la medición por trazo libre antes.');
-      return;
-    }
-    if (onOpenTrazar) {
-      onOpenTrazar();
-    }
-  });
-
   wire('btn-sidebar-medir', () => {
     if (isEditing()) {
       setStatus('Medir: no disponible mientras editas una ruta.');
       return;
     }
+    if (isTrazarViewOpen()) {
+      onTrazarDiscardMap();
+    }
     toggleMeasurePolylineMode();
   });
 
   wire('btn-sidebar-montar-evento', () => {
-    setStatus('Montar evento: flujo en preparación.');
+    if (isTrazarViewOpen()) onTrazarDiscardMap();
+    onMontarEvento?.();
   });
 
   wire('btn-sidebar-montar-cierre', () => {
+    if (isTrazarViewOpen()) onTrazarDiscardMap();
     setStatus('Montar cierre: flujo en preparación.');
   });
 
   wire('btn-sidebar-montar-ruta', () => {
-    if (btnNewRoute.disabled || isMeasurePolyDrawing() || isTrazarSheetOpen?.()) {
-      setStatus('Montar ruta: cierra Trazar o la medición abierta, o termina la edición, antes de crear una ruta.');
+    if (isTrazarViewOpen()) onTrazarDiscardMap();
+    if (btnNewRoute.disabled || isMeasurePolyDrawing()) {
+      setStatus('Montar ruta: cierra Trazar, la medición o la edición de tendido antes de crear una ruta.');
       return;
     }
     btnNewRoute.click();
   });
+
+  return { leaveTrazarView };
 }
 
 /**
@@ -1038,7 +1111,7 @@ function bboxFromCentralPoints(fc) {
   ];
 }
 
-/** Vista inicial en red FTTH: central CUNI (catálogo ETB / GeoJSON local). */
+/** Vista inicial en editor (FTTH y red corporativa): central CUNI (catálogo / GeoJSON local). */
 const MAP_FTTH_CUNI_VIEW = {
   center: /** @type {[number, number]} */ ([-74.087926, 4.62991]),
   zoom: 14.25,
@@ -1146,12 +1219,11 @@ export async function boot() {
   mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
   const api = createRutasApi(API_BASE, appNetwork);
 
-  /** FTTH: arranque cerca de la central CUNI; corporativa: Bogotá amplio. */
   const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v12',
-    center: appNetwork === 'ftth' ? MAP_FTTH_CUNI_VIEW.center : [-74.0817, 4.6097],
-    zoom: appNetwork === 'ftth' ? MAP_FTTH_CUNI_VIEW.zoom : 11.5
+    center: MAP_FTTH_CUNI_VIEW.center,
+    zoom: MAP_FTTH_CUNI_VIEW.zoom
   });
 
   let mapResizeTimer = 0;
@@ -1252,6 +1324,10 @@ export async function boot() {
   let eventosDisplayAbortCtrl = null;
   /** @type {AbortController | null} */
   let refreshCatalogAbortCtrl = null;
+  /** Copia de la última capa de eventos (sin pin borrador de «Montar evento»). */
+  let lastEventosFcForMap = /** @type {GeoJSON.FeatureCollection | null} */ (null);
+  /** Pin temporal al elegir ubicación en el flujo de reporte. */
+  let reporteDraftLngLat = /** @type {[number, number] | null} */ (null);
 
   /**
    * FTTH: molécula asociada al contexto actual (tendido o vista «Ver molécula …» / cierre).
@@ -1380,6 +1456,41 @@ export async function boot() {
   }
 
   /**
+   * Pinta la capa de eventos + pin borrador del flujo «Montar evento» (si hay).
+   * @param {{ suppressMapPins?: boolean }} [opts]
+   */
+  function paintEventosMapWithReporteDraft(opts) {
+    eventosReporteLayer.ensureLayer();
+    const base =
+      lastEventosFcForMap && lastEventosFcForMap.type === 'FeatureCollection'
+        ? {
+            type: 'FeatureCollection',
+            features: [...(lastEventosFcForMap.features || [])].filter((f) => !f?.properties?._reporte_borrador)
+          }
+        : { type: 'FeatureCollection', features: [] };
+    const feats = [...base.features];
+    if (reporteDraftLngLat) {
+      feats.push({
+        type: 'Feature',
+        properties: {
+          _reporte_borrador: true,
+          tipo_evento: 'NUEVO',
+          estado: '—',
+          descripcion: 'Borrador'
+        },
+        geometry: { type: 'Point', coordinates: [...reporteDraftLngLat] }
+      });
+    }
+    eventosReporteLayer.setData({ type: 'FeatureCollection', features: feats });
+    const evCb = document.getElementById('reporte-ev-layer-visible');
+    const wantPinsCheckbox = evCb instanceof HTMLInputElement ? evCb.checked : true;
+    const hasActiveMoleculeFilter = !!getMoleculeFilterForEventosApi();
+    const wantPins =
+      Boolean(reporteDraftLngLat) || (hasActiveMoleculeFilter && wantPinsCheckbox);
+    eventosReporteLayer.setVisible(opts?.suppressMapPins ? false : wantPins);
+  }
+
+  /**
    * Puntos del overlay de molécula (cierres E1/E2, etc.): coordenadas originales del GeoJSON/API.
    * (Sin proyección al tendido/troncal; `linesFc` se ignora.)
    * @param {GeoJSON.Feature[]} pts
@@ -1417,18 +1528,11 @@ export async function boot() {
           ? snapEventPointsToRouteCatalog(fcBase, fcRoutesForSnap, turf, 400)
           : fcBase;
       const nMapPoints = fcForMap.features?.length ?? 0;
-      eventosReporteLayer.ensureLayer();
-      eventosReporteLayer.setData(fcForMap);
-      const evCb = document.getElementById('reporte-ev-layer-visible');
-      const wantPinsCheckbox = evCb instanceof HTMLInputElement ? evCb.checked : true;
-      /* Regla de negocio: los pines de eventos en el MAPA solo se pintan
-         cuando hay una molécula activa (búsqueda de tendido en FTTH).
-         Sin molécula activa => pines ocultos en mapa, pero la lista del
-         panel «Reporte evento» sí se rellena con todos los registros.
-         Esto evita el ruido visual al abrir el editor. */
-      const hasActiveMoleculeFilter = !!getMoleculeFilterForEventosApi();
-      const wantPins = hasActiveMoleculeFilter && wantPinsCheckbox;
-      eventosReporteLayer.setVisible(opts?.suppressMapPins ? false : wantPins);
+      lastEventosFcForMap = {
+        type: 'FeatureCollection',
+        features: Array.isArray(fcForMap?.features) ? fcForMap.features.slice() : []
+      };
+      paintEventosMapWithReporteDraft(opts);
       const ul = document.getElementById('reporte-ev-ul');
       if (ul) {
         ul.replaceChildren();
@@ -1540,6 +1644,18 @@ export async function boot() {
 
   /** @type {GeoJSON.Feature<GeoJSON.LineString>|null} */
   let selectedFeature = null;
+  function setRouteSelection(/** @type {any} */ f) {
+    selectedFeature = f;
+    try {
+      if (f != null && f.id != null) {
+        routesLayer.setSelected(f.id);
+      } else {
+        routesLayer.setSelected(null);
+      }
+    } catch {
+      /* */
+    }
+  }
   let editing = false;
   /** Alta nueva vía POST (nombre ya pedido al usuario). */
   let isNewRoute = false;
@@ -1550,7 +1666,113 @@ export async function boot() {
   let measurePolylineConfirmed = false;
   /** @type {[number, number][]} */
   let measurePolylineCoords = [];
-  let trazarSheetOpen = false;
+  /** @type {ReturnType<typeof createTrazarController> | null} */
+  let trazar = null;
+  let leaveTrazarViewMenu = () => {};
+
+  function setReportePinForReporte(/** @type {[number, number] | null} */ lngLat) {
+    reporteDraftLngLat =
+      lngLat && lngLat.length === 2 && Number.isFinite(lngLat[0]) && Number.isFinite(lngLat[1])
+        ? [lngLat[0], lngLat[1]]
+        : null;
+    paintEventosMapWithReporteDraft({});
+  }
+
+  function findNearestRouteForLngLatReporte(lng, lat, maxM) {
+    const fcRoutes = filterRoutesByNetwork(allRoutesFc, appNetwork);
+    const routeFeats = fcRoutes.features || [];
+    let best = null;
+    let bestD = Infinity;
+    if (!turf?.point || !turf?.lineString || !turf?.nearestPointOnLine || !turf?.distance) return null;
+    const pt = turf.point([lng, lat]);
+    for (const rf of routeFeats) {
+      const ln =
+        rf?.geometry?.type === 'LineString' && Array.isArray(rf.geometry.coordinates)
+          ? /** @type {GeoJSON.LineString} */ (rf.geometry)
+          : null;
+      if (!ln?.coordinates?.length) continue;
+      try {
+        const lf = turf.lineString(ln.coordinates);
+        const sn = turf.nearestPointOnLine(lf, pt, { units: 'meters' });
+        const d = turf.distance(pt, sn, { units: 'meters' });
+        if (d < bestD) {
+          bestD = d;
+          best = {
+            feature: rf,
+            snapped: /** @type {[number, number]} */ ([
+              sn.geometry.coordinates[0],
+              sn.geometry.coordinates[1]
+            ]),
+            meters: d
+          };
+        }
+      } catch {
+        /* */
+      }
+    }
+    if (!best || best.meters > maxM) return null;
+    return best;
+  }
+
+  function applyReportePickedRoute(/** @type {any} */ feature, _e) {
+    setRouteSelection(feature ?? null);
+  }
+
+  function closeReporteEventoPanelUi() {
+    const el = document.getElementById('reporte-evento-details');
+    if (!el?.classList.contains('editor-float-panel--open')) return;
+    el.classList.remove('editor-float-panel--open');
+    el.setAttribute('aria-hidden', 'true');
+    try {
+      reporteCtl.notifyReportePanelClosed?.();
+    } catch {
+      /* */
+    }
+    scheduleMapResize(0);
+  }
+
+  function openMontarEventoPanel() {
+    if (editing || (measurePolylineActive && !measurePolylineConfirmed) || trazar?.isOpen()) {
+      setStatus('Montar evento: termina edición, Trazar o medición antes.');
+      return;
+    }
+    if (appNetwork === 'ftth' && !getMoleculeFilterForEventosApi()) {
+      setStatus('Montar evento: busca la molécula en la barra (ej. SI03) hasta pintar el tendido en el mapa.');
+      return;
+    }
+    const el = document.getElementById('reporte-evento-details');
+    if (!el) return;
+    el.classList.add('editor-float-panel--open');
+    el.setAttribute('aria-hidden', 'false');
+    try {
+      reporteCtl.notifyReportePanelOpened?.();
+    } catch {
+      /* */
+    }
+    scheduleMapResize(0);
+  }
+
+  let reporteCtl = initReporteEventoSidebar({
+    api,
+    setStatus,
+    getMap: () => map,
+    getSelectedFeature: () => selectedFeature,
+    turf,
+    applyReportePickedRoute,
+    setReportePin: setReportePinForReporte,
+    disarmOtdrPick: () => {},
+    onArmingChanged: (armed) => {
+      document.body.classList.toggle('editor-pick-mode-active', Boolean(armed));
+    },
+    onEventoGuardado: () => void refreshEventosReporteDisplay(),
+    closeReportePanelUi: () => closeReporteEventoPanelUi(),
+    canMountEvento: () => appNetwork !== 'ftth' || !!getMoleculeFilterForEventosApi(),
+    findNearestRouteForLngLat: (lng, lat, maxM) => findNearestRouteForLngLatReporte(lng, lat, maxM)
+  });
+
+  document.getElementById('btn-reporte-evento-close')?.addEventListener('click', () => {
+    closeReporteEventoPanelUi();
+  });
 
   const btnEdit = $('btn-edit');
   const btnSave = $('btn-save');
@@ -1571,17 +1793,6 @@ export async function boot() {
   const measurePolyUndo = /** @type {HTMLButtonElement} */ ($('measure-poly-undo'));
   const measurePolyConfirm = /** @type {HTMLButtonElement} */ ($('measure-poly-confirm'));
   const measurePolyTrash = /** @type {HTMLButtonElement} */ ($('measure-poly-trash'));
-
-  const trazarBackdrop = document.getElementById('editor-trazar-backdrop');
-  const trazarSheet = document.getElementById('editor-trazar-sheet');
-  const trazarCloseBtn = document.getElementById('editor-trazar-close');
-  const trazarFiberInput = /** @type {HTMLInputElement | null} */ (
-    document.getElementById('editor-trazar-fiber-m')
-  );
-  const trazarClearMarkBtn = /** @type {HTMLButtonElement | null} */ (
-    document.getElementById('editor-trazar-clear-mark')
-  );
-
   document.getElementById('btn-change-network')?.addEventListener('click', () => {
     try {
       sessionStorage.removeItem(STORAGE_KEY);
@@ -1603,7 +1814,7 @@ export async function boot() {
     features: []
   });
 
-  /** Solo el primer `reloadRoutes`: encuadre CUNI en FTTH; luego se usa el encuadre global de centrales. */
+  /** Solo el primer `reloadRoutes`: encuadre CUNI (FTTH y corporativa); luego encuadre global de centrales si aplica. */
   let firstReloadRoutes = true;
 
   /** Primera carga: mapa sin nodos catálogo, sin encuadre global y sin pins de incidencias hasta «Actualizar catálogo». */
@@ -1691,155 +1902,6 @@ export async function boot() {
   const statusBar = initStatusBar(map);
   statusBar.setNet(appNetwork === 'corporativa' ? 'CORP' : 'FTTH');
 
-  /** Panel «Montar evento» retirado: stub para no romper llamadas dispersas. */
-  const reporteCtl = {
-    cancelMapPickMode: () => {},
-    resetForCableCleared: () => {},
-    handleRouteLinePick: () => false,
-    handleMapTapPick: () => false,
-    isAwaitingRoutePick: () => false,
-    notifyReportePanelOpened: () => {},
-    notifyReportePanelClosed: () => {}
-  };
-
-  function isTrazarSheetOpen() {
-    return trazarSheetOpen;
-  }
-
-  function parseTrazarFiberMeters() {
-    const raw = String(trazarFiberInput?.value ?? '')
-      .trim()
-      .replace(',', '.');
-    if (raw === '') return null;
-    const n = Number.parseFloat(raw);
-    if (!Number.isFinite(n) || n < 0) return null;
-    return n;
-  }
-
-  function syncTrazarSheetUi() {
-    if (!trazarFiberInput) return;
-    const raw = String(trazarFiberInput.value ?? '').trim();
-    const ok = raw === '' || parseTrazarFiberMeters() != null;
-    trazarFiberInput.setAttribute('aria-invalid', ok ? 'false' : 'true');
-  }
-
-  /**
-   * Un clic en el cable decide automáticamente desde qué extremo se trazó:
-   * se usa el extremo más cercano al clic como referencia OTDR.
-   * @param {GeoJSON.LineString} line
-   * @param {number} fiberM
-   * @param {mapboxgl.LngLat} clickLngLat
-   * @param {string} cableName
-   * @returns {string}
-   */
-  function paintTrazarCutFromClick(line, fiberM, clickLngLat, cableName) {
-    const lineLen = lineLengthMeters(line, turf);
-    const distFromStart = distanceFromStartAlongLineMeters(
-      line,
-      [clickLngLat.lng, clickLngLat.lat],
-      turf
-    );
-    const from = distFromStart <= Math.max(0, lineLen - distFromStart) ? 'start' : 'end';
-    const cut = cutPointFromOtdrFiberMeters(line, fiberM, from, turf);
-    const pt = cut.point;
-    if (!pt?.geometry?.coordinates) {
-      return 'Trazar: no se pudo calcular el punto del evento.';
-    }
-    const lngLat = /** @type {[number, number]} */ (pt.geometry.coordinates);
-    try {
-      ensureTrazarCutLayers(map);
-      setTrazarCutMarker(map, lngLat);
-      bumpLayersAfterPolylineMeasure();
-    } catch (err) {
-      console.warn('Trazar corte en mapa:', err);
-      return 'Trazar: error al pintar el evento en el mapa.';
-    }
-    const refLabel = from === 'start' ? 'inicio' : 'final';
-    const clampNote = cut.clamped ? ' · distancia ajustada al extremo del cable' : '';
-    return `Evento en «${cableName}»: ${lngLat[1].toFixed(5)}, ${lngLat[0].toFixed(5)} (clic más cerca del ${refLabel}; fibra ${fmtM(fiberM)} m -> tendido ${fmtM(cut.geometricFromRefM)} m)${clampNote}`;
-  }
-
-  function closeTrazarSheet() {
-    const hadUi = trazarSheetOpen;
-    trazarSheetOpen = false;
-    if (hadUi) {
-      document.body.classList.remove('editor-trazar-open');
-      if (trazarBackdrop) {
-        trazarBackdrop.hidden = true;
-        trazarBackdrop.setAttribute('aria-hidden', 'true');
-      }
-      if (trazarSheet) {
-        trazarSheet.hidden = true;
-        trazarSheet.setAttribute('aria-hidden', 'true');
-      }
-    }
-    try {
-      clearTrazarCutMarker(map);
-    } catch {
-      /* */
-    }
-    try {
-      bumpLayersAfterPolylineMeasure();
-    } catch {
-      /* */
-    }
-    if (hadUi) {
-      try {
-        scheduleMapResize?.();
-      } catch {
-        /* */
-      }
-    }
-  }
-
-  function openTrazarSheet() {
-    deactivateMeasurePolyline();
-    trazarSheetOpen = true;
-    document.body.classList.add('editor-trazar-open');
-    if (trazarBackdrop) {
-      trazarBackdrop.hidden = false;
-      trazarBackdrop.setAttribute('aria-hidden', 'false');
-    }
-    if (trazarSheet) {
-      trazarSheet.hidden = false;
-      trazarSheet.setAttribute('aria-hidden', 'false');
-    }
-    if (trazarFiberInput) trazarFiberInput.value = '';
-    syncTrazarSheetUi();
-    try {
-      scheduleMapResize?.();
-    } catch {
-      /* */
-    }
-    setStatus(
-      'Trazar: escribe la longitud de fibra y toca el cable cerca del extremo desde donde se midio. El evento se marca con un solo clic.'
-    );
-    syncButtons();
-  }
-
-  initFieldSidebar(map, scheduleMapResize, toggleMeasurePolylineMode);
-
-  initEditorChromeMapBridge(map, {
-    getSuppressMapSidebarCollapse: () => {
-      if (editing) return true;
-      if (measurePolylineActive && !measurePolylineConfirmed) return true;
-      if (trazarSheetOpen) return true;
-      return false;
-    },
-    scheduleMapResize
-  });
-
-  initEditorFieldSidebarMenu({
-    scheduleMapResize,
-    setStatus,
-    toggleMeasurePolylineMode,
-    isEditing: () => editing,
-    btnNewRoute,
-    isMeasurePolyDrawing: () => measurePolylineActive && !measurePolylineConfirmed,
-    onOpenTrazar: openTrazarSheet,
-    isTrazarSheetOpen
-  });
-
   function updateMetrics(geom, turfNs) {
     if (!geom?.coordinates?.length) {
       lenEl.textContent = '—';
@@ -1854,13 +1916,19 @@ export async function boot() {
 
   function syncButtons() {
     const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
-    btnNewRoute.disabled = editing || polyDrawing || trazarSheetOpen;
+    const trOpen = Boolean(trazar?.isOpen());
+    btnNewRoute.disabled = editing || polyDrawing || trOpen;
     btnEdit.disabled = !selectedFeature || editing;
     btnSave.disabled = !editing;
     btnCancel.disabled = !editing;
     measureFab.disabled = editing;
     measureFab.classList.toggle('measure-fab--muted', editing);
-    cableSearch?.setDisabled(editing || polyDrawing || trazarSheetOpen);
+    cableSearch?.setDisabled(editing || polyDrawing || trOpen);
+    try {
+      trazar?.syncForm();
+    } catch {
+      /* */
+    }
     syncMeasureFloatUi();
     syncMeasurePolyDockVisibility();
   }
@@ -1908,12 +1976,13 @@ export async function boot() {
   /** Tras subir la polilínea de medición, vuelve a poner pins de eventos por encima del trazo naranja. */
   function bumpLayersAfterPolylineMeasure() {
     bringMeasurePolylineLayersToFront();
+    eventosReporteLayer.bringToFront();
     try {
+      bringTrazarRefLayerToFront(map);
       bringTrazarCutLayerToFront(map);
     } catch {
       /* */
     }
-    eventosReporteLayer.bringToFront();
     /* Crítico: sin esto, tras medición/actualización, Draw vuelve a quedar bajo otras capas (trazo inactivo). */
     bringMapboxDrawLayersToTop();
   }
@@ -2037,7 +2106,8 @@ export async function boot() {
       syncButtons();
       return;
     }
-    closeTrazarSheet();
+    trazar?.close();
+    leaveTrazarViewMenu();
     measurePolylineActive = true;
     measurePolylineConfirmed = false;
     reporteCtl?.cancelMapPickMode?.();
@@ -2049,8 +2119,62 @@ export async function boot() {
     setMeasurePolylineCursor();
     syncMeasureFloatUi();
     syncButtons();
-    setStatus('Trazar ruta: clics en el mapa para vértices. Panel inferior: distancia y +20 %.');
+    setStatus('Medición: clics en el mapa para marcar el trazado. Panel inferior: distancia y +20 % reserva fibra.');
   }
+
+  trazar = createTrazarController({
+    map,
+    getTurf: () => turf,
+    getSelectedFeature: () => selectedFeature,
+    setRouteSelection,
+    setStatus,
+    scheduleMapResize,
+    refreshToolbar: () => syncButtons(),
+    bumpLayersAfterPolylineMeasure,
+    deactivateMeasurePolyline,
+    isEditing: () => editing,
+    isPolyDrawing: () => measurePolylineActive && !measurePolylineConfirmed,
+    fmtM
+  });
+
+  {
+    const menuApi = initEditorFieldSidebarMenu({
+      scheduleMapResize,
+      setStatus,
+      toggleMeasurePolylineMode,
+      isEditing: () => editing,
+      btnNewRoute,
+      isMeasurePolyDrawing: () => measurePolylineActive && !measurePolylineConfirmed,
+      isTrazarViewOpen: () => trazar?.isOpen() ?? false,
+      onTrazarEnter: () => trazar?.open(),
+      onTrazarSidebarHide: () => trazar?.close({ keepMapMark: true }),
+      onTrazarDiscardMap: () => trazar?.close(),
+      onMontarEvento: () => openMontarEventoPanel(),
+      isReporteEventoOpen: () =>
+        Boolean(document.getElementById('reporte-evento-details')?.classList.contains('editor-float-panel--open')),
+      closeReporteEventoPanelUi: () => closeReporteEventoPanelUi()
+    });
+    leaveTrazarViewMenu = () => {
+      try {
+        menuApi.leaveTrazarView();
+      } catch {
+        /* */
+      }
+    };
+  }
+
+  initFieldSidebar(map, scheduleMapResize, toggleMeasurePolylineMode);
+
+  initEditorChromeMapBridge(map, {
+    getSuppressMapSidebarCollapse: () => {
+      if (editing) return true;
+      if (measurePolylineActive && !measurePolylineConfirmed) return true;
+      if (trazar?.isOpen()) return true;
+      if (reporteCtl?.isAwaitingRoutePick?.()) return true;
+      return false;
+    },
+    scheduleMapResize
+  });
 
   function clearCentralMetric() {
     metricNearestCentralDist.textContent = '—';
@@ -2089,7 +2213,9 @@ export async function boot() {
 
   function clearMeasureClickModes() {
     deactivateMeasurePolyline();
-    closeTrazarSheet();
+    trazar?.close();
+    leaveTrazarViewMenu();
+    closeReporteEventoPanelUi();
   }
 
   /** Carga o reset del mapa: sin medición polilínea ni dock inferior. */
@@ -2099,37 +2225,96 @@ export async function boot() {
   }
 
   /**
+   * Une varias respuestas de /api/centrales-etb o GeoJSON, sin duplicar por `id` o [lng,lat].
+   * @param {GeoJSON.FeatureCollection[]} fcs
+   * @returns {GeoJSON.FeatureCollection}
+   */
+  function mergeCentralesFcs(fcs) {
+    const seen = new Set();
+    const features = [];
+    for (const fc of fcs) {
+      for (const f of fc?.features || []) {
+        if (!f || f.type !== 'Feature') continue;
+        const g = f.geometry;
+        if (!g || g.type !== 'Point' || !Array.isArray(g.coordinates) || g.coordinates.length < 2) {
+          continue;
+        }
+        const k =
+          f.id != null && String(f.id) !== '' ? `id:${f.id}` : `c:${g.coordinates[0]},${g.coordinates[1]}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        features.push(f);
+      }
+    }
+    return { type: 'FeatureCollection', features };
+  }
+
+  /**
    * @param {AbortSignal} [signal]
    */
   async function loadCentralesFeatureCollection(signal) {
-    let fcCent = { type: 'FeatureCollection', features: [] };
+    const opt = signal ? { signal } : undefined;
+    const emptyFc = /** @type {GeoJSON.FeatureCollection} */ ({
+      type: 'FeatureCollection',
+      features: []
+    });
+    let fcCent = /** @type {GeoJSON.FeatureCollection} */ (emptyFc);
     try {
-      fcCent = await api.listCentralesEtB(signal ? { signal } : undefined);
+      if (appNetwork === 'corporativa') {
+        /** En BD casi solo hay `ftth`; se fusionan las dos red para el mapa operativo. */
+        const apiFtth = createRutasApi(API_BASE, 'ftth');
+        const [fcC, fcF] = await Promise.all([
+          api.listCentralesEtB(opt).catch((err) => {
+            if (err?.name === 'AbortError') throw err;
+            console.warn('Centrales (API red corporativa):', err?.message);
+            return emptyFc;
+          }),
+          apiFtth.listCentralesEtB(opt).catch((err) => {
+            if (err?.name === 'AbortError') throw err;
+            console.warn('Centrales (API red FTTH, fusión mapa corporativa):', err?.message);
+            return emptyFc;
+          })
+        ]);
+        fcCent = mergeCentralesFcs([fcC, fcF]);
+      } else {
+        fcCent = await api.listCentralesEtB(opt);
+      }
     } catch (e) {
       if (e?.name === 'AbortError') throw e;
-      console.warn('Puntos de red (API centrales):', e.message);
+      console.warn('Puntos de red (API centrales):', e?.message);
     }
-    if (!fcCent?.features?.length && appNetwork === 'ftth') {
+    if (!fcCent?.features?.length) {
       try {
-        const res = await fetch('/data/centrales-etb.geojson', { cache: 'no-store' });
+        const fetchOpts = { cache: 'no-store' };
+        if (signal) fetchOpts.signal = signal;
+        const res = await fetch('/data/centrales-etb.geojson', fetchOpts);
         if (res.ok) {
-          fcCent = await res.json();
-          if (fcCent?.features?.length) {
-            console.info(
-              `[centrales] ${fcCent.features.length} puntos desde /data (solo red FTTH; tabla vacía o sin datos).`
-            );
+          const raw = await res.json();
+          const parsed = normalizeRouteFeatureProperties(
+            raw && raw.type === 'FeatureCollection'
+              ? raw
+              : { type: 'FeatureCollection', features: [] }
+          );
+          if (appNetwork === 'corporativa') {
+            const porCorp = filterRoutesByNetwork(parsed, 'corporativa');
+            const porFt = filterRoutesByNetwork(parsed, 'ftth');
+            const merged = mergeCentralesFcs([porCorp, porFt]);
+            fcCent = merged.features.length ? merged : parsed;
+          } else {
+            fcCent = filterRoutesByNetwork(parsed, appNetwork);
           }
         }
       } catch (e) {
-        console.warn('Centrales ETB (archivo local):', e.message);
+        if (e?.name === 'AbortError') throw e;
+        console.warn('Centrales ETB (archivo local):', e?.message);
       }
     }
     return fcCent;
   }
 
-  /** Estilo de líneas: FTTH siempre mismo color/grosor; corporativa con resaltado. */
+  /** Estilo de líneas: FTTH y corporativa, mismo trazo (azul y grosor, modo uniforme). */
   function syncRoutesLineStyleMode() {
-    routesLayer.setLineStyleMode(appNetwork === 'ftth' ? 'uniform' : 'normal');
+    routesLayer.setLineStyleMode('uniform');
   }
 
   /** Quita el cable del mapa (siguen las centrales); no recarga API. */
@@ -2456,11 +2641,9 @@ export async function boot() {
       const fcCent = await loadCentralesFeatureCollection();
       lastCentralesFc = fcCent;
       centralesLayer.ensureLayer();
-      centralesLayer.setData(
-        wasCleanBootstrap ? { type: 'FeatureCollection', features: [] } : fcCent
-      );
+      centralesLayer.setData(fcCent);
 
-      if (appNetwork === 'ftth' && firstReloadRoutes) {
+      if (firstReloadRoutes) {
         firstReloadRoutes = false;
         const hit = findCentralLngLatByAliases(fcCent, MAP_FTTH_CUNI_VIEW.centralAliases);
         const lng = hit ? hit.lng : MAP_FTTH_CUNI_VIEW.center[0];
@@ -2476,9 +2659,8 @@ export async function boot() {
           /* */
         }
       } else {
-        firstReloadRoutes = false;
         const boxC = bboxFromCentralPoints(lastCentralesFc);
-        if (boxC && !wasCleanBootstrap) {
+        if (boxC) {
           try {
             map.fitBounds(boxC, { padding: 52, maxZoom: 14, duration: 720 });
           } catch {
@@ -2509,7 +2691,7 @@ export async function boot() {
           ? `Mapa FTTH: ${nR} tendido(s) en catálogo (sin centrales en API o /data). Solo se dibuja el buscado.`
           : `Sin nodos en mapa · ${nR} cable(s) en catálogo corporativa. Busca por nombre o ID para dibujar uno.`;
       if (wasCleanBootstrap) {
-        msg = `Vista limpia: sin nodos ni incidencias en el mapa. ${msg} «Actualizar catálogo» muestra nodos y encuadre global.`;
+        msg = `${msg} En la primera carga, los pines de incidencias se muestran al pulsar «Actualizar catálogo».`;
       }
       setStatus(msg);
       syncEditorChromeBarMeta();
@@ -2570,7 +2752,31 @@ export async function boot() {
     cableSearch = createCableSearchBar(mapWrap, {
       /** Siempre re-filtra por red activa (nunca mezcla catálogos en el buscador). */
       getRouteCollection: () => filterRoutesByNetwork(allRoutesFc, appNetwork),
+      getCentralesCollection: () => lastCentralesFc,
       networkRed: appNetwork,
+      onSelectCentral: (f) => {
+        clearCableFromMapOnly();
+        const g = f?.geometry;
+        if (g?.type === 'Point' && Array.isArray(g.coordinates) && g.coordinates.length >= 2) {
+          const [lng, lat] = g.coordinates;
+          try {
+            map.easeTo({
+              center: [lng, lat],
+              zoom: Math.max(map.getZoom(), 15.5),
+              duration: 820
+            });
+          } catch {
+            /* */
+          }
+        }
+        const nom = String(f.properties?.nombre ?? f.properties?.name ?? f.id ?? '');
+        const nodoOcentral = appNetwork === 'corporativa' ? 'Nodo' : 'Central';
+        setStatus(
+          `«${nom}» · ${nodoOcentral} del catálogo. (×) quita búsqueda; tendidos solo con otro resultado del buscador.`
+        );
+        scheduleOperationalLayersBump([0, 100]);
+        syncButtons();
+      },
       getMoleculeBrowseHits:
         appNetwork === 'ftth'
           ? (q) => matchMoleculeEntries(ftthManifestEntries, q, 40)
@@ -2734,7 +2940,7 @@ export async function boot() {
         clearCableFromMapOnly();
       },
       isInteractionLocked: () =>
-        editing || (measurePolylineActive && !measurePolylineConfirmed) || trazarSheetOpen
+        editing || (measurePolylineActive && !measurePolylineConfirmed) || Boolean(trazar?.isOpen())
     });
 
     document.getElementById('btn-refresh-editor-catalog')?.addEventListener('click', () => {
@@ -2743,13 +2949,8 @@ export async function boot() {
 
     const reporteEvVis = document.getElementById('reporte-ev-layer-visible');
     if (reporteEvVis instanceof HTMLInputElement) {
-      /* Coherente con la regla: pines de eventos solo visibles si hay
-         molécula activa Y la checkbox está marcada. */
-      const computeWantPins = () =>
-        reporteEvVis.checked && !!getMoleculeFilterForEventosApi();
-      eventosReporteLayer.setVisible(computeWantPins());
       reporteEvVis.addEventListener('change', () => {
-        eventosReporteLayer.setVisible(computeWantPins());
+        paintEventosMapWithReporteDraft({});
       });
     }
     async function refreshFtthMoleculeOverlayIfFiltered() {
@@ -3056,15 +3257,12 @@ export async function boot() {
     /** Centrales encima de rutas; cierres/NAP encima; polilínea de medición; eventos por encima del trazo. */
     scheduleOperationalLayersBump([0, 80, 250, 600]);
 
-    try {
-      ensureTrazarCutLayers(map);
-    } catch {
-      /* */
-    }
-
+    const ROUTE_HIT_PAD_PX = 20;
     routesLayer.onLineClick((e) => {
       const polyBusy = measurePolylineActive && !measurePolylineConfirmed;
       if (editing || polyBusy) return;
+      const f0 = e.features?.[0];
+      if (f0 && trazar?.handleRouteLineClick(e, f0)) return;
       const ovRoute = queryMoleculeOverlayFeatureAtPoint(e.point);
       if (ovRoute?.properties && String(ovRoute.properties.ftth_overlay_kind ?? '').trim()) {
         openCierreMapPopupFromFeature(ovRoute, e.lngLat);
@@ -3075,8 +3273,7 @@ export async function boot() {
 
       if (reporteCtl.handleRouteLinePick(e, f)) return;
 
-      selectedFeature = /** @type {any} */ (f);
-      routesLayer.setSelected(f.id);
+      setRouteSelection(/** @type {any} */ (f));
       const geom = /** @type {any} */ (f.geometry);
       const cableName = String(f.properties?.nombre ?? f.id);
       let statusExtra = '';
@@ -3096,24 +3293,9 @@ export async function boot() {
       } else {
         clearCentralMetric();
       }
-      let trazarStatus = '';
-      if (trazarSheetOpen && geom?.type === 'LineString' && geom.coordinates?.length >= 2) {
-        const fiberM = parseTrazarFiberMeters();
-        if (fiberM == null) {
-          trazarStatus = 'Trazar: escribe la longitud y vuelve a tocar el cable.';
-        } else {
-          trazarStatus = paintTrazarCutFromClick(
-            /** @type {GeoJSON.LineString} */ (geom),
-            fiberM,
-            e.lngLat,
-            cableName
-          );
-        }
-      }
-      setStatus(trazarStatus || `Seleccionada: ${cableName}${statusExtra}`);
+      setStatus(`Seleccionada: ${cableName}${statusExtra}`);
       updateMetrics(geom, turf);
       syncButtons();
-      if (trazarSheetOpen) syncTrazarSheetUi();
     });
 
     /**
@@ -3171,7 +3353,8 @@ export async function boot() {
       if (editing) return true;
       if (document.body.classList.contains('editor-pick-mode-active')) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
-      if (trazarSheetOpen) return true;
+      if (trazar?.isOpen()) return true;
+      if (reporteCtl?.isAwaitingRoutePick?.()) return true;
       return false;
     }
 
@@ -3263,7 +3446,13 @@ export async function boot() {
       try {
         const hasRouteHit =
           map.getLayer(ROUTES_LAYER_ID) != null
-            ? map.queryRenderedFeatures(e.point, { layers: [ROUTES_LAYER_ID] }).length > 0
+            ? map.queryRenderedFeatures(
+                [
+                  [e.point.x - ROUTE_HIT_PAD_PX, e.point.y - ROUTE_HIT_PAD_PX],
+                  [e.point.x + ROUTE_HIT_PAD_PX, e.point.y + ROUTE_HIT_PAD_PX]
+                ],
+                { layers: [ROUTES_LAYER_ID] }
+              ).length > 0
             : false;
         if (reporteCtl.handleMapTapPick?.(e, { hasRouteHit })) return;
       } catch {
@@ -3485,42 +3674,6 @@ export async function boot() {
 
   measurePolyDock.addEventListener('click', (ev) => {
     ev.stopPropagation();
-  });
-
-  document.addEventListener('keydown', (ev) => {
-    if (ev.key !== 'Escape' || !trazarSheetOpen) return;
-    ev.preventDefault();
-    closeTrazarSheet();
-    setStatus('Trazar cerrado.');
-  });
-
-  trazarCloseBtn?.addEventListener('click', () => {
-    closeTrazarSheet();
-    setStatus('Trazar cerrado.');
-  });
-  trazarBackdrop?.addEventListener('click', () => {
-    closeTrazarSheet();
-    setStatus('Trazar cerrado.');
-  });
-  trazarSheet?.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-  });
-  trazarFiberInput?.addEventListener('input', () => syncTrazarSheetUi());
-  trazarFiberInput?.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter') {
-      ev.preventDefault();
-      setStatus('Trazar: ahora toca el cable cerca del extremo desde donde se midio.');
-    }
-  });
-
-  trazarClearMarkBtn?.addEventListener('click', () => {
-    try {
-      clearTrazarCutMarker(map);
-      bumpLayersAfterPolylineMeasure();
-    } catch {
-      /* */
-    }
-    setStatus('Marca de corte quitada.');
   });
 
   syncButtons();

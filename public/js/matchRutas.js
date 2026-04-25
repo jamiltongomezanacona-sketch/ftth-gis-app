@@ -42,6 +42,8 @@ export function filterRoutesByNetwork(fc, redTipo) {
 
 /** Catálogos con hasta este tamaño muestran lista al enfocar sin escribir (p. ej. red corporativa). */
 const MAX_CATALOG_EMPTY_QUERY = 80;
+/** Caché de índice para puntos (centrales) por red. */
+const CENTRALES_INDEX_CACHE = new WeakMap();
 /**
  * Cache en memoria por colección para evitar normalizaciones repetidas
  * durante búsquedas sucesivas.
@@ -81,7 +83,7 @@ function buildSearchIndex(feats) {
   const entries = [];
   for (const f of feats) {
     if (!f || f.type !== 'Feature') continue;
-    const nombreRaw = String(f.properties?.nombre ?? '');
+    const nombreRaw = String(f.properties?.nombre ?? f.properties?.name ?? '');
     const idRaw = String(f.id ?? '').trim();
     entries.push({
       f,
@@ -163,6 +165,90 @@ export function searchRouteFeatures(fc, rawQuery, limit = 20, networkRed) {
     if (b.score !== a.score) return b.score - a.score;
     const na = String(a.f.properties?.nombre ?? '');
     const nb = String(b.f.properties?.nombre ?? '');
+    return na.localeCompare(nb, 'es', { sensitivity: 'base' });
+  });
+  return ranked.slice(0, limit).map((x) => x.f);
+}
+
+/**
+ * Aíndice de búsqueda solo para `Point` (centrales / nodos) con `nombre` e `id`.
+ * @param {GeoJSON.Feature[]} feats
+ */
+function getOrCreateCentralesSearchIndex(feats) {
+  const onlyPoints = feats.filter(
+    (f) => f && f.type === 'Feature' && f.geometry?.type === 'Point'
+  );
+  return buildSearchIndex(onlyPoints);
+}
+
+/**
+ * Búsqueda de centrales o nodos por `nombre` e `id` (misma lógica que tendidos, solo puntos).
+ * @param {GeoJSON.FeatureCollection} fc
+ * @param {string} rawQuery
+ * @param {number} limit
+ * @param {'ftth'|'corporativa'} networkRed
+ * @returns {GeoJSON.Feature[]}
+ */
+export function searchCentralesFeatures(fc, rawQuery, limit = 20, networkRed) {
+  if (networkRed !== 'ftth' && networkRed !== 'corporativa') {
+    return [];
+  }
+  let byNetwork = CENTRALES_INDEX_CACHE.get(fc);
+  if (!byNetwork) {
+    byNetwork = { ftth: null, corporativa: null };
+    CENTRALES_INDEX_CACHE.set(fc, byNetwork);
+  }
+  if (!byNetwork[networkRed]) {
+    /**
+     * En el editor, red corporativa fusiona en capa centrales FTTH + corporativas; el buscador
+     * debe indexar todos los `Point` de la colección, no solo `red_tipo=corporativa`.
+     */
+    const featsToIndex =
+      networkRed === 'corporativa'
+        ? (fc?.features || []).filter(
+            (f) => f && f.type === 'Feature' && f.geometry?.type === 'Point'
+          )
+        : filterRoutesByNetwork(fc, networkRed).features || [];
+    byNetwork[networkRed] = getOrCreateCentralesSearchIndex(featsToIndex);
+  }
+  const index = byNetwork[networkRed];
+  const entries = index.entries;
+  if (!entries.length) return [];
+
+  const q = normalizeSearchText(rawQuery);
+  if (!q) {
+    if (entries.length <= MAX_CATALOG_EMPTY_QUERY) {
+      return index.emptyQuerySorted.slice(0, limit);
+    }
+    return [];
+  }
+
+  const words = q.split(' ').filter((w) => w.length > 0);
+  const ranked = [];
+
+  for (const entry of entries) {
+    const { f, nombreNorm: nombre, idRaw, idNorm } = entry;
+
+    let score = 0;
+
+    if (idNorm === q || idRaw === String(rawQuery).trim()) score = 100000;
+    else if (idNorm.includes(q) || idRaw.includes(q)) score = 75000 + Math.min(q.length * 50, 5000);
+
+    const nameWordMatch = words.length > 0 && words.every((w) => nombre.includes(w));
+    if (nameWordMatch) {
+      let s = 25000;
+      if (nombre.includes(q)) s += 6000;
+      if (nombre.startsWith(q)) s += 4000;
+      score = Math.max(score, s);
+    }
+
+    if (score > 0) ranked.push({ f, score });
+  }
+
+  ranked.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    const na = String(a.f.properties?.nombre ?? a.f.properties?.name ?? '');
+    const nb = String(b.f.properties?.nombre ?? b.f.properties?.name ?? '');
     return na.localeCompare(nb, 'es', { sensitivity: 'base' });
   });
   return ranked.slice(0, limit).map((x) => x.f);

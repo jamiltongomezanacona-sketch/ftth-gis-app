@@ -1,3 +1,5 @@
+import { getAuthSession } from './authSession.js';
+
 /**
  * Deja solo el origen (protocolo + host + puerto), sin sufijo /api/rutas.
  * Evita URLs duplicadas tipo .../api/rutas/api/rutas si API_BASE estaba mal puesto.
@@ -46,9 +48,15 @@ export function createRutasApi(apiBase, redTipo) {
     const url = resolveUrl(path);
     const method = String(options.method || 'GET').toUpperCase();
     /** GET/HEAD sin cuerpo: no enviar Content-Type (evita peticiones «no simples» y rarezas en proxy/CORS). */
+    const session = getAuthSession();
+    const bearer =
+      session?.token && typeof session.token === 'string'
+        ? { Authorization: `Bearer ${session.token}` }
+        : {};
     const headers = {
       Accept: 'application/json',
       'X-Red-Tipo': red,
+      ...bearer,
       ...options.headers
     };
     if (method !== 'GET' && method !== 'HEAD') {
@@ -58,7 +66,8 @@ export function createRutasApi(apiBase, redTipo) {
     }
     const res = await fetch(url, {
       ...options,
-      headers
+      headers,
+      credentials: 'include'
     });
     const text = await res.text();
     let data;

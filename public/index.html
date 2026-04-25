@@ -19,7 +19,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <!-- Base + tokens; el panel del home vive en home-landing.css (archivo aparte = sin caché vieja en CDN/PWA) -->
   <link rel="stylesheet" href="/css/app.css?v=20260423authpanel1" />
-  <link rel="stylesheet" href="/css/home-landing.css?v=20260423panel1" />
+  <link rel="stylesheet" href="/css/home-landing.css?v=20260424quickbar" />
   <style id="home-paint-fallback">
     /* Si el CSS va lento o falla, evita enlaces azul sistema y fondo en blanco */
     body.home-body { background: #080a0f; color: #e2e8f0; font-family: Outfit, ui-sans-serif, system-ui, sans-serif; }
@@ -41,6 +41,19 @@
   </div>
 
   <div class="home-shell">
+    <nav class="home-quickbar" aria-label="Inicio rápido del proyecto">
+      <span class="home-quickbar__title">Inicio rápido</span>
+      <div class="home-quickbar__links">
+        <a href="/editor.html?red=ftth">Editor FTTH</a>
+        <a href="/editor.html?red=corporativa">Editor corporativa</a>
+        <a href="/analitica.html">Analítica</a>
+        <a href="/dashboard/">Dashboard</a>
+        <span class="home-quickbar__sep" aria-hidden="true"></span>
+        <a href="/api/db-check" target="_blank" rel="noopener">Estado BD</a>
+        <a href="/health" target="_blank" rel="noopener">Health API</a>
+      </div>
+    </nav>
+
     <header class="home-hero">
       <div class="home-hero-head">
         <span class="home-kicker">
@@ -143,7 +156,7 @@
   </div>
   <script type="module">
     import { ensureAuthenticated } from '/js/authGate.js';
-    import { clearAuthSession } from '/js/authSession.js';
+    import { logoutSession } from '/js/authSession.js';
 
     async function loadCfg() {
       const deploy = await import('/js/config.deploy.js');
@@ -164,8 +177,9 @@
       document.body.classList.remove('auth-pending');
     })();
 
-    document.getElementById('auth-logout')?.addEventListener('click', () => {
-      clearAuthSession();
+    document.getElementById('auth-logout')?.addEventListener('click', async () => {
+      const cfg = await loadCfg();
+      await logoutSession(cfg.API_BASE ?? '');
       location.reload();
     });
   </script>

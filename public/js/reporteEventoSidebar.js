@@ -1,6 +1,5 @@
 /**
- * Re-enganche al editor: importar `initReporteEventoSidebar` en `app.js` y sustituir el stub `reporteCtl`
- * cuando exista de nuevo el panel `#reporte-evento-details` y el cableado Mapbox (ruta + pin).
+ * Panel «Montar evento»: enganchado desde `app.js` con `#reporte-evento-details` (float + mapa).
  */
 import { distanceFromStartAlongLineMeters, snapLngLatToLine } from './measurements.js';
 
@@ -22,9 +21,9 @@ const QUICK_PRESETS = {
 /** Acciones sugeridas por tipo para evitar combinaciones inválidas al guardar. */
 const ACTIONS_BY_TYPE = {
   VANDALISMO: ['REEMPLAZO DE FIBRA', 'INTERVENCIÓN TECNICA'],
-  'OBRAS CIVILES': ['INTERVENCIÓN TECNICA', 'REEMPLAZO DE FIBRA', 'CIERRE CONTINUIDAD'],
+  'OBRAS CIVILES': ['INTERVENCIÓN TECNICA', 'REEMPLAZO DE FIBRA', 'SE INSTALA CIERRE'],
   DETERIORO: ['INTERVENCIÓN TECNICA', 'REEMPLAZO DE FIBRA'],
-  MANTENIMIENTO: ['INTERVENCIÓN TECNICA', 'CIERRE CONTINUIDAD'],
+  MANTENIMIENTO: ['INTERVENCIÓN TECNICA', 'SE INSTALA CIERRE'],
   'DAÑO POR TERCEROS': ['REEMPLAZO DE FIBRA', 'INTERVENCIÓN TECNICA']
 };
 
@@ -86,14 +85,10 @@ export function initReporteEventoSidebar(opts) {
   const btnCancelWait = document.getElementById('btn-reporte-cancel-wait');
   const btnRepick = document.getElementById('btn-reporte-repick');
   const btnUseGps = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-use-gps'));
-  const btnImproveGps = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-improve-gps'));
   const presetSelect = /** @type {HTMLSelectElement | null} */ (document.getElementById('reporte-ev-preset-select'));
   const gpsStatusEl = document.getElementById('reporte-ev-gps-status');
   const offlineNoteEl = document.getElementById('reporte-ev-offline-note');
   const pinCardEl = document.getElementById('reporte-ev-pin-card');
-  const pinCoordsEl = document.getElementById('reporte-ev-pin-coords');
-  const pinRouteEl = document.getElementById('reporte-ev-pin-route');
-  const pinAccEl = document.getElementById('reporte-ev-pin-acc');
   const toastEl = document.getElementById('reporte-ev-toast');
   const presetBtns = /** @type {NodeListOf<HTMLButtonElement>} */ (
     document.querySelectorAll('.reporte-ev-preset[data-preset]')
@@ -113,8 +108,24 @@ export function initReporteEventoSidebar(opts) {
 
   const FLOAT_OPEN = 'editor-float-panel--open';
 
+  /** Tras elegir modo en UI: solo tendido (`cable`) o coordenada exacta (`libre`). */
+  let pickPlacementMode = /** @type {'cable' | 'libre' | null} */ (null);
+  const placementRow = document.getElementById('reporte-ev-placement-row');
+
   function isReportePanelOpen() {
     return details.classList.contains(FLOAT_OPEN);
+  }
+
+  function showPlacementChooser() {
+    pickPlacementMode = null;
+    awaitingMapPick = false;
+    details.classList.remove('reporte-ev--armed');
+    onArmingChanged?.(false);
+    if (placementRow) placementRow.hidden = false;
+    if (phaseWait) phaseWait.hidden = false;
+    if (phaseForm) phaseForm.hidden = true;
+    updatePhaseDom();
+    updatePinCard();
   }
 
   function hasMoleculeSelected() {
@@ -171,10 +182,6 @@ export function initReporteEventoSidebar(opts) {
     gpsStatusEl.dataset.level = level || '';
   }
 
-  function fmtCoord(v) {
-    return Number.isFinite(v) ? v.toFixed(6) : '—';
-  }
-
   function updatePinCard() {
     if (!pinCardEl) return;
     if (!pinnedLngLat) {
@@ -182,33 +189,6 @@ export function initReporteEventoSidebar(opts) {
       return;
     }
     pinCardEl.hidden = false;
-    if (pinCoordsEl) {
-      pinCoordsEl.textContent = `${fmtCoord(pinnedLngLat.lat)}, ${fmtCoord(pinnedLngLat.lng)}`;
-    }
-    if (pinRouteEl) {
-      pinRouteEl.textContent = pinnedRouteLabel
-        ? `Tendido: ${pinnedRouteLabel}`
-        : 'Sin tendido asociado (coordenada cruda)';
-    }
-    if (pinAccEl) {
-      if (Number.isFinite(lastGpsAccuracy) && /** @type {number} */ (lastGpsAccuracy) > 0) {
-        const acc = /** @type {number} */ (lastGpsAccuracy);
-        const level = acc <= 15 ? 'ok' : acc <= GPS_POOR_ACCURACY_M ? 'warn' : 'bad';
-        pinAccEl.textContent = `±${Math.round(acc)} m`;
-        pinAccEl.dataset.level = level;
-        pinAccEl.hidden = false;
-      } else {
-        pinAccEl.hidden = true;
-        pinAccEl.textContent = '';
-      }
-    }
-    if (btnImproveGps) {
-      /* Solo mostrar «Mejorar GPS» si el punto venía de GPS con precisión pobre. */
-      btnImproveGps.hidden = !(
-        Number.isFinite(lastGpsAccuracy) &&
-        /** @type {number} */ (lastGpsAccuracy) > GPS_POOR_ACCURACY_M
-      );
-    }
   }
 
   function startAwaitingMapPick() {
@@ -218,13 +198,22 @@ export function initReporteEventoSidebar(opts) {
       onArmingChanged?.(false);
       if (phaseForm) phaseForm.hidden = true;
       if (phaseWait) phaseWait.hidden = false;
+      if (placementRow) placementRow.hidden = false;
       updatePinCard();
+      return;
+    }
+    if (!pickPlacementMode) {
+      setStatus('Montar evento: elige primero «Sobre el tendido» o «Punto libre».');
       return;
     }
     awaitingMapPick = true;
     details.classList.add('reporte-ev--armed');
     disarmOtdrPick();
-    setStatus('Montar evento: toca cualquier punto del mapa (o el tendido) o usa GPS.');
+    if (pickPlacementMode === 'cable') {
+      setStatus('Montar evento: toca el cable en el mapa. Cancelar abajo si te equivocas.');
+    } else {
+      setStatus('Montar evento: toca el mapa donde quieras el incidente (coordenada libre).');
+    }
     onArmingChanged?.(true);
     updatePhaseDom();
   }
@@ -271,6 +260,36 @@ export function initReporteEventoSidebar(opts) {
   function handleRouteLinePick(e, f) {
     if (!ensureMoleculeSelected(true)) return false;
     if (!awaitingMapPick) return false;
+    /* Modo libre: un clic sobre el cable también fija el punto (coordenada del clic, sin encajar al trazado). */
+    if (pickPlacementMode === 'libre') {
+      const lng = Number(e.lngLat?.lng);
+      const lat = Number(e.lngLat?.lat);
+      if (!Number.isFinite(lng) || !Number.isFinite(lat)) return false;
+      try {
+        applyReportePickedRoute(null, /** @type {any} */ (e));
+      } catch {
+        /* */
+      }
+      pinnedLngLat = { lng, lat };
+      pinnedRouteLabel = null;
+      lastGpsAccuracy = null;
+      setReportePin([lng, lat]);
+      autoComputedDistOdf = null;
+      if (distAutoTag) distAutoTag.hidden = true;
+      awaitingMapPick = false;
+      details.classList.remove('reporte-ev--armed');
+      onArmingChanged?.(false);
+      updatePhaseDom();
+      refreshFechaText();
+      setStatus('Montar evento: punto libre fijado. Completa el formulario y guarda.');
+      try {
+        tipoEl.focus();
+      } catch {
+        /* */
+      }
+      return true;
+    }
+    if (pickPlacementMode !== 'cable') return false;
     const geomEarly = /** @type {any} */ (f.geometry);
     if (geomEarly?.type !== 'LineString' || !Array.isArray(geomEarly.coordinates) || geomEarly.coordinates.length < 2) {
       return false;
@@ -316,6 +335,7 @@ export function initReporteEventoSidebar(opts) {
   function handleMapTapPick(e, meta = {}) {
     if (!ensureMoleculeSelected(true)) return false;
     if (!awaitingMapPick) return false;
+    if (pickPlacementMode === 'cable' && !meta.hasRouteHit) return false;
     if (meta.hasRouteHit) return false;
     const lng = Number(e?.lngLat?.lng);
     const lat = Number(e?.lngLat?.lat);
@@ -326,28 +346,39 @@ export function initReporteEventoSidebar(opts) {
     let msgExtra = 'Punto libre del mapa.';
     pinnedRouteLabel = null;
 
-    const nearest = findNearestRouteForLngLat?.(lng, lat, GPS_ROUTE_SNAP_RADIUS_M) || null;
-    if (nearest?.feature && Array.isArray(nearest.snapped) && nearest.snapped.length === 2) {
-      finalLng = Number(nearest.snapped[0]);
-      finalLat = Number(nearest.snapped[1]);
-      pinnedRouteLabel =
-        String(nearest.feature.properties?.nombre ?? nearest.feature.id ?? '').trim() || null;
+    if (pickPlacementMode === 'libre') {
       try {
-        applyReportePickedRoute(
-          nearest.feature,
-          /** @type {any} */ ({ lngLat: { lng: finalLng, lat: finalLat } })
-        );
+        applyReportePickedRoute(null, /** @type {any} */ (e));
       } catch {
         /* */
       }
-      const geomSel = /** @type {any} */ (nearest.feature.geometry);
-      if (geomSel?.type === 'LineString' && geomSel.coordinates?.length >= 2) {
-        setDistOdfFromRoute(geomSel);
-      }
-      msgExtra = `Ajustado al tendido «${pinnedRouteLabel ?? '—'}» (${Math.round(nearest.meters)} m).`;
-    } else {
       autoComputedDistOdf = null;
       if (distAutoTag) distAutoTag.hidden = true;
+      msgExtra = 'Coordenada libre (sin asociar al tendido).';
+    } else {
+      const nearest = findNearestRouteForLngLat?.(lng, lat, GPS_ROUTE_SNAP_RADIUS_M) || null;
+      if (nearest?.feature && Array.isArray(nearest.snapped) && nearest.snapped.length === 2) {
+        finalLng = Number(nearest.snapped[0]);
+        finalLat = Number(nearest.snapped[1]);
+        pinnedRouteLabel =
+          String(nearest.feature.properties?.nombre ?? nearest.feature.id ?? '').trim() || null;
+        try {
+          applyReportePickedRoute(
+            nearest.feature,
+            /** @type {any} */ ({ lngLat: { lng: finalLng, lat: finalLat } })
+          );
+        } catch {
+          /* */
+        }
+        const geomSel = /** @type {any} */ (nearest.feature.geometry);
+        if (geomSel?.type === 'LineString' && geomSel.coordinates?.length >= 2) {
+          setDistOdfFromRoute(geomSel);
+        }
+        msgExtra = `Ajustado al tendido «${pinnedRouteLabel ?? '—'}» (${Math.round(nearest.meters)} m).`;
+      } else {
+        autoComputedDistOdf = null;
+        if (distAutoTag) distAutoTag.hidden = true;
+      }
     }
 
     pinnedLngLat = { lng: finalLng, lat: finalLat };
@@ -488,6 +519,7 @@ export function initReporteEventoSidebar(opts) {
   }
 
   function resetForCableCleared() {
+    pickPlacementMode = null;
     cancelAwaitingMapPickOnly();
     pinnedLngLat = null;
     pinnedRouteLabel = null;
@@ -497,6 +529,7 @@ export function initReporteEventoSidebar(opts) {
     if (distAutoTag) distAutoTag.hidden = true;
     setReportePin(null);
     details.classList.remove('reporte-ev--armed');
+    if (placementRow) placementRow.hidden = false;
     if (phaseForm) phaseForm.hidden = true;
     if (phaseWait) phaseWait.hidden = false;
     onArmingChanged?.(false);
@@ -515,7 +548,7 @@ export function initReporteEventoSidebar(opts) {
     setGpsStatus('', '');
     updatePinCard();
     if (isReportePanelOpen()) {
-      startAwaitingMapPick();
+      showPlacementChooser();
     }
   }
 
@@ -750,7 +783,7 @@ export function initReporteEventoSidebar(opts) {
     setReportePin(null);
     setGpsStatus('', '');
     updatePinCard();
-    if (isReportePanelOpen()) startAwaitingMapPick();
+    if (isReportePanelOpen()) showPlacementChooser();
     refreshFechaText();
   }
 
@@ -849,12 +882,14 @@ export function initReporteEventoSidebar(opts) {
     restoreDraft();
     void flushQueue();
     if (!pinnedLngLat) {
-      startAwaitingMapPick();
+      showPlacementChooser();
     }
     updatePhaseDom();
   }
 
   function notifyReportePanelClosed() {
+    pickPlacementMode = null;
+    if (placementRow) placementRow.hidden = false;
     cancelAwaitingMapPickOnly();
   }
 
@@ -862,8 +897,23 @@ export function initReporteEventoSidebar(opts) {
 
   btnCancelWait?.addEventListener('click', () => {
     cancelAwaitingMapPickOnly();
+    pickPlacementMode = null;
+    if (placementRow) placementRow.hidden = false;
     closeReportePanelUi?.();
     setStatus('Montar evento: modo mapa cancelado.');
+  });
+
+  document.getElementById('btn-reporte-pick-cable')?.addEventListener('click', () => {
+    if (!ensureMoleculeSelected(true)) return;
+    pickPlacementMode = 'cable';
+    if (placementRow) placementRow.hidden = true;
+    startAwaitingMapPick();
+  });
+  document.getElementById('btn-reporte-pick-free')?.addEventListener('click', () => {
+    if (!ensureMoleculeSelected(true)) return;
+    pickPlacementMode = 'libre';
+    if (placementRow) placementRow.hidden = true;
+    startAwaitingMapPick();
   });
 
   btnRepick?.addEventListener('click', () => {
@@ -872,7 +922,6 @@ export function initReporteEventoSidebar(opts) {
   });
 
   btnUseGps?.addEventListener('click', () => handleGpsPick());
-  btnImproveGps?.addEventListener('click', () => handleGpsPick({ silent: false }));
   btnRapido?.addEventListener('click', async () => {
     if (!ensureMoleculeSelected(true)) return;
     if (btnRapido.disabled) return;

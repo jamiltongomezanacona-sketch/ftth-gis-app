@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import express from 'express';
-import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createPool } from './db.js';
@@ -9,6 +8,7 @@ import { createCentralesRouter } from './centralesRouter.js';
 import { createCierresRouter } from './cierresRouter.js';
 import { createEventosReporteRouter } from './eventosReporteRouter.js';
 import { createAuthRouter } from './authRouter.js';
+import { requireBearerAuth } from './authBearerMiddleware.js';
 import { insertRuta } from './rutasRepo.js';
 import {
   MAX_LINE_VERTICES,
@@ -17,16 +17,41 @@ import {
   parseRedTipoObligatorio,
   isLineStringGeometry
 } from './rutasShared.js';
+import { createCorsMiddleware, isProductionDeployment } from './corsConfig.js';
+import { securityHeadersMiddleware } from './securityHeadersMiddleware.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
 const publicDir = path.join(rootDir, 'public');
 
 const app = express();
+app.disable('x-powered-by');
+/** Tras proxy (Vercel, etc.) para que `req.ip` refleje al cliente en límites y logs. */
+if (process.env.NODE_ENV === 'production' || process.env.VERCEL === '1') {
+  app.set('trust proxy', 1);
+}
 const pool = createPool();
 
-app.use(cors({ origin: true }));
+app.use(createCorsMiddleware());
+app.use(securityHeadersMiddleware);
 app.use(express.json({ limit: '2mb' }));
+
+/** En producción, `/api/db-check` exige sesión JWT salvo `GIS_DB_CHECK_PUBLIC=1`. */
+function maybeRequireAuthForDbCheck(req, res, next) {
+  if (!isProductionDeployment()) {
+    next();
+    return;
+  }
+  if (String(process.env.GIS_DB_CHECK_PUBLIC ?? '').toLowerCase() === '1') {
+    next();
+    return;
+  }
+  requireBearerAuth(req, res, next);
+}
+
+if (isProductionDeployment() && String(process.env.GIS_DB_CHECK_PUBLIC ?? '').toLowerCase() !== '1') {
+  console.log('[db-check] En producción exige sesión JWT. Ping público: GET /health. GIS_DB_CHECK_PUBLIC=1 desactiva la protección.');
+}
 
 app.use('/api/auth', createAuthRouter(pool));
 
@@ -90,15 +115,15 @@ async function handlePostRuta(req, res, next) {
   }
 }
 
-app.post('/api/rutas', handlePostRuta);
-app.post('/api/rutas/', handlePostRuta);
+app.post('/api/rutas', requireBearerAuth, handlePostRuta);
+app.post('/api/rutas/', requireBearerAuth, handlePostRuta);
 
-app.use('/api/rutas', createRutasRouter(pool));
+app.use('/api/rutas', createRutasRouter(pool, { requireBearerAuth }));
 app.use('/api/centrales-etb', createCentralesRouter(pool));
-app.use('/api/cierres', createCierresRouter(pool));
+app.use('/api/cierres', createCierresRouter(pool, { requireBearerAuth }));
 /** Montaje anidado: evita 404 en algunos entornos donde `app.use('/api/eventos-reporte', r)` no enlaza POST/GET. */
 const apiEventosWrap = express.Router();
-apiEventosWrap.use('/eventos-reporte', createEventosReporteRouter(pool));
+apiEventosWrap.use('/eventos-reporte', createEventosReporteRouter(pool, { requireBearerAuth }));
 app.use('/api', apiEventosWrap);
 
 /**
@@ -169,7 +194,7 @@ app.get('/health', (_req, res) => {
 });
 
 /** Comprueba conexión a PostgreSQL y existencia de la tabla `rutas` (diagnóstico). */
-app.get('/api/db-check', async (_req, res) => {
+app.get('/api/db-check', maybeRequireAuthForDbCheck, async (_req, res) => {
   try {
     await pool.query('SELECT 1');
     const { rows: r0 } = await pool.query(
