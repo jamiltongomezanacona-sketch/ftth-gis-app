@@ -86,6 +86,14 @@ function sqlMoleculeMatchExpr(moleculaCodigoVariants) {
     where: `
     AND (
       (er.nombre_tendido IS NOT NULL AND er.nombre_tendido = ANY($2::text[]))
+      OR (
+        er.nombre_tendido IS NOT NULL
+        AND position('|' IN trim(er.nombre_tendido)) > 0
+        AND split_part(trim(er.nombre_tendido), '|', 2) <> ''
+        AND (
+          split_part(trim(er.nombre_tendido), '|', 1) || '|' || split_part(trim(er.nombre_tendido), '|', 2)
+        ) = ANY($2::text[])
+      )
       OR EXISTS (
         SELECT 1
         FROM rutas r
