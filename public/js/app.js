@@ -282,6 +282,21 @@ function labelCierreProp(key) {
 }
 
 /**
+ * @param {unknown} kindRaw
+ * @returns {string}
+ */
+function cierreOverlayKindLabel(kindRaw) {
+  const kind = String(kindRaw ?? '').trim();
+  if (kind === 'cierre_e1') return 'Cierre E1';
+  if (kind === 'cierre_e2') return 'Cierre E2';
+  if (kind === 'cierre_e0') return 'Cierre E0';
+  if (kind === 'nap') return 'NAP';
+  if (kind === 'cierre_otro') return 'Cierre / punto';
+  if (kind) return kind;
+  return 'Punto';
+}
+
+/**
  * @param {Record<string, unknown>} p
  * @param {string} coordsWgs84 texto ya formateado lng, lat
  */
@@ -289,22 +304,56 @@ function htmlCierreMapPopup(p, coordsWgs84) {
   const nombre = String(p.nombre ?? p.name ?? '').trim();
   const title = nombre || 'Cierre / NAP';
   const kind = String(p.ftth_overlay_kind ?? '').trim();
-  const kindLabel =
-    kind === 'cierre_e1'
-      ? 'Cierre E1'
-      : kind === 'cierre_e2'
-        ? 'Cierre E2'
-        : kind === 'cierre_e0'
-          ? 'Cierre E0'
-          : kind === 'nap'
-            ? 'NAP'
-            : kind === 'cierre_otro'
-              ? 'Cierre / punto'
-              : kind || 'Punto';
+  const kindLabel = cierreOverlayKindLabel(kind);
 
   const preferred = ['estado', 'dist_odf', 'usuario_id', 'created_at', 'lat', 'lng'];
   const distM = pickDistOdfMetersFromProps(p);
   const isE1E2 = kind === 'cierre_e1' || kind === 'cierre_e2';
+
+  const desc = escapeHtml(String(p.descripcion ?? '').trim());
+  const idStr = String(p.id ?? '').trim();
+  const canAdmin = String(p.source) === 'db_cierres' && isCierreDbUuidLike(idStr);
+  const admin = canAdmin
+    ? `<div class="evento-popup__actions">
+    <button type="button" class="evento-popup__btn" data-admin="ci-edit">Editar</button>
+    <button type="button" class="evento-popup__btn evento-popup__btn--danger" data-admin="ci-del">Borrar</button>
+  </div>`
+    : '';
+
+  if (isE1E2) {
+    const distVal =
+      distM != null
+        ? `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(String(distM))}</span>`
+        : `<span class="evento-popup__value evento-popup__value--mono">—</span>`;
+    const nombreStat = nombre
+      ? `<div class="evento-popup__stat">
+      <span class="evento-popup__stat-label">Nombre</span>
+      <span class="evento-popup__stat-value evento-popup__value--tendido">${escapeHtml(nombre)}</span>
+    </div>`
+      : '';
+    return `<div class="evento-popup evento-popup--cierre-sheet">
+  <header class="evento-popup__head">
+    <p class="evento-popup__eyebrow">${escapeHtml(kindLabel)}</p>
+    <h2 class="evento-popup__title">${escapeHtml(title)}</h2>
+  </header>
+  <section class="evento-popup__summary" aria-label="Datos del cierre">
+    ${nombreStat}
+    <div class="evento-popup__stat${distM == null ? ' evento-popup__stat--muted' : ''}">
+      <span class="evento-popup__stat-label">Dist. ODF (m)</span>
+      <span class="evento-popup__stat-value">${distVal}</span>
+    </div>
+    <div class="evento-popup__stat">
+      <span class="evento-popup__stat-label">WGS84</span>
+      <span class="evento-popup__stat-value evento-popup__value--mono">${escapeHtml(coordsWgs84)}</span>
+    </div>
+  </section>
+  <section class="evento-popup__desc" aria-label="Descripción">
+    <span class="evento-popup__desc-label">Descripción</span>
+    <p class="evento-popup__desc-text">${desc || '—'}</p>
+  </section>
+  ${admin}
+</div>`;
+  }
 
   /** @type {string[]} */
   const chunks = [];
@@ -317,29 +366,21 @@ function htmlCierreMapPopup(p, coordsWgs84) {
     pushRow('Nombre', `<span class="evento-popup__value evento-popup__value--tendido">${escapeHtml(nombre)}</span>`);
   }
 
-  if (isE1E2) {
-    const distHtml =
-      distM != null
-        ? `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(String(distM))}</span>`
-        : `<span class="evento-popup__value evento-popup__value--mono">—</span>`;
-    pushRow('Dist. ODF (m)', distHtml);
-  } else {
-    for (const key of preferred) {
-      if (key === 'dist_odf') {
-        if (distM == null) continue;
-        pushRow(
-          labelCierreProp('dist_odf'),
-          `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(String(distM))}</span>`
-        );
-        continue;
-      }
-      if (!(key in p) || p[key] == null || String(p[key]).trim() === '') continue;
-      let raw = p[key];
-      if (key === 'created_at') raw = formatEventoFechaEs(raw);
-      const val = escapeHtml(String(raw));
-      const mono = key === 'usuario_id' ? ' evento-popup__value--mono' : '';
-      pushRow(labelCierreProp(key), `<span class="evento-popup__value${mono}">${val}</span>`);
+  for (const key of preferred) {
+    if (key === 'dist_odf') {
+      if (distM == null) continue;
+      pushRow(
+        labelCierreProp('dist_odf'),
+        `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(String(distM))}</span>`
+      );
+      continue;
     }
+    if (!(key in p) || p[key] == null || String(p[key]).trim() === '') continue;
+    let raw = p[key];
+    if (key === 'created_at') raw = formatEventoFechaEs(raw);
+    const val = escapeHtml(String(raw));
+    const mono = key === 'usuario_id' ? ' evento-popup__value--mono' : '';
+    pushRow(labelCierreProp(key), `<span class="evento-popup__value${mono}">${val}</span>`);
   }
 
   pushRow(
@@ -355,37 +396,26 @@ function htmlCierreMapPopup(p, coordsWgs84) {
     ...CIERRE_POPUP_OMIT_KEYS,
     ...CIERRE_DIST_ODF_ALIAS_KEYS
   ]);
-  if (!isE1E2) {
-    const restKeys = Object.keys(p)
-      .filter((k) => !used.has(k) && k !== 'descripcion' && !CIERRE_POPUP_OMIT_KEYS.has(k))
-      .sort((a, b) => a.localeCompare(b, 'es'));
-    for (const key of restKeys) {
-      const v = p[key];
-      if (v == null || v === '') continue;
-      let s = typeof v === 'object' ? JSON.stringify(v) : String(v);
-      if (s.length > 280) s = `${s.slice(0, 280)}…`;
-      pushRow(labelCierreProp(key), `<span class="evento-popup__value">${escapeHtml(s)}</span>`);
-    }
-
-    const lo = p.ftth_orig_lon != null ? Number(p.ftth_orig_lon) : NaN;
-    const la = p.ftth_orig_lat != null ? Number(p.ftth_orig_lat) : NaN;
-    if (Number.isFinite(lo) && Number.isFinite(la)) {
-      pushRow(
-        'Coord. inventario',
-        `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(`${lo.toFixed(6)}, ${la.toFixed(6)}`)}</span>`
-      );
-    }
+  const restKeys = Object.keys(p)
+    .filter((k) => !used.has(k) && k !== 'descripcion' && !CIERRE_POPUP_OMIT_KEYS.has(k))
+    .sort((a, b) => a.localeCompare(b, 'es'));
+  for (const key of restKeys) {
+    const v = p[key];
+    if (v == null || v === '') continue;
+    let s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    if (s.length > 280) s = `${s.slice(0, 280)}…`;
+    pushRow(labelCierreProp(key), `<span class="evento-popup__value">${escapeHtml(s)}</span>`);
   }
 
-  const desc = escapeHtml(String(p.descripcion ?? '').trim());
-  const idStr = String(p.id ?? '').trim();
-  const canAdmin = String(p.source) === 'db_cierres' && isCierreDbUuidLike(idStr);
-  const admin = canAdmin
-    ? `<div class="evento-popup__actions">
-    <button type="button" class="evento-popup__btn" data-admin="ci-edit">Editar</button>
-    <button type="button" class="evento-popup__btn evento-popup__btn--danger" data-admin="ci-del">Borrar</button>
-  </div>`
-    : '';
+  const lo = p.ftth_orig_lon != null ? Number(p.ftth_orig_lon) : NaN;
+  const la = p.ftth_orig_lat != null ? Number(p.ftth_orig_lat) : NaN;
+  if (Number.isFinite(lo) && Number.isFinite(la)) {
+    pushRow(
+      'Coord. inventario',
+      `<span class="evento-popup__value evento-popup__value--mono">${escapeHtml(`${lo.toFixed(6)}, ${la.toFixed(6)}`)}</span>`
+    );
+  }
+
   return `<div class="evento-popup">
   <div class="evento-popup__title">${escapeHtml(title)}</div>
   <dl class="evento-popup__grid">
@@ -457,9 +487,20 @@ function htmlEventoMapPopupEditForm(p) {
  */
 function htmlCierreMapPopupEditForm(p, coordsWgs84) {
   const id = String(p.id ?? '').trim();
-  return `<div class="evento-popup evento-popup--edit">
-  <div class="evento-popup__title">Editar cierre</div>
-  <p class="evento-popup__hint">ID <span class="evento-popup__value--mono">${escapeHtml(id)}</span> · WGS84 ${escapeHtml(coordsWgs84)}</p>
+  const kind = String(p.ftth_overlay_kind ?? '').trim();
+  const cierreSheet = kind === 'cierre_e1' || kind === 'cierre_e2';
+  const kindLabel = cierreOverlayKindLabel(kind);
+  const headBlock = cierreSheet
+    ? `<header class="evento-popup__head">
+    <p class="evento-popup__eyebrow">Editar cierre</p>
+    <h2 class="evento-popup__title">${escapeHtml(kindLabel)}</h2>
+  </header>
+  <p class="evento-popup__cierre-edit-meta">ID <span class="evento-popup__value--mono">${escapeHtml(id)}</span> · WGS84 ${escapeHtml(coordsWgs84)}</p>`
+    : `<div class="evento-popup__title">Editar cierre</div>
+  <p class="evento-popup__hint">ID <span class="evento-popup__value--mono">${escapeHtml(id)}</span> · WGS84 ${escapeHtml(coordsWgs84)}</p>`;
+  const rootClass = cierreSheet ? 'evento-popup evento-popup--edit evento-popup--cierre-sheet' : 'evento-popup evento-popup--edit';
+  return `<div class="${rootClass}">
+  ${headBlock}
   <div class="evento-popup__edit-grid">
     <label class="evento-popup__edit-lab">Nombre</label>
     <input class="evento-popup__edit-ctl" type="text" data-f="nombre" value="${escapeHtml(String(p.nombre ?? p.name ?? ''))}" maxlength="500" />
