@@ -2707,8 +2707,8 @@ export async function boot() {
         : appNetwork === 'ftth'
           ? `Mapa FTTH: ${nR} tendido(s) en catálogo (sin centrales en API o /data). Solo se dibuja el buscado.`
           : `Sin nodos en mapa · ${nR} cable(s) en catálogo corporativa. Busca por nombre o ID para dibujar uno.`;
-      if (wasCleanBootstrap) {
-        msg = `${msg} En la primera carga, los pines de incidencias se muestran al pulsar «Actualizar catálogo».`;
+      if (wasCleanBootstrap && appNetwork === 'ftth') {
+        msg = `${msg} Pines de incidencias: se activan al elegir un tendido o una molécula en el buscador (o al abrir una vista de molécula/cierre); no dependen solo de «Actualizar catálogo».`;
       }
       setStatus(msg);
       syncEditorChromeBarMeta();
@@ -3312,6 +3312,17 @@ export async function boot() {
       }
       setStatus(`Seleccionada: ${cableName}${statusExtra}`);
       updateMetrics(geom, turf);
+      if (appNetwork === 'ftth') {
+        const pm = parseMoleculeCentralFromRouteFeature(f);
+        editorMoleculeFilter =
+          pm && pm.molecula
+            ? {
+                central: String(pm.central ?? '').trim(),
+                molecula: String(pm.molecula ?? '').trim()
+              }
+            : null;
+        void refreshEventosReporteDisplay();
+      }
       syncButtons();
     });
 
