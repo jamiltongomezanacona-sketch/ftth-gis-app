@@ -180,12 +180,15 @@ export function createRutasApi(apiBase, redTipo) {
     listEventosReporte(molecule, options = {}) {
       const c = molecule?.central != null ? String(molecule.central).trim() : '';
       const m = molecule?.molecula != null ? String(molecule.molecula).trim() : '';
+      /** El servidor por defecto usa 500; con muchas incidencias recientes, IDs antiguos no aparecen en mapa/lista. */
+      const limMax = '2000';
       if (!c || !m) {
-        return getJson(`/api/eventos-reporte${redQs}`, options);
+        return getJson(`/api/eventos-reporte${redQs}&limit=${limMax}`, options);
       }
       const q = new URLSearchParams();
       q.set('central', c);
       q.set('molecula', m);
+      q.set('limit', limMax);
       return getJson(`/api/eventos-reporte${redQs}&${q.toString()}`, options);
     },
 
