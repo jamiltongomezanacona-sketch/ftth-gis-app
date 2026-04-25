@@ -81,6 +81,22 @@ function stripEventoLegacyDescripcionSuffix(raw) {
     .trim();
 }
 
+/**
+ * Coordenadas del punto del evento (GeoJSON) para anclar el popup con precisión.
+ * @param {GeoJSON.Feature} f
+ * @param {mapboxgl.LngLat} lngLatFallback
+ * @returns {[number, number]}
+ */
+function getEventoPinLngLatFromFeature(f, lngLatFallback) {
+  const g = f?.geometry;
+  if (g?.type === 'Point' && Array.isArray(g.coordinates) && g.coordinates.length >= 2) {
+    const lo = Number(g.coordinates[0]);
+    const la = Number(g.coordinates[1]);
+    if (Number.isFinite(lo) && Number.isFinite(la)) return [lo, la];
+  }
+  return [lngLatFallback.lng, lngLatFallback.lat];
+}
+
 function formatEventoFechaEs(iso) {
   if (!iso || String(iso).trim() === '') return '—';
   try {
@@ -3231,24 +3247,55 @@ export async function boot() {
       const p = /** @type {Record<string, unknown>} */ (f.properties);
       const descShort = stripEventoLegacyDescripcionSuffix(String(p.descripcion ?? '')).slice(0, 420);
       setStatus(
-        `Evento #${p.id}: ${p.tipo_evento} · ${p.estado} · ${p.accion}. ${descShort}${descShort.length >= 420 ? '…' : ''}`
+        `Evento #${p.id}: ${p.tipo_evento} · ${p.estado}. ${descShort}${descShort.length >= 420 ? '…' : ''}`
       );
       closeCierreMapPopup();
       closeEventoMapPopup();
       try {
+        const anchor = getEventoPinLngLatFromFeature(f, e.lngLat);
+        const isNarrow = window.matchMedia('(max-width: 900px)').matches;
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (isNarrow && !reducedMotion) {
+          try {
+            if (navigator.vibrate) navigator.vibrate(14);
+          } catch {
+            /* */
+          }
+          try {
+            map.easeTo({
+              center: anchor,
+              duration: 440,
+              essential: true,
+              padding: { top: 64, bottom: 240, left: 14, right: 14 }
+            });
+          } catch {
+            /* */
+          }
+        }
         const popup = new mapboxgl.Popup({
           className: 'evento-popup-wrap',
-          offset: 12,
-          maxWidth: window.matchMedia('(max-width: 900px)').matches ? 'min(calc(100vw - 20px), 288px)' : 'min(92vw, 340px)',
+          anchor: 'bottom',
+          offset: isNarrow ? [0, -16] : [0, -12],
+          maxWidth: isNarrow ? 'min(calc(100vw - 16px), 340px)' : 'min(92vw, 380px)',
           closeButton: true,
           closeOnClick: true
         })
-          .setLngLat(e.lngLat)
+          .setLngLat(anchor)
           .setHTML(htmlEventoMapPopup(p))
           .addTo(map);
         eventoMapPopup = popup;
         popup.on('close', () => {
           if (eventoMapPopup === popup) eventoMapPopup = null;
+        });
+        popup.once('open', () => {
+          window.requestAnimationFrame(() => {
+            try {
+              const btn = popup.getElement()?.querySelector?.('.mapboxgl-popup-close-button');
+              if (btn instanceof HTMLElement) btn.focus({ preventScroll: true });
+            } catch {
+              /* */
+            }
+          });
         });
         attachEventoPopupAdmin?.(popup, p);
       } catch (err) {

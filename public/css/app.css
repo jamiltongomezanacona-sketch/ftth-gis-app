@@ -3659,6 +3659,28 @@ body.editor-body #sidebar {
 }
 
 /* Popup al hacer clic en un evento (incidencia) en el mapa — ficha tipo “propiedades” */
+@keyframes evento-popup-tap-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.evento-popup-wrap:has(.evento-popup--evento) .evento-popup--evento {
+  animation: evento-popup-tap-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .evento-popup-wrap:has(.evento-popup--evento) .evento-popup--evento {
+    animation: none;
+  }
+}
+
 .evento-popup-wrap .mapboxgl-popup-content {
   background: #ffffff;
   color: #1e293b;
