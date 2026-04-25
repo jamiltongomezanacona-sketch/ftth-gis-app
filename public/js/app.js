@@ -404,8 +404,11 @@ function htmlEventoMapPopupEditForm(p) {
   const id = p.id != null ? String(p.id) : '';
   const dist =
     p.dist_odf != null && Number.isFinite(Number(p.dist_odf)) ? String(Number(p.dist_odf)) : '';
-  return `<div class="evento-popup evento-popup--edit">
-  <div class="evento-popup__title">Editar evento #${escapeHtml(id)}</div>
+  return `<div class="evento-popup evento-popup--edit evento-popup--evento">
+  <header class="evento-popup__head">
+    <p class="evento-popup__eyebrow">Editar incidencia</p>
+    <h2 class="evento-popup__title">Evento #${escapeHtml(id)}</h2>
+  </header>
   <div class="evento-popup__edit-grid">
     <label class="evento-popup__edit-lab">Tipo</label>
     <select class="evento-popup__edit-ctl" data-f="tipo">${htmlSelectOpts(EVENTO_TIPO_OPTS, p.tipo_evento)}</select>
@@ -466,6 +469,11 @@ function htmlEventoMapPopup(p) {
   const estado = escapeHtml(p.estado);
   const desc = escapeHtml(p.descripcion ?? '');
   const fecha = escapeHtml(formatEventoFechaEs(p.created_iso));
+  const isoEsc =
+    p.created_iso != null && String(p.created_iso).trim() !== ''
+      ? escapeHtml(String(p.created_iso).trim())
+      : '';
+  const timeAttrs = isoEsc ? ` datetime="${isoEsc}"` : '';
   const d = p.dist_odf != null ? Number(p.dist_odf) : NaN;
   const dist = Number.isFinite(d) ? escapeHtml(String(d)) : '—';
   const stMod = eventoEstadoPillModifier(p.estado);
@@ -476,18 +484,26 @@ function htmlEventoMapPopup(p) {
     <button type="button" class="evento-popup__btn evento-popup__btn--danger" data-admin="ev-del">Borrar</button>
   </div>`
     : '';
-  return `<div class="evento-popup">
-  <div class="evento-popup__title">Evento #${escapeHtml(id)}</div>
-  <dl class="evento-popup__grid">
-    <dt>Fecha</dt><dd><span class="evento-popup__value">${fecha}</span></dd>
-    <dt>Tipo</dt><dd><span class="evento-popup__pill evento-popup__pill--tipo">${tipo || '—'}</span></dd>
-    <dt>Estado</dt><dd><span class="evento-popup__pill evento-popup__pill--estado ${stMod}">${estado || '—'}</span></dd>
-    <dt>Dist. ODF</dt><dd><span class="evento-popup__value evento-popup__value--mono">${dist}</span></dd>
-  </dl>
-  <div class="evento-popup__desc">
+  return `<div class="evento-popup evento-popup--evento">
+  <header class="evento-popup__head">
+    <p class="evento-popup__eyebrow">Incidencia FTTH</p>
+    <h2 class="evento-popup__title">Evento #${escapeHtml(id)}</h2>
+  </header>
+  <section class="evento-popup__summary" aria-label="Resumen del evento">
+    <time class="evento-popup__date"${timeAttrs}>${fecha}</time>
+    <div class="evento-popup__badges">
+      <span class="evento-popup__pill evento-popup__pill--tipo">${tipo || '—'}</span>
+      <span class="evento-popup__pill evento-popup__pill--estado ${stMod}">${estado || '—'}</span>
+    </div>
+    <div class="evento-popup__stat${dist === '—' ? ' evento-popup__stat--muted' : ''}">
+      <span class="evento-popup__stat-label">Dist. ODF (m)</span>
+      <span class="evento-popup__stat-value evento-popup__value--mono">${dist}</span>
+    </div>
+  </section>
+  <section class="evento-popup__desc" aria-label="Descripción">
     <span class="evento-popup__desc-label">Descripción</span>
     <p class="evento-popup__desc-text">${desc || '—'}</p>
-  </div>
+  </section>
   ${eventoActions}
 </div>`;
 }
