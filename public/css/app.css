@@ -5517,25 +5517,35 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
     padding-left: max(8px, env(safe-area-inset-left, 0px));
     padding-right: max(10px, env(safe-area-inset-right, 0px));
     padding-bottom: 0;
-    gap: 8px;
+    gap: 6px;
   }
 
-  /* Buscador centrado en el chrome (móvil: algo más de ancho útil). */
+  /* Móvil: buscador en flujo normal para evitar recortes debajo de iconos. */
   body.editor-body .editor-chrome-search-slot {
-    order: 0;
-    left: 50%;
+    position: relative;
+    transform: none;
+    left: auto;
+    top: auto;
     right: auto;
-    width: min(100%, calc(100vw - 88px));
-    max-width: min(420px, calc(100vw - 24px));
+    width: auto;
+    max-width: none;
     min-width: 0;
-    flex: none;
+    flex: 1 1 auto;
     margin: 0;
-    justify-content: center;
+    justify-content: flex-start;
+    z-index: 1;
+    pointer-events: auto;
   }
 
   body.editor-body .cable-search-mount--chrome {
     width: 100%;
     max-width: 100%;
+  }
+
+  body.editor-body .cable-search-mount--chrome .cable-search-input {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   /* Altura del rail (safe area + margen + barra con blur + padding interno) */
