@@ -376,6 +376,7 @@ export function initMontarCierreModal(opts) {
 
   function disarmMapPick() {
     document.body.classList.remove('editor-mc-pick-map');
+    root.classList.remove('editor-mc-modal--map-pick');
     try {
       const m = getMap();
       if (mapClickHandler) {
@@ -391,6 +392,7 @@ export function initMontarCierreModal(opts) {
   function armMapPick() {
     disarmMapPick();
     document.body.classList.add('editor-mc-pick-map');
+    root.classList.add('editor-mc-modal--map-pick');
     const m = getMap();
     mapClickHandler = (e) => {
       pickedLngLat = { lng: e.lngLat.lng, lat: e.lngLat.lat };
@@ -411,7 +413,7 @@ export function initMontarCierreModal(opts) {
     } catch {
       /* */
     }
-    setStatus('Montar cierre: haz un clic en el mapa para colocar el pin del cierre.');
+    setStatus('Montar cierre: usa "Ubicar punto del cierre" y haz clic en el mapa para definir la posición.');
   }
 
   function hideNombreSuggest() {
@@ -620,7 +622,10 @@ export function initMontarCierreModal(opts) {
     return !root.hidden;
   }
 
-  backdrop.addEventListener('click', () => close());
+  backdrop.addEventListener('click', () => {
+    if (mapClickHandler) return;
+    close();
+  });
   btnClose.addEventListener('click', () => close());
   btnCancel.addEventListener('click', () => close());
   btnBack.addEventListener('click', () => showStepPick());

@@ -1429,6 +1429,19 @@ body.editor-body .editor-trazar-modal__title.editor-float-panel__title {
   pointer-events: auto;
 }
 
+.editor-mc-modal.editor-mc-modal--map-pick {
+  /* Mientras se elige punto, los clics fuera del panel deben pasar al mapa. */
+  pointer-events: none;
+}
+
+.editor-mc-modal.editor-mc-modal--map-pick .editor-mc-modal__panel {
+  pointer-events: auto;
+}
+
+.editor-mc-modal.editor-mc-modal--map-pick .editor-mc-modal__backdrop {
+  pointer-events: none;
+}
+
 .editor-mc-modal__backdrop {
   position: absolute;
   inset: 0;
