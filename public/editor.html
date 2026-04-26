@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260426quitarAltaEnCampoEv" />
+  <link rel="stylesheet" href="/css/app.css?v=20260426quitarHintMontarEvento" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -440,10 +440,6 @@
       <p id="reporte-ev-offline-note" class="reporte-ev-offline-note" hidden></p>
 
       <div id="reporte-ev-phase-wait">
-        <p class="editor-mc-hint reporte-ev-wait-intro">
-          Elige <strong>Sobre el tendido</strong> o <strong>Punto libre</strong> y toca el mapa, o usa <strong>GPS</strong>. Con el punto fijado, completa tipo, estado y descripción; el campo ofrece
-          <strong>sugerencias</strong> según el tendido y el tipo de evento.
-        </p>
         <div id="reporte-ev-placement-row" class="editor-mc-cards reporte-ev-placement-cards">
           <button type="button" class="reporte-ev-btn reporte-ev-btn--cta-verde" id="btn-reporte-pick-cable">
             <span class="reporte-ev-preset__title">Sobre el tendido</span>
@@ -595,6 +591,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260426quitarAltaEnCampoEv"></script>
+  <script type="module" src="/js/app.js?v=20260426quitarHintMontarEvento"></script>
 </body>
 </html>
