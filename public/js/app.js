@@ -495,20 +495,15 @@ function htmlCierreMapPopupEditForm(p, coordsWgs84) {
     ? `<header class="evento-popup__head">
     <p class="evento-popup__eyebrow">Editar cierre</p>
     <h2 class="evento-popup__title">${escapeHtml(kindLabel)}</h2>
-  </header>
-  <p class="evento-popup__cierre-edit-meta">ID <span class="evento-popup__value--mono">${escapeHtml(id)}</span> · WGS84 ${escapeHtml(coordsWgs84)}</p>`
+  </header>`
     : `<div class="evento-popup__title">Editar cierre</div>
-  <p class="evento-popup__hint">ID <span class="evento-popup__value--mono">${escapeHtml(id)}</span> · WGS84 ${escapeHtml(coordsWgs84)}</p>`;
+  <p class="evento-popup__hint">Actualiza los datos necesarios del cierre.</p>`;
   const rootClass = cierreSheet ? 'evento-popup evento-popup--edit evento-popup--cierre-sheet' : 'evento-popup evento-popup--edit';
   return `<div class="${rootClass}">
   ${headBlock}
   <div class="evento-popup__edit-grid">
     <label class="evento-popup__edit-lab">Nombre</label>
     <input class="evento-popup__edit-ctl" type="text" data-f="nombre" value="${escapeHtml(String(p.nombre ?? p.name ?? ''))}" maxlength="500" />
-    <label class="evento-popup__edit-lab">Tipo</label>
-    <input class="evento-popup__edit-ctl" type="text" data-f="tipo" value="${escapeHtml(String(p.tipo ?? ''))}" maxlength="80" />
-    <label class="evento-popup__edit-lab">Estado</label>
-    <input class="evento-popup__edit-ctl" type="text" data-f="estado" value="${escapeHtml(String(p.estado ?? ''))}" maxlength="120" />
     <label class="evento-popup__edit-lab">Molécula</label>
     <input class="evento-popup__edit-ctl" type="text" data-f="molecula_codigo" value="${escapeHtml(String(p.molecula_codigo ?? ''))}" maxlength="200" />
     <label class="evento-popup__edit-lab">Dist. ODF</label>
