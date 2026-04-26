@@ -320,7 +320,11 @@
       </header>
       <div class="editor-mc-modal__body">
         <div id="editor-mc-step-pick" class="editor-mc-step">
-          <p class="editor-mc-hint">Elige el tipo. Luego podrás usar el <strong>centro del mapa</strong> o un <strong>clic en el mapa</strong> para la posición.</p>
+          <p class="editor-mc-hint">
+            Elige <strong>E1</strong> o <strong>E2</strong>. En el siguiente paso verás el <strong>pin del cierre</strong> en el mapa: puedes
+            <strong>arrastrarlo</strong>, colocarlo con un <strong>clic</strong> o dejarlo <strong>siguiendo el centro</strong> mientras mueves el mapa.
+            El nombre ofrece <strong>sugerencias</strong> según los cierres ya dados de alta en esta molécula.
+          </p>
           <div id="editor-mc-cards-root" class="editor-mc-cards" role="group" aria-label="Tipo de cierre"></div>
         </div>
         <div id="editor-mc-step-form" class="editor-mc-step" hidden>
@@ -330,14 +334,30 @@
           </div>
           <div class="editor-mc-coord-actions">
             <button type="button" class="editor-mc-btn editor-mc-btn--ghost editor-mc-btn--sm" id="btn-editor-mc-pick-map">
-              Punto en el mapa
+              Clic en el mapa
             </button>
             <button type="button" class="editor-mc-btn editor-mc-btn--ghost editor-mc-btn--sm" id="btn-editor-mc-use-center">
-              Centro del mapa
+              Pin al centro
             </button>
           </div>
           <label class="editor-mc-lab" for="editor-mc-nombre">Nombre <span class="editor-mc-req">*</span></label>
-          <input class="editor-mc-input" id="editor-mc-nombre" type="text" maxlength="500" placeholder="Ej. CIERRE SI26-12" autocomplete="off" />
+          <div class="editor-mc-combo">
+            <input
+              class="editor-mc-input"
+              id="editor-mc-nombre"
+              type="text"
+              maxlength="500"
+              placeholder="Ej. CIERRE SI26-12"
+              autocomplete="off"
+            />
+            <ul
+              id="editor-mc-nombre-suggest"
+              class="editor-mc-suggest"
+              role="listbox"
+              aria-label="Sugerencias de nombre"
+              hidden
+            ></ul>
+          </div>
           <label class="editor-mc-lab" for="editor-mc-dist">Dist. ODF (m)</label>
           <input class="editor-mc-input" id="editor-mc-dist" type="number" min="0" step="0.1" placeholder="Opcional" />
           <label class="editor-mc-lab" for="editor-mc-estado">Estado</label>

@@ -1,7 +1,12 @@
 /**
  * Modal «Montar cierre»: flujo en dos pasos (elegir E1/E2 → datos).
  * Catálogo de tipos extensible (`MONTAR_CIERRE_TIPOS`).
+ *
+ * Posición: pin en mapa (Mapbox Marker, arrastrable); puede seguir el centro o fijarse por clic/arrastre.
+ * Nombre: sugerencias desde `api.listCierresPorMolecula` (misma API que overlay / búsqueda).
  */
+
+import { FTTH_ICON_CIERRE_E1, FTTH_ICON_CIERRE_E2 } from './ftthCierreIcons.js';
 
 /** @typedef {{ id: string, label: string, short: string, hint: string, kindBadgeClass: string }} MontarCierreTipo */
 
@@ -31,9 +36,53 @@ export const MONTAR_CIERRE_TIPOS = /** @type {const} */ ([
   }
 ]);
 
+const NOMBRE_SUGGEST_DEBOUNCE_MS = 200;
+const NOMBRE_SUGGEST_MAX = 10;
+
+/**
+ * @param {string} query
+ * @param {string[]} names deduplicados preferentemente
+ * @returns {string[]}
+ */
+function rankNombreSuggestions(query, names) {
+  const stripDiacritics = (s) =>
+    String(s)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  const q = stripDiacritics(String(query ?? '').trim()).toLowerCase();
+  const norm = (s) => stripDiacritics(String(s)).toLowerCase();
+  /** @type {{ n: string; score: number }[]} */
+  const rows = [];
+  const seen = new Set();
+  for (const raw of names) {
+    const n = String(raw ?? '').trim();
+    if (!n || seen.has(n)) continue;
+    seen.add(n);
+    const ln = norm(n);
+    let score = 0;
+    if (!q) {
+      score = 80 - Math.min(ln.length, 40);
+    } else if (ln.startsWith(q)) {
+      score = 300 - ln.length;
+    } else if (` ${ln}`.includes(` ${q}`) || ln.includes(`_${q}`) || ln.includes(`-${q}`)) {
+      score = 220 - ln.length;
+    } else if (ln.includes(q)) {
+      score = 120 - ln.length;
+    } else {
+      continue;
+    }
+    rows.push({ n, score });
+  }
+  rows.sort((a, b) => b.score - a.score || a.n.localeCompare(b.n));
+  return rows.map((r) => r.n).slice(0, NOMBRE_SUGGEST_MAX);
+}
+
 /**
  * @param {{
- *   api: { postCierre: (b: Record<string, unknown>) => Promise<{ ok?: boolean, id?: string }> },
+ *   api: {
+ *     postCierre: (b: Record<string, unknown>) => Promise<{ ok?: boolean, id?: string }>,
+ *     listCierresPorMolecula?: (central: string, molecula: string) => Promise<{ features?: object[] }>
+ *   },
  *   setStatus: (msg: string) => void,
  *   getMap: () => import('mapbox-gl').Map,
  *   getMoleculeFilter: () => { central: string, molecula: string } | null,
@@ -63,6 +112,7 @@ export function initMontarCierreModal(opts) {
   const coordsLine = document.getElementById('editor-mc-coords');
   const btnPickMap = document.getElementById('btn-editor-mc-pick-map');
   const btnUseCenter = document.getElementById('btn-editor-mc-use-center');
+  const ulNombreSuggest = document.getElementById('editor-mc-nombre-suggest');
 
   if (
     !root ||
@@ -82,7 +132,8 @@ export function initMontarCierreModal(opts) {
     !inpEstado ||
     !coordsLine ||
     !btnPickMap ||
-    !btnUseCenter
+    !btnUseCenter ||
+    !ulNombreSuggest
   ) {
     return {
       open: () => {},
@@ -95,16 +146,98 @@ export function initMontarCierreModal(opts) {
   let selected = null;
   /** @type {null | (() => void)} */
   let unsubMapMove = null;
-  /** Coordenadas elegidas por clic; `null` = usar centro del mapa al guardar. */
+  /** `null` = pin anclado al centro del mapa (se mueve con el mapa). Si hay valor = pin fijo (clic o arrastre). */
   /** @type {{ lng: number, lat: number } | null} */
   let pickedLngLat = null;
   /** @type {((e: import('mapbox-gl').MapLayerMouseEvent & import('mapbox-gl').EventData) => void) | null} */
   let mapClickHandler = null;
+  /** @type {import('mapbox-gl').Marker | null} */
+  let draftMarker = null;
+  /** Nombres de cierres ya existentes en la molécula (caché al abrir el paso formulario). */
+  /** @type {string[]} */
+  let nombreSuggestPool = [];
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let nombreSuggestTimer = null;
+  /** @type {number} */
+  let nombreSuggestActive = -1;
 
   function moleculaCodigoFromFilter(f) {
     if (!f?.central || !f?.molecula) return '';
     const under = String(f.central).trim().replace(/\s+/g, '_');
     return `${under}|${String(f.molecula).trim()}`;
+  }
+
+  function iconUrlForSelected() {
+    if (selected?.id === 'E2') return FTTH_ICON_CIERRE_E2;
+    return FTTH_ICON_CIERRE_E1;
+  }
+
+  function removeDraftMarker() {
+    try {
+      if (draftMarker) {
+        draftMarker.remove();
+        draftMarker = null;
+      }
+    } catch {
+      /* */
+    }
+  }
+
+  function ensureDraftMarker() {
+    removeDraftMarker();
+    const mb = globalThis.mapboxgl ?? window.mapboxgl;
+    if (typeof mb !== 'object' || !mb || typeof mb.Marker !== 'function' || !selected) return;
+    try {
+      const m = getMap();
+      const wrap = document.createElement('div');
+      wrap.className = 'editor-mc-map-pin';
+      wrap.setAttribute('role', 'img');
+      wrap.setAttribute(
+        'aria-label',
+        `Pin de cierre ${selected.short} (arrastra o usa los botones de posición)`
+      );
+      const img = document.createElement('img');
+      img.src = iconUrlForSelected();
+      img.alt = '';
+      img.width = 36;
+      img.height = 36;
+      wrap.appendChild(img);
+
+      const start =
+        pickedLngLat && Number.isFinite(pickedLngLat.lat) && Number.isFinite(pickedLngLat.lng)
+          ? [pickedLngLat.lng, pickedLngLat.lat]
+          : /** @type {[number, number]} */ ([m.getCenter().lng, m.getCenter().lat]);
+
+      draftMarker = new mb.Marker({ element: wrap, anchor: 'bottom', draggable: true })
+        .setLngLat(start)
+        .addTo(m);
+
+      draftMarker.on('dragend', () => {
+        try {
+          const ll = draftMarker?.getLngLat();
+          if (!ll || !Number.isFinite(ll.lat) || !Number.isFinite(ll.lng)) return;
+          pickedLngLat = { lng: ll.lng, lat: ll.lat };
+          paintCoords();
+          setStatus(
+            `Montar cierre: pin fijado en ${pickedLngLat.lat.toFixed(5)}, ${pickedLngLat.lng.toFixed(5)}.`
+          );
+        } catch {
+          /* */
+        }
+      });
+    } catch {
+      draftMarker = null;
+    }
+  }
+
+  function syncDraftMarkerToCenterIfNeeded() {
+    try {
+      if (!draftMarker || pickedLngLat) return;
+      const c = getMap().getCenter();
+      draftMarker.setLngLat([c.lng, c.lat]);
+    } catch {
+      /* */
+    }
   }
 
   function paintCoords() {
@@ -114,12 +247,12 @@ export function initMontarCierreModal(opts) {
         Number.isFinite(pickedLngLat.lat) &&
         Number.isFinite(pickedLngLat.lng)
       ) {
-        coordsLine.textContent = `${pickedLngLat.lat.toFixed(5)}, ${pickedLngLat.lng.toFixed(5)} (clic en mapa)`;
+        coordsLine.textContent = `${pickedLngLat.lat.toFixed(5)}, ${pickedLngLat.lng.toFixed(5)} · pin fijo`;
         return;
       }
       const c = getMap().getCenter();
       if (Number.isFinite(c.lat) && Number.isFinite(c.lng)) {
-        coordsLine.textContent = `${c.lat.toFixed(5)}, ${c.lng.toFixed(5)} (centro del mapa)`;
+        coordsLine.textContent = `${c.lat.toFixed(5)}, ${c.lng.toFixed(5)} · pin sigue el centro`;
       } else {
         coordsLine.textContent = '—';
       }
@@ -148,8 +281,13 @@ export function initMontarCierreModal(opts) {
     const m = getMap();
     mapClickHandler = (e) => {
       pickedLngLat = { lng: e.lngLat.lng, lat: e.lngLat.lat };
+      try {
+        draftMarker?.setLngLat([pickedLngLat.lng, pickedLngLat.lat]);
+      } catch {
+        /* */
+      }
       setStatus(
-        `Montar cierre: punto ${pickedLngLat.lat.toFixed(5)}, ${pickedLngLat.lng.toFixed(5)} · puedes guardar o cambiar.`
+        `Montar cierre: pin colocado en ${pickedLngLat.lat.toFixed(5)}, ${pickedLngLat.lng.toFixed(5)}.`
       );
       disarmMapPick();
       paintCoords();
@@ -160,12 +298,110 @@ export function initMontarCierreModal(opts) {
     } catch {
       /* */
     }
-    setStatus('Montar cierre: pulsa en el mapa la posición del cierre (un clic).');
+    setStatus('Montar cierre: haz un clic en el mapa para colocar el pin del cierre.');
+  }
+
+  function hideNombreSuggest() {
+    nombreSuggestTimer = null;
+    ulNombreSuggest.hidden = true;
+    ulNombreSuggest.innerHTML = '';
+    nombreSuggestActive = -1;
+    inpNombre.removeAttribute('aria-activedescendant');
+    inpNombre.setAttribute('aria-expanded', 'false');
+  }
+
+  function applyNombreSuggestSelection(value) {
+    inpNombre.value = value;
+    hideNombreSuggest();
+    inpNombre.focus();
+  }
+
+  function renderNombreSuggest(hits) {
+    ulNombreSuggest.innerHTML = '';
+    nombreSuggestActive = hits.length ? 0 : -1;
+    if (!hits.length) {
+      hideNombreSuggest();
+      return;
+    }
+    hits.forEach((text, i) => {
+      const li = document.createElement('li');
+      li.id = `editor-mc-nombre-opt-${i}`;
+      li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      li.textContent = text;
+      li.addEventListener('mousedown', (ev) => {
+        ev.preventDefault();
+        applyNombreSuggestSelection(text);
+      });
+      ulNombreSuggest.appendChild(li);
+    });
+    ulNombreSuggest.hidden = false;
+    inpNombre.setAttribute('aria-expanded', 'true');
+    if (hits[0]) inpNombre.setAttribute('aria-activedescendant', 'editor-mc-nombre-opt-0');
+  }
+
+  function refreshNombreSuggestHighlight() {
+    const items = ulNombreSuggest.querySelectorAll('li[role="option"]');
+    items.forEach((node, i) => {
+      const sel = i === nombreSuggestActive;
+      node.setAttribute('aria-selected', sel ? 'true' : 'false');
+      if (sel) {
+        inpNombre.setAttribute('aria-activedescendant', node.id || '');
+        try {
+          node.scrollIntoView({ block: 'nearest' });
+        } catch {
+          /* */
+        }
+      }
+    });
+  }
+
+  function scheduleNombreSuggest() {
+    if (nombreSuggestTimer) window.clearTimeout(nombreSuggestTimer);
+    nombreSuggestTimer = window.setTimeout(() => {
+      nombreSuggestTimer = null;
+      const q = inpNombre.value;
+      const hits = rankNombreSuggestions(q, nombreSuggestPool);
+      renderNombreSuggest(hits);
+    }, NOMBRE_SUGGEST_DEBOUNCE_MS);
+  }
+
+  /** Actualiza la lista sin esperar al debounce (p. ej. al llegar la caché de nombres desde la API). */
+  function flushNombreSuggestIfFocused() {
+    if (nombreSuggestTimer) window.clearTimeout(nombreSuggestTimer);
+    nombreSuggestTimer = null;
+    if (stepForm.hidden || document.activeElement !== inpNombre) return;
+    const hits = rankNombreSuggestions(inpNombre.value, nombreSuggestPool);
+    renderNombreSuggest(hits);
+  }
+
+  async function loadNombreSuggestPool() {
+    nombreSuggestPool = [];
+    const mol = getMoleculeFilter();
+    if (!mol?.central || !mol?.molecula || typeof api.listCierresPorMolecula !== 'function') return;
+    try {
+      const fc = await api.listCierresPorMolecula(mol.central, mol.molecula);
+      const feats = Array.isArray(fc?.features) ? fc.features : [];
+      /** @type {string[]} */
+      const names = [];
+      for (const f of feats) {
+        const p = f && typeof f === 'object' && 'properties' in f ? /** @type {{ nombre?: unknown, name?: unknown }} */ (f).properties : null;
+        const raw = p && typeof p.nombre === 'string' ? p.nombre : p && typeof p.name === 'string' ? p.name : '';
+        const t = String(raw ?? '').trim();
+        if (t) names.push(t);
+      }
+      nombreSuggestPool = names;
+      flushNombreSuggestIfFocused();
+    } catch {
+      nombreSuggestPool = [];
+    }
   }
 
   function showStepPick() {
     disarmMapPick();
+    removeDraftMarker();
     pickedLngLat = null;
+    hideNombreSuggest();
     selected = null;
     stepPick.hidden = false;
     stepForm.hidden = true;
@@ -188,6 +424,10 @@ export function initMontarCierreModal(opts) {
     inpDist.value = '';
     inpDesc.value = '';
     inpEstado.value = 'ACTIVO';
+    hideNombreSuggest();
+    void loadNombreSuggestPool();
+    ensureDraftMarker();
+    syncDraftMarkerToCenterIfNeeded();
     paintCoords();
     window.requestAnimationFrame(() => inpNombre.focus());
   }
@@ -216,7 +456,10 @@ export function initMontarCierreModal(opts) {
     try {
       const m = getMap();
       const onMoveEnd = () => {
-        if (!pickedLngLat) paintCoords();
+        if (!pickedLngLat) {
+          syncDraftMarkerToCenterIfNeeded();
+          paintCoords();
+        }
       };
       m.on('moveend', onMoveEnd);
       unsubMapMove = () => {
@@ -234,7 +477,9 @@ export function initMontarCierreModal(opts) {
 
   function close() {
     disarmMapPick();
+    removeDraftMarker();
     pickedLngLat = null;
+    hideNombreSuggest();
     try {
       unsubMapMove?.();
     } catch {
@@ -263,8 +508,55 @@ export function initMontarCierreModal(opts) {
   btnUseCenter.addEventListener('click', () => {
     disarmMapPick();
     pickedLngLat = null;
+    syncDraftMarkerToCenterIfNeeded();
     paintCoords();
-    setStatus('Montar cierre: se usará el centro del mapa al guardar.');
+    setStatus('Montar cierre: el pin vuelve a seguir el centro del mapa.');
+  });
+
+  inpNombre.setAttribute('role', 'combobox');
+  inpNombre.setAttribute('aria-autocomplete', 'list');
+  inpNombre.setAttribute('aria-controls', 'editor-mc-nombre-suggest');
+  inpNombre.setAttribute('aria-expanded', 'false');
+
+  inpNombre.addEventListener('input', () => {
+    scheduleNombreSuggest();
+  });
+  inpNombre.addEventListener('focus', () => {
+    scheduleNombreSuggest();
+  });
+  inpNombre.addEventListener('blur', () => {
+    window.setTimeout(() => hideNombreSuggest(), 180);
+  });
+  inpNombre.addEventListener('keydown', (ev) => {
+    if (ulNombreSuggest.hidden) return;
+    const items = ulNombreSuggest.querySelectorAll('li[role="option"]');
+    const n = items.length;
+    if (!n) return;
+    if (ev.key === 'Escape') {
+      ev.preventDefault();
+      hideNombreSuggest();
+      return;
+    }
+    if (ev.key === 'ArrowDown') {
+      ev.preventDefault();
+      nombreSuggestActive = Math.min(nombreSuggestActive + 1, n - 1);
+      refreshNombreSuggestHighlight();
+      return;
+    }
+    if (ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      nombreSuggestActive = Math.max(nombreSuggestActive - 1, 0);
+      refreshNombreSuggestHighlight();
+      return;
+    }
+    if (ev.key === 'Enter' && nombreSuggestActive >= 0) {
+      const li = items[nombreSuggestActive];
+      const t = li?.textContent?.trim();
+      if (t) {
+        ev.preventDefault();
+        applyNombreSuggestSelection(t);
+      }
+    }
   });
 
   for (const t of MONTAR_CIERRE_TIPOS) {

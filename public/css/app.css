@@ -1657,6 +1657,62 @@ body.editor-mc-pick-map .mapboxgl-canvas-container.mapboxgl-interactive {
   cursor: crosshair !important;
 }
 
+/* Pin de borrador (Montar cierre) — mismo espíritu que Trazar ref, icono E1/E2 */
+.editor-mc-map-pin {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 42px;
+  height: 46px;
+  pointer-events: auto;
+  filter: drop-shadow(0 3px 8px rgba(15, 23, 42, 0.38));
+}
+
+.editor-mc-map-pin img {
+  display: block;
+  width: 36px;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+}
+
+.editor-mc-combo {
+  position: relative;
+  z-index: 4;
+}
+
+.editor-mc-suggest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  max-height: min(200px, 32vh);
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  z-index: 20;
+}
+
+.editor-mc-suggest li {
+  margin: 0;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  color: #0f172a;
+  cursor: pointer;
+  line-height: 1.25;
+}
+
+.editor-mc-suggest li:hover,
+.editor-mc-suggest li[aria-selected='true'] {
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
 .editor-mc-lab {
   display: block;
   margin: 6px 0 3px;
