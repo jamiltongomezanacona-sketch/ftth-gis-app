@@ -45,7 +45,7 @@ import {
 } from './measurePolylineLayer.js';
 import { initEditorGpsDock } from './editorGpsDock.js';
 import { initReporteEventoSidebar } from './reporteEventoSidebar.js';
-import { initMontarCierreModal } from './montarCierreModal.js?v=20260425montarCierrePinSuggest';
+import { initMontarCierreModal } from './montarCierreModal.js?v=20260425montarCierreSmartTool';
 import { createTrazarController } from './trazarTool.js';
 import { bringTrazarCutLayerToFront, bringTrazarRefLayerToFront } from './trazarCutLayer.js';
 async function loadConfig() {

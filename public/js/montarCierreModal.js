@@ -38,6 +38,46 @@ export const MONTAR_CIERRE_TIPOS = /** @type {const} */ ([
 
 const NOMBRE_SUGGEST_DEBOUNCE_MS = 200;
 const NOMBRE_SUGGEST_MAX = 10;
+const SUBMOLECULA_COUNT = 18;
+const CENTRAL_CODE_BY_NAME = {
+  SANTA_INES: 'SI',
+  MUZU: 'MU',
+  CUNI: 'CU',
+  CHICO: 'CO',
+  FONTIBON: 'FO',
+  HOLANDA: 'HO',
+  BACHUE: 'BA',
+  SUBA: 'SU',
+  GUAYMARAL: 'GU',
+  TOBERIN: 'TO'
+};
+
+function escapeRe(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function subMoleculaToLetter(sub) {
+  const n = Number(sub);
+  if (!Number.isFinite(n) || n < 1 || n > SUBMOLECULA_COUNT) return '';
+  return String.fromCharCode('A'.charCodeAt(0) + n - 1);
+}
+
+function extractCentralAndMoleculaFromFilter(moleculeFilter) {
+  const molRaw = String(moleculeFilter?.molecula ?? '').trim().toUpperCase();
+  const centralRaw = String(moleculeFilter?.central ?? '').trim().toUpperCase().replace(/\s+/g, '_');
+  let centralCode = '';
+  let moleculaNum = '';
+  const fromMol = molRaw.match(/^([A-Z]{2})(\d{2})$/);
+  if (fromMol) {
+    centralCode = fromMol[1];
+    moleculaNum = fromMol[2];
+  } else {
+    const fromDigits = molRaw.match(/(\d{2})$/);
+    moleculaNum = fromDigits ? fromDigits[1] : '';
+    centralCode = CENTRAL_CODE_BY_NAME[centralRaw] || '';
+  }
+  return { centralCode, moleculaNum };
+}
 
 /**
  * @param {string} query
@@ -113,6 +153,10 @@ export function initMontarCierreModal(opts) {
   const btnPickMap = document.getElementById('btn-editor-mc-pick-map');
   const btnUseCenter = document.getElementById('btn-editor-mc-use-center');
   const ulNombreSuggest = document.getElementById('editor-mc-nombre-suggest');
+  const subWrap = document.getElementById('editor-mc-sub-wrap');
+  const inpSub = /** @type {HTMLSelectElement | null} */ (document.getElementById('editor-mc-sub'));
+  const smartPreview = document.getElementById('editor-mc-smart-preview');
+  const btnSuggestName = document.getElementById('btn-editor-mc-suggest-name');
 
   if (
     !root ||
@@ -133,7 +177,11 @@ export function initMontarCierreModal(opts) {
     !coordsLine ||
     !btnPickMap ||
     !btnUseCenter ||
-    !ulNombreSuggest
+    !ulNombreSuggest ||
+    !subWrap ||
+    !inpSub ||
+    !smartPreview ||
+    !btnSuggestName
   ) {
     return {
       open: () => {},
@@ -160,11 +208,76 @@ export function initMontarCierreModal(opts) {
   let nombreSuggestTimer = null;
   /** @type {number} */
   let nombreSuggestActive = -1;
+  /** Evita sobrescribir manualmente el nombre cuando el usuario ya lo editó. */
+  let smartNameManual = false;
+  /** Bloquea `input` al setear valor desde código. */
+  let updatingNombreProgrammatically = false;
 
   function moleculaCodigoFromFilter(f) {
     if (!f?.central || !f?.molecula) return '';
     const under = String(f.central).trim().replace(/\s+/g, '_');
     return `${under}|${String(f.molecula).trim()}`;
+  }
+
+  function computeSmartNameSuggestion() {
+    if (!selected) return { value: '', preview: 'Elige tipo de cierre para sugerir.' };
+    const mf = getMoleculeFilter();
+    const { centralCode, moleculaNum } = extractCentralAndMoleculaFromFilter(mf);
+    if (!centralCode || !moleculaNum) {
+      return { value: '', preview: 'No se pudo derivar central/molécula para sugerir código.' };
+    }
+    const existing = nombreSuggestPool.map((s) => String(s).trim().toUpperCase()).filter(Boolean);
+    if (selected.id === 'E1') {
+      const re = new RegExp(`^E1${escapeRe(centralCode)}${escapeRe(moleculaNum)}_(\\d+)$`, 'i');
+      const nums = existing
+        .map((n) => n.match(re))
+        .filter(Boolean)
+        .map((m) => Number(m[1]))
+        .filter((n) => Number.isFinite(n));
+      const next = nums.length ? Math.max(...nums) + 1 : 1;
+      const value = `E1${centralCode}${moleculaNum}_${next}`;
+      return { value, preview: `Sugerido inteligente: ${value}` };
+    }
+    const sub = String(inpSub.value || '1');
+    const letter = subMoleculaToLetter(sub);
+    if (!letter) return { value: '', preview: 'Submolécula inválida para E2.' };
+    const reNew = new RegExp(`^E2${escapeRe(centralCode)}${escapeRe(moleculaNum)}_${escapeRe(letter)}(\\d+)$`, 'i');
+    const reOld = new RegExp(`^E2${escapeRe(centralCode)}${escapeRe(moleculaNum)}_${escapeRe(sub)}(\\d+)$`, 'i');
+    const nums = [];
+    for (const n of existing) {
+      const hitNew = n.match(reNew);
+      if (hitNew) {
+        nums.push(Number(hitNew[1]));
+        continue;
+      }
+      const hitOld = n.match(reOld);
+      if (hitOld) nums.push(Number(hitOld[1]));
+    }
+    const next = nums.length ? Math.max(...nums) + 1 : 1;
+    const value = `E2${centralCode}${moleculaNum}_${letter}${next}`;
+    return { value, preview: `Sugerido inteligente: ${value}` };
+  }
+
+  function renderSmartPreview() {
+    const r = computeSmartNameSuggestion();
+    smartPreview.textContent = r.preview;
+  }
+
+  function applySmartNameSuggestion(force = false) {
+    const r = computeSmartNameSuggestion();
+    renderSmartPreview();
+    if (!r.value) return;
+    if (smartNameManual && !force) return;
+    updatingNombreProgrammatically = true;
+    inpNombre.value = r.value;
+    updatingNombreProgrammatically = false;
+    scheduleNombreSuggest();
+  }
+
+  function validateNombreNoDuplicado() {
+    const n = inpNombre.value.trim().toUpperCase();
+    if (!n) return true;
+    return !nombreSuggestPool.some((x) => String(x).trim().toUpperCase() === n);
   }
 
   function iconUrlForSelected() {
@@ -392,8 +505,11 @@ export function initMontarCierreModal(opts) {
       }
       nombreSuggestPool = names;
       flushNombreSuggestIfFocused();
+      renderSmartPreview();
+      applySmartNameSuggestion(false);
     } catch {
       nombreSuggestPool = [];
+      renderSmartPreview();
     }
   }
 
@@ -408,6 +524,8 @@ export function initMontarCierreModal(opts) {
     btnBack.hidden = true;
     btnSave.hidden = true;
     kindBadge.textContent = '';
+    subWrap.hidden = true;
+    smartPreview.textContent = '';
   }
 
   function showStepForm(tipo) {
@@ -424,10 +542,15 @@ export function initMontarCierreModal(opts) {
     inpDist.value = '';
     inpDesc.value = '';
     inpEstado.value = 'ACTIVO';
+    inpSub.value = '1';
+    subWrap.hidden = tipo.id !== 'E2';
     hideNombreSuggest();
     void loadNombreSuggestPool();
+    smartNameManual = false;
     ensureDraftMarker();
     syncDraftMarkerToCenterIfNeeded();
+    renderSmartPreview();
+    applySmartNameSuggestion(true);
     paintCoords();
     window.requestAnimationFrame(() => inpNombre.focus());
   }
@@ -513,13 +636,25 @@ export function initMontarCierreModal(opts) {
     setStatus('Montar cierre: el pin vuelve a seguir el centro del mapa.');
   });
 
+  btnSuggestName.addEventListener('click', () => {
+    smartNameManual = false;
+    applySmartNameSuggestion(true);
+    inpNombre.focus();
+  });
+  inpSub.addEventListener('change', () => {
+    renderSmartPreview();
+    applySmartNameSuggestion(false);
+  });
+
   inpNombre.setAttribute('role', 'combobox');
   inpNombre.setAttribute('aria-autocomplete', 'list');
   inpNombre.setAttribute('aria-controls', 'editor-mc-nombre-suggest');
   inpNombre.setAttribute('aria-expanded', 'false');
 
   inpNombre.addEventListener('input', () => {
+    if (!updatingNombreProgrammatically) smartNameManual = true;
     scheduleNombreSuggest();
+    renderSmartPreview();
   });
   inpNombre.addEventListener('focus', () => {
     scheduleNombreSuggest();
@@ -583,6 +718,11 @@ export function initMontarCierreModal(opts) {
     const nombre = inpNombre.value.trim();
     if (!nombre) {
       setStatus('Montar cierre: indica un nombre para el cierre.');
+      inpNombre.focus();
+      return;
+    }
+    if (!validateNombreNoDuplicado()) {
+      setStatus('Montar cierre: el nombre/código ya existe en esta molécula. Usa "Sugerir nombre".');
       inpNombre.focus();
       return;
     }

@@ -1653,6 +1653,40 @@ body.editor-body .editor-trazar-modal__title.editor-float-panel__title {
   font-size: 0.72rem;
 }
 
+.editor-mc-smart-tools {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+
+.editor-mc-sub-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 112px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.editor-mc-input--sm {
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+}
+
+.editor-mc-smart-preview {
+  margin: 0 0 6px;
+  min-height: 1.05rem;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: #475569;
+}
+
 body.editor-mc-pick-map .mapboxgl-canvas-container.mapboxgl-interactive {
   cursor: crosshair !important;
 }
