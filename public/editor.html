@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260428montarCierre" />
+  <link rel="stylesheet" href="/css/app.css?v=20260426montarEventoModal" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -406,26 +406,47 @@
     </div>
   </div>
 
-  <!-- Montar evento: panel flotante (molécula vía buscador + punto en cable o mapa). -->
+  <!-- Montar evento: modal centrado (misma receta visual que «Montar cierre»). -->
   <div
     id="reporte-evento-details"
-    class="editor-float-panel panel-reporte-evento"
+    class="editor-re-modal editor-float-panel panel-reporte-evento"
     aria-hidden="true"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="reporte-evento-title"
+    role="presentation"
   >
-    <div class="editor-float-panel__titlebar reporte-ev-summary">
-      <span class="editor-float-panel__title" id="reporte-evento-title">Montar evento</span>
-      <button type="button" class="editor-float-panel__close" id="btn-reporte-evento-close" aria-label="Cerrar">×</button>
-    </div>
-    <div class="editor-float-panel__body reporte-ev-body">
+    <button
+      type="button"
+      class="editor-mc-modal__backdrop"
+      id="reporte-evento-backdrop"
+      aria-label="Cerrar montar evento"
+      tabindex="-1"
+    ></button>
+    <div
+      class="editor-mc-modal__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reporte-evento-title"
+    >
+      <header class="editor-mc-modal__head">
+        <div class="editor-mc-modal__head-text">
+          <p class="editor-mc-modal__eyebrow">Alta en campo</p>
+          <h2 id="reporte-evento-title" class="editor-mc-modal__title">Montar evento</h2>
+          <p id="reporte-ev-molecule-line" class="editor-mc-modal__mol"></p>
+        </div>
+        <button type="button" class="editor-mc-modal__close" id="btn-reporte-evento-close" title="Cerrar" aria-label="Cerrar">
+          ×
+        </button>
+      </header>
+      <div class="editor-mc-modal__body editor-float-panel__body reporte-ev-body">
       <div id="reporte-ev-toast" class="reporte-ev-toast" hidden></div>
       <p id="reporte-evento-fecha" class="reporte-ev-wait-hint"></p>
       <p id="reporte-ev-offline-note" class="reporte-ev-offline-note" hidden></p>
 
       <div id="reporte-ev-phase-wait">
-        <div id="reporte-ev-placement-row" class="reporte-ev-presets" style="grid-template-columns: 1fr">
+        <p class="editor-mc-hint reporte-ev-wait-intro">
+          Elige <strong>Sobre el tendido</strong> o <strong>Punto libre</strong> y toca el mapa, o usa <strong>GPS</strong>. Con el punto fijado, completa tipo, estado y descripción; el campo ofrece
+          <strong>sugerencias</strong> según el tendido y el tipo de evento.
+        </p>
+        <div id="reporte-ev-placement-row" class="editor-mc-cards reporte-ev-placement-cards">
           <button type="button" class="reporte-ev-btn reporte-ev-btn--cta-verde" id="btn-reporte-pick-cable">
             <span class="reporte-ev-preset__title">Sobre el tendido</span>
             <span class="reporte-ev-preset__sub">Clic en el cable en el mapa</span>
@@ -527,6 +548,7 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 
   <!-- Nodos usados por app.js para eventos en mapa / metadatos (sin panel flotante). -->
@@ -590,6 +612,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260426reporteEvDescSuggest"></script>
+  <script type="module" src="/js/app.js?v=20260426montarEventoModalMcParity"></script>
 </body>
 </html>

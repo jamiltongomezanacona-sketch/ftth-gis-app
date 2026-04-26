@@ -3954,16 +3954,17 @@ body.editor-body #sidebar {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(100% + 6px);
+  top: calc(100% + 4px);
+  bottom: auto;
   margin: 0;
   padding: 4px 0;
   list-style: none;
   max-height: min(220px, 32vh);
   overflow-y: auto;
   border-radius: 10px;
-  border: 1px solid rgba(59, 130, 246, 0.22);
+  border: 1px solid #e2e8f0;
   background: #ffffff;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.14);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
   z-index: 35;
 }
 
@@ -10306,12 +10307,138 @@ body.editor-body .editor-float-panel {
     transform 0.22s ease;
 }
 
-/* Shell: si el root lleva otras clases, deben perder `position: relative` del panel estándar. */
-body.editor-body #reporte-evento-details.editor-float-panel {
+/* Shell: Montar evento = modal centrado (misma receta que «Montar cierre»). */
+body.editor-body #reporte-evento-details.editor-float-panel.editor-re-modal {
   position: fixed !important;
-  margin: 0;
+  inset: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: max(10px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
-  padding: 0;
+  z-index: 640;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none !important;
+}
+
+body.editor-body #reporte-evento-details.editor-re-modal.editor-float-panel--open {
+  transform: none !important;
+}
+
+body.editor-body #reporte-evento-details .editor-mc-modal__panel {
+  width: min(360px, calc(100vw - 20px));
+  max-height: min(82dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 20px));
+}
+
+body.editor-body #reporte-evento-details .editor-mc-modal__body.reporte-ev-body {
+  padding: 10px 12px 8px;
+  gap: 0;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-field {
+  margin-bottom: 8px;
+  padding: 9px 10px 11px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-field:focus-within {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-label {
+  color: #64748b;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-req {
+  color: #1e40af;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-field:focus-within .reporte-ev-label {
+  color: #64748b;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-auto-tag {
+  color: #0369a1;
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-input,
+body.editor-body #reporte-evento-details .reporte-ev-select,
+body.editor-body #reporte-evento-details .reporte-ev-textarea {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-select option {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+body.editor-body #reporte-evento-details #reporte-ev-preset-select {
+  color: #0f172a !important;
+  font-weight: 600;
+}
+
+body.editor-body #reporte-evento-details #reporte-ev-preset-select:invalid,
+body.editor-body #reporte-evento-details #reporte-ev-preset-select[value=''] {
+  color: #64748b !important;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-textarea {
+  min-height: 88px;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-wait-hint,
+body.editor-body #reporte-evento-details .reporte-ev-gps-status {
+  color: #475569;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-or {
+  color: #64748b;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-wait-intro {
+  margin-top: 0;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-placement-cards {
+  margin: 0 0 10px;
+}
+
+body.editor-body #reporte-evento-details.panel-reporte-evento.reporte-ev--armed .editor-mc-modal__head {
+  background: linear-gradient(180deg, #166534 0%, #14532d 100%);
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-toast {
+  border: 1px solid #e2e8f0;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-pin-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+body.editor-body #reporte-evento-details .reporte-ev-offline-note {
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
 }
 
 body.editor-body .editor-float-panel--open {
@@ -10319,68 +10446,6 @@ body.editor-body .editor-float-panel--open {
   visibility: visible;
   pointer-events: auto;
   transform: translateY(0);
-}
-
-/*
- * Montar evento: ventana modal compacta, alineada al borde izquierdo (viewport + safe area).
- * (El modo pick chip: misma alineación arriba a la izquierda.)
- * !important: gana a reglas móviles de `.editor-float-panel` genérico o restos de `.panel-block` en el shell.
- */
-body.editor-body
-  #reporte-evento-details.editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) {
-  left: max(12px, env(safe-area-inset-left, 0px)) !important;
-  right: auto !important;
-  top: 50% !important;
-  bottom: auto !important;
-  width: min(360px, calc(100vw - 24px)) !important;
-  max-width: min(400px, calc(100vw - 20px)) !important;
-  max-height: min(78dvh, 600px) !important;
-  border-radius: 16px;
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.48),
-    0 0 0 1px rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 44px -10px rgba(34, 197, 94, 0.2);
-  transform: translate(0, calc(-50% + 8px)) !important;
-}
-
-body.editor-body
-  #reporte-evento-details.editor-float-panel.panel-reporte-evento.editor-float-panel--open:not(.editor-float-panel--pick-mode) {
-  transform: translate(0, -50%) !important;
-}
-
-body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-body {
-  padding: 6px 8px 8px;
-  gap: 2px;
-}
-
-body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-collapse {
-  margin-bottom: 8px;
-  border-radius: 12px;
-}
-
-body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-collapse > summary {
-  min-height: 40px;
-  padding: 8px 10px;
-  font-size: 0.76rem;
-}
-
-body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .editor-float-panel__titlebar {
-  padding: 8px 10px;
-  min-height: 0;
-  border-bottom: 1px solid rgba(34, 197, 94, 0.28);
-  background: linear-gradient(180deg, rgba(22, 163, 74, 0.24), rgba(15, 23, 42, 0.55));
-  border-radius: 16px 16px 0 0;
-}
-
-body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-field {
-  margin-bottom: 8px;
-  padding: 9px 10px 11px;
-  border-radius: 11px;
-}
-
-body.editor-body .editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) .reporte-ev-textarea {
-  min-height: 88px;
 }
 
 body.editor-body .editor-float-panel__titlebar {
@@ -10674,20 +10739,25 @@ body.editor-body
 }
 
 @media (max-width: 900px) {
-  body.editor-body .editor-float-panel {
+  body.editor-body .editor-float-panel:not(#reporte-evento-details) {
     left: max(8px, env(safe-area-inset-left, 0px));
     right: max(8px, env(safe-area-inset-right, 0px));
     width: auto;
     max-height: min(70dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 16px));
   }
 
-  /* Montar evento: alto útil con safe area (misma #id que el bloque base). */
-  body.editor-body
-    #reporte-evento-details.editor-float-panel.panel-reporte-evento:not(.editor-float-panel--pick-mode) {
+  body.editor-body #reporte-evento-details.editor-re-modal.editor-float-panel {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-height: none !important;
+  }
+
+  body.editor-body #reporte-evento-details .editor-mc-modal__panel {
     max-height: min(
-        80dvh,
-        calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px)
-      ) !important;
+      86dvh,
+      calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px)
+    );
   }
 
   body.editor-body .editor-float-panel.panel-reporte-evento .editor-float-panel__body,
@@ -10721,13 +10791,13 @@ body.editor-body
     position: sticky;
     bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
     z-index: 3;
-    margin: 8px -8px -8px;
-    padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+    margin: 8px -12px -10px;
+    padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px));
     display: grid;
     grid-template-columns: minmax(120px, 0.9fr) minmax(160px, 1.1fr);
     gap: 8px;
-    background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0%, rgba(8, 12, 22, 0.92) 42%);
-    border-top: 1px solid rgba(34, 197, 94, 0.16);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0) 0%, rgba(248, 250, 252, 0.97) 38%);
+    border-top: 1px solid #e2e8f0;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }

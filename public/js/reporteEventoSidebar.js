@@ -70,6 +70,7 @@ const DESC_TEMPLATES_BY_TYPE = {
  *   onEventoGuardado?: () => void,
  *   closeReportePanelUi?: () => void,
  *   canMountEvento?: () => boolean,
+ *   getMoleculeFilter?: () => { central: string, molecula: string } | null,
  *   findNearestRouteForLngLat?: (lng: number, lat: number, maxM: number) => null | {
  *     feature: import('geojson').Feature<import('geojson').LineString>,
  *     snapped: [number, number],
@@ -91,6 +92,7 @@ export function initReporteEventoSidebar(opts) {
     onEventoGuardado,
     closeReportePanelUi,
     canMountEvento,
+    getMoleculeFilter,
     findNearestRouteForLngLat
   } = opts;
 
@@ -134,6 +136,28 @@ export function initReporteEventoSidebar(opts) {
   }
 
   const FLOAT_OPEN = 'editor-float-panel--open';
+  const molLineEl = document.getElementById('reporte-ev-molecule-line');
+
+  function moleculaCodigoFromFilter(f) {
+    if (!f?.central || !f.molecula) return '';
+    const under = String(f.central).trim().toUpperCase().replace(/\s+/g, '_');
+    return `${under}|${String(f.molecula).trim()}`;
+  }
+
+  function refreshMoleculeLine() {
+    if (!molLineEl) return;
+    try {
+      const mol = typeof getMoleculeFilter === 'function' ? getMoleculeFilter() : null;
+      if (mol?.central && mol?.molecula) {
+        const code = moleculaCodigoFromFilter(mol);
+        molLineEl.textContent = `Molécula · ${mol.molecula} (${mol.central}) · ${code}`;
+      } else {
+        molLineEl.textContent = 'Selecciona una molécula en el buscador o un tendido en el mapa.';
+      }
+    } catch {
+      molLineEl.textContent = '';
+    }
+  }
 
   /** Tras elegir modo en UI: solo tendido (`cable`) o coordenada exacta (`libre`). */
   let pickPlacementMode = /** @type {'cable' | 'libre' | null} */ (null);
@@ -321,6 +345,7 @@ export function initReporteEventoSidebar(opts) {
     phaseWait.hidden = has;
     phaseForm.hidden = !has;
     updatePinCard();
+    refreshMoleculeLine();
   }
 
   function setGpsStatus(msg, level) {
@@ -1029,6 +1054,7 @@ export function initReporteEventoSidebar(opts) {
   restoreDraft();
 
   function notifyReportePanelOpened() {
+    refreshMoleculeLine();
     refreshFechaText();
     updateOfflineBadge();
     restoreDraft();
@@ -1046,6 +1072,10 @@ export function initReporteEventoSidebar(opts) {
     if (placementRow) placementRow.hidden = false;
     cancelAwaitingMapPickOnly();
   }
+
+  document.getElementById('reporte-evento-backdrop')?.addEventListener('click', () => {
+    closeReportePanelUi?.();
+  });
 
   btnGuardar.addEventListener('click', () => void submit());
 
