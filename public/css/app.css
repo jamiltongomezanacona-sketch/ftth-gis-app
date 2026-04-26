@@ -10426,6 +10426,28 @@ body.editor-body #reporte-evento-details.panel-reporte-evento.reporte-ev--armed 
   background: linear-gradient(180deg, #166534 0%, #14532d 100%);
 }
 
+/*
+ * Modo toque en mapa: igual que Montar cierre (`editor-mc-modal--map-pick`):
+ * el contenedor a pantalla completa no roba clics; solo el panel compacto.
+ */
+body.editor-body #reporte-evento-details.editor-re-modal.panel-reporte-evento.reporte-ev--armed {
+  pointer-events: none;
+}
+
+body.editor-body #reporte-evento-details.editor-re-modal.panel-reporte-evento.reporte-ev--armed
+  .editor-mc-modal__backdrop {
+  pointer-events: none;
+}
+
+body.editor-body #reporte-evento-details.editor-re-modal.panel-reporte-evento.reporte-ev--armed
+  .editor-mc-modal__panel {
+  pointer-events: auto;
+  align-self: flex-start;
+  margin-top: max(8px, env(safe-area-inset-top, 0px));
+  max-height: min(48dvh, 360px) !important;
+  width: min(360px, calc(100vw - 20px)) !important;
+}
+
 body.editor-body #reporte-evento-details .reporte-ev-toast {
   border: 1px solid #e2e8f0;
 }
