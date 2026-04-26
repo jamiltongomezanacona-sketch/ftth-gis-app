@@ -508,11 +508,6 @@ function htmlCierreMapPopupEditForm(p, coordsWgs84) {
     <input class="evento-popup__edit-ctl" type="text" data-f="molecula_codigo" value="${escapeHtml(String(p.molecula_codigo ?? ''))}" maxlength="200" />
     <label class="evento-popup__edit-lab">Dist. ODF</label>
     <input class="evento-popup__edit-ctl" type="number" data-f="dist_odf" min="0" step="0.1" value="${p.dist_odf != null && Number.isFinite(Number(p.dist_odf)) ? escapeHtml(String(Number(p.dist_odf))) : ''}" />
-    <label class="evento-popup__edit-lab">Lat / Lng</label>
-    <div class="evento-popup__edit-pair">
-      <input class="evento-popup__edit-ctl" type="number" step="any" data-f="lat" placeholder="lat" value="${p.lat != null ? escapeHtml(String(Number(p.lat))) : ''}" />
-      <input class="evento-popup__edit-ctl" type="number" step="any" data-f="lng" placeholder="lng" value="${p.lng != null ? escapeHtml(String(Number(p.lng))) : ''}" />
-    </div>
     <label class="evento-popup__edit-lab">Descripción</label>
     <textarea class="evento-popup__edit-ctl evento-popup__edit-ta" rows="4" maxlength="8000" data-f="desc">${escapeHtml(String(p.descripcion ?? ''))}</textarea>
   </div>
