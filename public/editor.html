@@ -320,13 +320,21 @@
       </header>
       <div class="editor-mc-modal__body">
         <div id="editor-mc-step-pick" class="editor-mc-step">
-          <p class="editor-mc-hint">Elige el tipo. La posición será el <strong>centro del mapa</strong> (ajusta el mapa antes de guardar).</p>
+          <p class="editor-mc-hint">Elige el tipo. Luego podrás usar el <strong>centro del mapa</strong> o un <strong>clic en el mapa</strong> para la posición.</p>
           <div id="editor-mc-cards-root" class="editor-mc-cards" role="group" aria-label="Tipo de cierre"></div>
         </div>
         <div id="editor-mc-step-form" class="editor-mc-step" hidden>
           <div class="editor-mc-form-head">
             <span id="editor-mc-kind-badge" class="editor-mc-kind-badge" aria-live="polite"></span>
             <p id="editor-mc-coords" class="editor-mc-coords"></p>
+          </div>
+          <div class="editor-mc-coord-actions">
+            <button type="button" class="editor-mc-btn editor-mc-btn--ghost editor-mc-btn--sm" id="btn-editor-mc-pick-map">
+              Punto en el mapa
+            </button>
+            <button type="button" class="editor-mc-btn editor-mc-btn--ghost editor-mc-btn--sm" id="btn-editor-mc-use-center">
+              Centro del mapa
+            </button>
           </div>
           <label class="editor-mc-lab" for="editor-mc-nombre">Nombre <span class="editor-mc-req">*</span></label>
           <input class="editor-mc-input" id="editor-mc-nombre" type="text" maxlength="500" placeholder="Ej. CIERRE SI26-12" autocomplete="off" />

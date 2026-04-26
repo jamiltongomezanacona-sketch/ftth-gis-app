@@ -61,6 +61,8 @@ export function initMontarCierreModal(opts) {
   const inpDesc = /** @type {HTMLTextAreaElement | null} */ (document.getElementById('editor-mc-desc'));
   const inpEstado = /** @type {HTMLInputElement | null} */ (document.getElementById('editor-mc-estado'));
   const coordsLine = document.getElementById('editor-mc-coords');
+  const btnPickMap = document.getElementById('btn-editor-mc-pick-map');
+  const btnUseCenter = document.getElementById('btn-editor-mc-use-center');
 
   if (
     !root ||
@@ -78,7 +80,9 @@ export function initMontarCierreModal(opts) {
     !inpDist ||
     !inpDesc ||
     !inpEstado ||
-    !coordsLine
+    !coordsLine ||
+    !btnPickMap ||
+    !btnUseCenter
   ) {
     return {
       open: () => {},
@@ -91,6 +95,11 @@ export function initMontarCierreModal(opts) {
   let selected = null;
   /** @type {null | (() => void)} */
   let unsubMapMove = null;
+  /** Coordenadas elegidas por clic; `null` = usar centro del mapa al guardar. */
+  /** @type {{ lng: number, lat: number } | null} */
+  let pickedLngLat = null;
+  /** @type {((e: import('mapbox-gl').MapLayerMouseEvent & import('mapbox-gl').EventData) => void) | null} */
+  let mapClickHandler = null;
 
   function moleculaCodigoFromFilter(f) {
     if (!f?.central || !f?.molecula) return '';
@@ -100,6 +109,14 @@ export function initMontarCierreModal(opts) {
 
   function paintCoords() {
     try {
+      if (
+        pickedLngLat &&
+        Number.isFinite(pickedLngLat.lat) &&
+        Number.isFinite(pickedLngLat.lng)
+      ) {
+        coordsLine.textContent = `${pickedLngLat.lat.toFixed(5)}, ${pickedLngLat.lng.toFixed(5)} (clic en mapa)`;
+        return;
+      }
       const c = getMap().getCenter();
       if (Number.isFinite(c.lat) && Number.isFinite(c.lng)) {
         coordsLine.textContent = `${c.lat.toFixed(5)}, ${c.lng.toFixed(5)} (centro del mapa)`;
@@ -111,7 +128,44 @@ export function initMontarCierreModal(opts) {
     }
   }
 
+  function disarmMapPick() {
+    document.body.classList.remove('editor-mc-pick-map');
+    try {
+      const m = getMap();
+      if (mapClickHandler) {
+        m.off('click', mapClickHandler);
+        mapClickHandler = null;
+      }
+      m.getCanvas().style.cursor = '';
+    } catch {
+      /* */
+    }
+  }
+
+  function armMapPick() {
+    disarmMapPick();
+    document.body.classList.add('editor-mc-pick-map');
+    const m = getMap();
+    mapClickHandler = (e) => {
+      pickedLngLat = { lng: e.lngLat.lng, lat: e.lngLat.lat };
+      setStatus(
+        `Montar cierre: punto ${pickedLngLat.lat.toFixed(5)}, ${pickedLngLat.lng.toFixed(5)} · puedes guardar o cambiar.`
+      );
+      disarmMapPick();
+      paintCoords();
+    };
+    m.on('click', mapClickHandler);
+    try {
+      m.getCanvas().style.cursor = 'crosshair';
+    } catch {
+      /* */
+    }
+    setStatus('Montar cierre: pulsa en el mapa la posición del cierre (un clic).');
+  }
+
   function showStepPick() {
+    disarmMapPick();
+    pickedLngLat = null;
     selected = null;
     stepPick.hidden = false;
     stepForm.hidden = true;
@@ -121,6 +175,8 @@ export function initMontarCierreModal(opts) {
   }
 
   function showStepForm(tipo) {
+    disarmMapPick();
+    pickedLngLat = null;
     selected = tipo;
     stepPick.hidden = true;
     stepForm.hidden = false;
@@ -159,7 +215,9 @@ export function initMontarCierreModal(opts) {
     document.body.classList.add('editor-mc-modal-open');
     try {
       const m = getMap();
-      const onMoveEnd = () => paintCoords();
+      const onMoveEnd = () => {
+        if (!pickedLngLat) paintCoords();
+      };
       m.on('moveend', onMoveEnd);
       unsubMapMove = () => {
         try {
@@ -175,6 +233,8 @@ export function initMontarCierreModal(opts) {
   }
 
   function close() {
+    disarmMapPick();
+    pickedLngLat = null;
     try {
       unsubMapMove?.();
     } catch {
@@ -196,6 +256,16 @@ export function initMontarCierreModal(opts) {
   btnClose.addEventListener('click', () => close());
   btnCancel.addEventListener('click', () => close());
   btnBack.addEventListener('click', () => showStepPick());
+
+  btnPickMap.addEventListener('click', () => {
+    armMapPick();
+  });
+  btnUseCenter.addEventListener('click', () => {
+    disarmMapPick();
+    pickedLngLat = null;
+    paintCoords();
+    setStatus('Montar cierre: se usará el centro del mapa al guardar.');
+  });
 
   for (const t of MONTAR_CIERRE_TIPOS) {
     const b = document.createElement('button');
@@ -224,15 +294,21 @@ export function initMontarCierreModal(opts) {
       inpNombre.focus();
       return;
     }
-    let center;
+    let lat;
+    let lng;
     try {
-      center = getMap().getCenter();
+      if (pickedLngLat && Number.isFinite(pickedLngLat.lat) && Number.isFinite(pickedLngLat.lng)) {
+        lat = pickedLngLat.lat;
+        lng = pickedLngLat.lng;
+      } else {
+        const center = getMap().getCenter();
+        lat = center.lat;
+        lng = center.lng;
+      }
     } catch {
       setStatus('Montar cierre: mapa no disponible.');
       return;
     }
-    const lat = center.lat;
-    const lng = center.lng;
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       setStatus('Montar cierre: coordenadas no válidas.');
       return;

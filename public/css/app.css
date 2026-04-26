@@ -1641,6 +1641,22 @@ body.editor-body .editor-trazar-modal__title.editor-float-panel__title {
   line-height: 1.3;
 }
 
+.editor-mc-coord-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.editor-mc-btn--sm {
+  padding: 4px 10px;
+  font-size: 0.72rem;
+}
+
+body.editor-mc-pick-map .mapboxgl-canvas-container.mapboxgl-interactive {
+  cursor: crosshair !important;
+}
+
 .editor-mc-lab {
   display: block;
   margin: 6px 0 3px;
