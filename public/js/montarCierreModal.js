@@ -151,6 +151,7 @@ export function initMontarCierreModal(opts) {
   const inpEstado = /** @type {HTMLInputElement | null} */ (document.getElementById('editor-mc-estado'));
   const coordsLine = document.getElementById('editor-mc-coords');
   const btnPickMap = document.getElementById('btn-editor-mc-pick-map');
+  const btnUseGps = document.getElementById('btn-editor-mc-use-gps');
   const btnUseCenter = document.getElementById('btn-editor-mc-use-center');
   const ulNombreSuggest = document.getElementById('editor-mc-nombre-suggest');
   const subWrap = document.getElementById('editor-mc-sub-wrap');
@@ -176,6 +177,7 @@ export function initMontarCierreModal(opts) {
     !inpEstado ||
     !coordsLine ||
     !btnPickMap ||
+    !btnUseGps ||
     !btnUseCenter ||
     !ulNombreSuggest ||
     !subWrap ||
@@ -329,11 +331,7 @@ export function initMontarCierreModal(opts) {
         try {
           const ll = draftMarker?.getLngLat();
           if (!ll || !Number.isFinite(ll.lat) || !Number.isFinite(ll.lng)) return;
-          pickedLngLat = { lng: ll.lng, lat: ll.lat };
-          paintCoords();
-          setStatus(
-            `Montar cierre: pin fijado en ${pickedLngLat.lat.toFixed(5)}, ${pickedLngLat.lng.toFixed(5)}.`
-          );
+          setPickedPoint(ll.lng, ll.lat, 'arrastre');
         } catch {
           /* */
         }
@@ -351,6 +349,18 @@ export function initMontarCierreModal(opts) {
     } catch {
       /* */
     }
+  }
+
+  function setPickedPoint(lng, lat, sourceLabel) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    pickedLngLat = { lng, lat };
+    try {
+      draftMarker?.setLngLat([lng, lat]);
+    } catch {
+      /* */
+    }
+    paintCoords();
+    setStatus(`Montar cierre: pin fijado desde ${sourceLabel} en ${lat.toFixed(5)}, ${lng.toFixed(5)}.`);
   }
 
   function paintCoords() {
@@ -395,17 +405,8 @@ export function initMontarCierreModal(opts) {
     root.classList.add('editor-mc-modal--map-pick');
     const m = getMap();
     mapClickHandler = (e) => {
-      pickedLngLat = { lng: e.lngLat.lng, lat: e.lngLat.lat };
-      try {
-        draftMarker?.setLngLat([pickedLngLat.lng, pickedLngLat.lat]);
-      } catch {
-        /* */
-      }
-      setStatus(
-        `Montar cierre: pin colocado en ${pickedLngLat.lat.toFixed(5)}, ${pickedLngLat.lng.toFixed(5)}.`
-      );
+      setPickedPoint(e.lngLat.lng, e.lngLat.lat, 'mapa');
       disarmMapPick();
-      paintCoords();
     };
     m.on('click', mapClickHandler);
     try {
@@ -633,6 +634,43 @@ export function initMontarCierreModal(opts) {
   btnPickMap.addEventListener('click', () => {
     armMapPick();
   });
+  btnUseGps.addEventListener('click', () => {
+    disarmMapPick();
+    if (!('geolocation' in navigator)) {
+      setStatus('Montar cierre: este dispositivo no soporta GPS del navegador.');
+      return;
+    }
+    setStatus('Montar cierre: obteniendo ubicación GPS del dispositivo...');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = Number(pos?.coords?.latitude);
+        const lng = Number(pos?.coords?.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          setStatus('Montar cierre: GPS sin coordenadas válidas.');
+          return;
+        }
+        setPickedPoint(lng, lat, 'GPS');
+        try {
+          getMap().easeTo({ center: [lng, lat], duration: 420 });
+        } catch {
+          /* */
+        }
+      },
+      (err) => {
+        const code = Number(err?.code || 0);
+        if (code === 1) {
+          setStatus('Montar cierre: permiso de ubicación denegado.');
+          return;
+        }
+        if (code === 3) {
+          setStatus('Montar cierre: GPS sin respuesta (timeout). Intenta de nuevo.');
+          return;
+        }
+        setStatus('Montar cierre: no fue posible obtener ubicación GPS.');
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 12000 }
+    );
+  });
   btnUseCenter.addEventListener('click', () => {
     disarmMapPick();
     pickedLngLat = null;
@@ -760,6 +798,7 @@ export function initMontarCierreModal(opts) {
       descripcion: inpDesc.value.trim() || null,
       dist_odf: inpDist.value.trim() ? Number(inpDist.value) : null
     };
+    btnSave.disabled = true;
     try {
       const r = await api.postCierre(body);
       setStatus(`Cierre ${selected.short} creado · id ${r?.id ?? '—'}.`);
@@ -768,6 +807,8 @@ export function initMontarCierreModal(opts) {
     } catch (err) {
       const msg = err?.message ? String(err.message) : String(err);
       setStatus(`Montar cierre: ${msg}`);
+    } finally {
+      btnSave.disabled = false;
     }
   });
 
