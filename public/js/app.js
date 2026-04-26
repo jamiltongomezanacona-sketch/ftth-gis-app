@@ -44,7 +44,7 @@ import {
   fmtTotalHuman
 } from './measurePolylineLayer.js';
 import { initEditorGpsDock } from './editorGpsDock.js';
-import { initReporteEventoSidebar } from './reporteEventoSidebar.js?v=20260426quitarSugerirDesc';
+import { initReporteEventoSidebar } from './reporteEventoSidebar.js?v=20260426quitarLineaMoleculaEv';
 import { initMontarCierreModal } from './montarCierreModal.js?v=20260425montarCierreFieldMobile';
 import { createTrazarController } from './trazarTool.js';
 import { bringTrazarCutLayerToFront, bringTrazarRefLayerToFront } from './trazarCutLayer.js';
@@ -1909,7 +1909,6 @@ export async function boot() {
     onEventoGuardado: () => void refreshEventosReporteDisplay(),
     closeReportePanelUi: () => closeReporteEventoPanelUi(),
     canMountEvento: () => appNetwork !== 'ftth' || !!getMoleculeFilterForEventosApi(),
-    getMoleculeFilter: () => getMoleculeFilterForEventosApi(),
     findNearestRouteForLngLat: (lng, lat, maxM) => findNearestRouteForLngLatReporte(lng, lat, maxM)
   });
 
