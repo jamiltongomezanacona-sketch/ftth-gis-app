@@ -3,6 +3,7 @@ import {
   deleteCierreById,
   fetchCierresAsFeatureCollection,
   fetchCierresSearch,
+  insertCierre,
   isUuidString,
   updateCierreById
 } from './cierresRepo.js';
@@ -33,6 +34,29 @@ export function buildMoleculaCodigoVariants(central, molecula) {
 export function createCierresRouter(pool, opts) {
   const { requireBearerAuth } = opts;
   const r = Router();
+
+  r.post('/', requireBearerAuth, async (req, res, next) => {
+    try {
+      const rRed = redTipoDesdePeticionLectura(req);
+      if (!rRed.ok) {
+        res.status(400).json({ error: rRed.error });
+        return;
+      }
+      if (rRed.red !== 'ftth') {
+        res.status(400).json({ error: 'Solo red FTTH' });
+        return;
+      }
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const { id } = await insertCierre(pool, body);
+      res.status(201).json({ ok: true, id });
+    } catch (e) {
+      if (e?.code === 'VALIDATION') {
+        res.status(400).json({ error: e.message || 'Datos inválidos' });
+        return;
+      }
+      next(e);
+    }
+  });
 
   r.delete('/:id', requireBearerAuth, async (req, res, next) => {
     try {

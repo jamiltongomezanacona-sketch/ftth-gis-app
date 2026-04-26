@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 /**
  * Cierres por molécula (tabla `cierres`, campo `molecula_codigo` tipo CENTRAL|MOL).
  * @param {import('pg').Pool} pool
@@ -224,4 +226,89 @@ export async function updateCierreById(pool, id, body) {
 export async function deleteCierreById(pool, id) {
   const { rowCount } = await pool.query(`DELETE FROM cierres WHERE id = $1::uuid`, [id.trim()]);
   return { deleted: rowCount ?? 0 };
+}
+
+/**
+ * Alta de cierre FTTH (E1 / E2 u otros tipos cortos).
+ * @param {import('pg').Pool} pool
+ * @param {Record<string, unknown>} payload
+ * @returns {Promise<{ id: string }>}
+ */
+export async function insertCierre(pool, payload) {
+  const nombre = String(payload.nombre ?? '')
+    .trim()
+    .slice(0, 500);
+  const tipo = String(payload.tipo ?? '')
+    .trim()
+    .slice(0, 80)
+    .toUpperCase();
+  const molecula_codigo = String(payload.molecula_codigo ?? '')
+    .trim()
+    .slice(0, 200);
+  const la = Number(payload.lat);
+  const lo = Number(payload.lng);
+  if (!nombre) {
+    throw Object.assign(new Error('nombre requerido'), { code: 'VALIDATION' });
+  }
+  if (!tipo) {
+    throw Object.assign(new Error('tipo requerido'), { code: 'VALIDATION' });
+  }
+  if (!molecula_codigo) {
+    throw Object.assign(new Error('molecula_codigo requerido'), { code: 'VALIDATION' });
+  }
+  if (!Number.isFinite(la) || !Number.isFinite(lo) || lo < -180 || lo > 180 || la < -90 || la > 90) {
+    throw Object.assign(new Error('lat/lng inválidos'), { code: 'VALIDATION' });
+  }
+
+  let dist_odf = null;
+  if (payload.dist_odf != null && payload.dist_odf !== '') {
+    const d = Number(payload.dist_odf);
+    if (Number.isFinite(d) && d >= 0) dist_odf = d;
+  }
+
+  const estado =
+    payload.estado != null && String(payload.estado).trim() !== ''
+      ? String(payload.estado).trim().slice(0, 120)
+      : null;
+  const descripcion =
+    payload.descripcion != null && String(payload.descripcion).trim() !== ''
+      ? String(payload.descripcion).trim().slice(0, 8000)
+      : null;
+
+  const id = randomUUID();
+
+  const { rows } = await pool.query(
+    `
+    INSERT INTO cierres (
+      id,
+      molecula_codigo,
+      nombre,
+      tipo,
+      estado,
+      descripcion,
+      lat,
+      lng,
+      dist_odf,
+      created_at,
+      geom
+    )
+    VALUES (
+      $1::uuid,
+      $2,
+      $3,
+      $4,
+      $5,
+      $6,
+      $7::double precision,
+      $8::double precision,
+      $9::double precision,
+      now(),
+      ST_SetSRID(ST_MakePoint($8::double precision, $7::double precision), 4326)
+    )
+    RETURNING id::text AS id
+    `,
+    [id, molecula_codigo, nombre, tipo, estado, descripcion, la, lo, dist_odf]
+  );
+
+  return { id: String(rows[0]?.id ?? id) };
 }

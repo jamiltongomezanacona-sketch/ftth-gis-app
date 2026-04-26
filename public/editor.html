@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260427evEditCompact" />
+  <link rel="stylesheet" href="/css/app.css?v=20260428montarCierre" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -293,6 +293,59 @@
     </div>
   </div>
 
+  <!-- Montar cierre (E1 / E2): modal compacto; tipos extensibles en `montarCierreModal.js`. -->
+  <div id="editor-montar-cierre-modal" class="editor-mc-modal" hidden aria-hidden="true">
+    <button
+      type="button"
+      class="editor-mc-modal__backdrop"
+      id="editor-mc-modal-backdrop"
+      aria-label="Cerrar montar cierre"
+      tabindex="-1"
+    ></button>
+    <div
+      class="editor-mc-modal__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="editor-mc-modal-title"
+    >
+      <header class="editor-mc-modal__head">
+        <div class="editor-mc-modal__head-text">
+          <p class="editor-mc-modal__eyebrow">Alta en campo</p>
+          <h2 id="editor-mc-modal-title" class="editor-mc-modal__title">Montar cierre</h2>
+          <p id="editor-mc-molecule-line" class="editor-mc-modal__mol"></p>
+        </div>
+        <button type="button" class="editor-mc-modal__close" id="btn-editor-mc-close" title="Cerrar" aria-label="Cerrar">
+          ×
+        </button>
+      </header>
+      <div class="editor-mc-modal__body">
+        <div id="editor-mc-step-pick" class="editor-mc-step">
+          <p class="editor-mc-hint">Elige el tipo. La posición será el <strong>centro del mapa</strong> (ajusta el mapa antes de guardar).</p>
+          <div id="editor-mc-cards-root" class="editor-mc-cards" role="group" aria-label="Tipo de cierre"></div>
+        </div>
+        <div id="editor-mc-step-form" class="editor-mc-step" hidden>
+          <div class="editor-mc-form-head">
+            <span id="editor-mc-kind-badge" class="editor-mc-kind-badge" aria-live="polite"></span>
+            <p id="editor-mc-coords" class="editor-mc-coords"></p>
+          </div>
+          <label class="editor-mc-lab" for="editor-mc-nombre">Nombre <span class="editor-mc-req">*</span></label>
+          <input class="editor-mc-input" id="editor-mc-nombre" type="text" maxlength="500" placeholder="Ej. CIERRE SI26-12" autocomplete="off" />
+          <label class="editor-mc-lab" for="editor-mc-dist">Dist. ODF (m)</label>
+          <input class="editor-mc-input" id="editor-mc-dist" type="number" min="0" step="0.1" placeholder="Opcional" />
+          <label class="editor-mc-lab" for="editor-mc-estado">Estado</label>
+          <input class="editor-mc-input" id="editor-mc-estado" type="text" maxlength="120" placeholder="Ej. ACTIVO" value="ACTIVO" />
+          <label class="editor-mc-lab" for="editor-mc-desc">Descripción</label>
+          <textarea class="editor-mc-ta" id="editor-mc-desc" rows="2" maxlength="8000" placeholder="Opcional"></textarea>
+        </div>
+      </div>
+      <footer class="editor-mc-modal__foot">
+        <button type="button" class="editor-mc-btn editor-mc-btn--ghost" id="btn-editor-mc-back" hidden>Atrás</button>
+        <button type="button" class="editor-mc-btn editor-mc-btn--ghost" id="btn-editor-mc-cancel">Cerrar</button>
+        <button type="button" class="editor-mc-btn editor-mc-btn--primary" id="btn-editor-mc-save" hidden>Guardar</button>
+      </footer>
+    </div>
+  </div>
+
   <!-- Montar evento: panel flotante (molécula vía buscador + punto en cable o mapa). -->
   <div
     id="reporte-evento-details"
@@ -469,6 +522,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260427evEditCompact"></script>
+  <script type="module" src="/js/app.js?v=20260428montarCierre"></script>
 </body>
 </html>

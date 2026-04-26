@@ -45,6 +45,7 @@ import {
 } from './measurePolylineLayer.js';
 import { initEditorGpsDock } from './editorGpsDock.js';
 import { initReporteEventoSidebar } from './reporteEventoSidebar.js';
+import { initMontarCierreModal } from './montarCierreModal.js?v=20260428montarCierre';
 import { createTrazarController } from './trazarTool.js';
 import { bringTrazarCutLayerToFront, bringTrazarRefLayerToFront } from './trazarCutLayer.js';
 async function loadConfig() {
@@ -663,7 +664,10 @@ function initEditorChromeMapBridge(mapInstance, opts) {
  *   onTrazarDiscardMap: () => void,
  *   onMontarEvento?: () => void,
  *   isReporteEventoOpen?: () => boolean,
- *   closeReporteEventoPanelUi?: () => void
+ *   closeReporteEventoPanelUi?: () => void,
+ *   onMontarCierre?: () => void,
+ *   isMontarCierreModalOpen?: () => boolean,
+ *   closeMontarCierreModal?: () => void
  * }} opts
  * @returns {{ leaveTrazarView: () => void }}
  */
@@ -681,7 +685,10 @@ function initEditorFieldSidebarMenu(opts) {
     onTrazarDiscardMap,
     onMontarEvento,
     isReporteEventoOpen,
-    closeReporteEventoPanelUi
+    closeReporteEventoPanelUi,
+    onMontarCierre,
+    isMontarCierreModalOpen,
+    closeMontarCierreModal
   } = opts;
   const btn = document.getElementById('btn-editor-field-menu');
   const panel = document.getElementById('editor-field-sidebar');
@@ -768,6 +775,12 @@ function initEditorFieldSidebarMenu(opts) {
   backdrop.addEventListener('click', () => closeMenu());
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    if (isMontarCierreModalOpen?.()) {
+      e.preventDefault();
+      closeMontarCierreModal?.();
+      requestResize();
+      return;
+    }
     if (isReporteEventoOpen?.()) {
       e.preventDefault();
       closeReporteEventoPanelUi?.();
@@ -849,7 +862,7 @@ function initEditorFieldSidebarMenu(opts) {
 
   wire('btn-sidebar-montar-cierre', () => {
     if (isTrazarViewOpen()) onTrazarDiscardMap();
-    setStatus('Montar cierre: flujo en preparación.');
+    onMontarCierre?.();
   });
 
   wire('btn-sidebar-montar-ruta', () => {
@@ -2276,6 +2289,9 @@ export async function boot() {
     fmtM
   });
 
+  /** Controlador modal «Montar cierre» (se asigna tras definir `refreshFtthMoleculeOverlayIfFiltered`). */
+  const montarCierreCtlRef = { ctl: /** @type {ReturnType<typeof initMontarCierreModal> | null} */ (null) };
+
   {
     const menuApi = initEditorFieldSidebarMenu({
       scheduleMapResize,
@@ -2291,7 +2307,20 @@ export async function boot() {
       onMontarEvento: () => openMontarEventoPanel(),
       isReporteEventoOpen: () =>
         Boolean(document.getElementById('reporte-evento-details')?.classList.contains('editor-float-panel--open')),
-      closeReporteEventoPanelUi: () => closeReporteEventoPanelUi()
+      closeReporteEventoPanelUi: () => closeReporteEventoPanelUi(),
+      onMontarCierre: () => {
+        if (editing || (measurePolylineActive && !measurePolylineConfirmed) || (trazar?.isOpen() ?? false)) {
+          setStatus('Montar cierre: termina edición, Trazar o medición antes.');
+          return;
+        }
+        if (appNetwork !== 'ftth' || !getMoleculeFilterForEventosApi()) {
+          setStatus('Montar cierre: busca la molécula en la barra hasta pintar el tendido en el mapa.');
+          return;
+        }
+        montarCierreCtlRef.ctl?.open();
+      },
+      isMontarCierreModalOpen: () => montarCierreCtlRef.ctl?.isOpen() ?? false,
+      closeMontarCierreModal: () => montarCierreCtlRef.ctl?.close()
     });
     leaveTrazarViewMenu = () => {
       try {
@@ -2309,6 +2338,7 @@ export async function boot() {
       if (editing) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
       if (trazar?.isOpen()) return true;
+      if (montarCierreCtlRef.ctl?.isOpen()) return true;
       if (reporteCtl?.isAwaitingRoutePick?.()) return true;
       return false;
     },
@@ -3117,6 +3147,20 @@ export async function boot() {
         console.warn('refreshFtthMoleculeOverlayIfFiltered', e);
       }
     }
+
+    montarCierreCtlRef.ctl = initMontarCierreModal({
+      api,
+      setStatus,
+      getMap: () => map,
+      getMoleculeFilter: () => editorMoleculeFilter,
+      onCierreCreado: () => refreshFtthMoleculeOverlayIfFiltered(),
+      canOpen: () =>
+        !editing &&
+        !(measurePolylineActive && !measurePolylineConfirmed) &&
+        !(trazar?.isOpen() ?? false) &&
+        appNetwork === 'ftth',
+      scheduleMapResize
+    });
 
     attachEventoPopupAdmin = (popup, p) => {
       window.setTimeout(() => {

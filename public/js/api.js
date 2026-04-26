@@ -237,6 +237,20 @@ export function createRutasApi(apiBase, redTipo) {
     },
 
     /**
+     * Alta cierre FTTH (tabla `cierres`). Requiere sesión.
+     * @param {Record<string, unknown>} body nombre, tipo (ej. E1|E2), molecula_codigo, lat, lng, dist_odf?, descripcion?, estado?
+     */
+    postCierre(body) {
+      if (red !== 'ftth') {
+        return Promise.reject(new Error('Solo red FTTH'));
+      }
+      return getJson(`/api/cierres${redQs}`, {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+    },
+
+    /**
      * @param {string} id uuid
      */
     deleteCierre(id) {

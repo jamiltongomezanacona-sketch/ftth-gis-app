@@ -42,7 +42,7 @@ function beginListen(port) {
       );
     }
     console.log(
-      '[api] POST /api/rutas · GET/POST /api/eventos-reporte · GET /api/centrales-etb · GET /api/cierres · GET /api/db-check'
+      '[api] POST /api/rutas · GET/POST /api/eventos-reporte · GET /api/centrales-etb · GET/POST /api/cierres · GET /api/db-check'
     );
 
     if (String(process.env.OPEN_BROWSER ?? '').toLowerCase() === '1') {
