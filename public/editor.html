@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260426reporteQuitarRepickRapido" />
+  <link rel="stylesheet" href="/css/app.css?v=20260426quitarSugerirDesc" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -505,21 +505,13 @@
 
         <div class="reporte-ev-field">
           <label class="reporte-ev-label" for="reporte-ev-descripcion">Descripción <span class="reporte-ev-req">*</span></label>
-          <div class="reporte-ev-smart-row">
-            <button type="button" class="reporte-ev-btn reporte-ev-btn--ghost-sm reporte-ev-btn--smart" id="btn-reporte-ev-suggest-desc">
-              Sugerir descripción
-            </button>
-          </div>
-          <div class="reporte-ev-combo">
-            <textarea
-              class="reporte-ev-textarea"
-              id="reporte-ev-descripcion"
-              rows="4"
-              maxlength="8000"
-              placeholder="Describe el incidente…"
-            ></textarea>
-            <ul id="reporte-ev-desc-suggest" class="reporte-ev-suggest" role="listbox" aria-label="Sugerencias de descripción" hidden></ul>
-          </div>
+          <textarea
+            class="reporte-ev-textarea"
+            id="reporte-ev-descripcion"
+            rows="4"
+            maxlength="8000"
+            placeholder="Describe el incidente…"
+          ></textarea>
           <span id="reporte-ev-desc-draft" class="reporte-ev-auto-tag" hidden>borrador</span>
         </div>
 
@@ -605,6 +597,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260426reporteQuitarRepickRapido"></script>
+  <script type="module" src="/js/app.js?v=20260426quitarSugerirDesc"></script>
 </body>
 </html>

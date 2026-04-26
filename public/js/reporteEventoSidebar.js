@@ -9,8 +9,6 @@ const DRAFT_DESC_KEY = 'reporteEventoDescDraftV1';
 const GPS_ROUTE_SNAP_RADIUS_M = 150;
 /** Umbral (m) a partir del cual ofrecemos «Mejorar GPS» (precisión pobre). */
 const GPS_POOR_ACCURACY_M = 50;
-const DESC_SUGGEST_DEBOUNCE_MS = 180;
-const DESC_SUGGEST_MAX = 8;
 
 /** Presets rápidos: un tap llena tipo/estado/acción para los casos más comunes. */
 const QUICK_PRESETS = {
@@ -27,29 +25,6 @@ const ACTIONS_BY_TYPE = {
   DETERIORO: ['INTERVENCIÓN TECNICA', 'REEMPLAZO DE FIBRA'],
   MANTENIMIENTO: ['INTERVENCIÓN TECNICA', 'SE INSTALA CIERRE'],
   'DAÑO POR TERCEROS': ['REEMPLAZO DE FIBRA', 'INTERVENCIÓN TECNICA']
-};
-
-const DESC_TEMPLATES_BY_TYPE = {
-  VANDALISMO: [
-    'Se evidencia vandalismo en la red, se aísla tramo afectado y se gestiona reemplazo de fibra.',
-    'Daño por vandalismo confirmado en campo; se asegura zona y se programa intervención técnica.'
-  ],
-  'OBRAS CIVILES': [
-    'Afectación por obras civiles en tendido; se coordina cuadrilla para intervención y normalización.',
-    'Daño por obra civil sobre la red detectado en campo, se inicia gestión de reparación.'
-  ],
-  DETERIORO: [
-    'Deterioro de infraestructura detectado en campo, se requiere intervención técnica.',
-    'Se identifica degradación del tendido, se programa reparación correctiva.'
-  ],
-  MANTENIMIENTO: [
-    'Actividad de mantenimiento en curso sobre el tendido; servicio bajo seguimiento.',
-    'Mantenimiento preventivo ejecutado en campo, se valida estabilidad de la red.'
-  ],
-  'DAÑO POR TERCEROS': [
-    'Daño causado por terceros sobre el cable, se coordina reposición de fibra.',
-    'Afectación por terceros confirmada en campo; se inicia recuperación del enlace.'
-  ]
 };
 
 /**
@@ -106,8 +81,6 @@ export function initReporteEventoSidebar(opts) {
   const estadoEl = /** @type {HTMLSelectElement | null} */ (document.getElementById('reporte-ev-estado'));
   const accionEl = /** @type {HTMLSelectElement | null} */ (document.getElementById('reporte-ev-accion'));
   const descEl = /** @type {HTMLTextAreaElement | null} */ (document.getElementById('reporte-ev-descripcion'));
-  const descSuggestEl = document.getElementById('reporte-ev-desc-suggest');
-  const btnSuggestDesc = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-ev-suggest-desc'));
   const descDraftTag = document.getElementById('reporte-ev-desc-draft');
   const btnGuardar = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-evento-guardar'));
   const btnCancelWait = document.getElementById('btn-reporte-cancel-wait');
@@ -120,7 +93,7 @@ export function initReporteEventoSidebar(opts) {
     document.querySelectorAll('.reporte-ev-preset[data-preset]')
   );
 
-  if (!tipoEl || !estadoEl || !accionEl || !descEl || !btnGuardar || !details || !descSuggestEl || !btnSuggestDesc) {
+  if (!tipoEl || !estadoEl || !accionEl || !descEl || !btnGuardar || !details) {
     return {
       handleRouteLinePick: () => false,
       handleMapTapPick: () => false,
@@ -201,10 +174,6 @@ export function initReporteEventoSidebar(opts) {
   /** Último «dist ODF» calculado automáticamente; si el usuario edita, se respeta. */
   let autoComputedDistOdf = /** @type {number | null} */ (null);
   let distOdfIsManual = false;
-  /** @type {ReturnType<typeof setTimeout> | null} */
-  let descSuggestTimer = null;
-  /** @type {number} */
-  let descSuggestActive = -1;
 
   function refreshFechaText() {
     if (!fechaEl) return;
@@ -216,122 +185,6 @@ export function initReporteEventoSidebar(opts) {
     } catch {
       fechaEl.textContent = `Fecha: ${new Date().toISOString()}`;
     }
-  }
-
-  function normalizeTxt(s) {
-    return String(s ?? '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-  }
-
-  function buildDescSuggestPool() {
-    const tipo = String(tipoEl.value || '').trim().toUpperCase();
-    const estado = String(estadoEl.value || '').trim();
-    const accion = String(accionEl.value || '').trim();
-    const route = pinnedRouteLabel ? ` en ${pinnedRouteLabel}` : '';
-    /** @type {string[]} */
-    const pool = [];
-    if (tipo) {
-      const templates = DESC_TEMPLATES_BY_TYPE[tipo] || [];
-      for (const t of templates) pool.push(`${t}${route}`);
-    }
-    if (tipo || estado || accion) {
-      pool.push(
-        `Incidente ${tipo || 'de red'}${route}. Estado: ${estado || 'PENDIENTE'}. Acción aplicada: ${
-          accion || 'INTERVENCIÓN TECNICA'
-        }.`
-      );
-    }
-    if (pinnedRouteLabel) {
-      pool.push(`Evento reportado en el tendido ${pinnedRouteLabel}. Se realiza diagnóstico en campo.`);
-    }
-    pool.push(
-      'Se realiza inspección técnica en campo y se deja seguimiento activo hasta cierre del incidente.',
-      'Evento validado en sitio, se registra evidencia y se coordina atención técnica.'
-    );
-    return pool;
-  }
-
-  function rankDescSuggestions(query, items) {
-    const q = normalizeTxt(query).trim();
-    const seen = new Set();
-    /** @type {{ t: string, s: number }[]} */
-    const rows = [];
-    for (const raw of items) {
-      const t = String(raw || '').trim();
-      if (!t || seen.has(t)) continue;
-      seen.add(t);
-      const n = normalizeTxt(t);
-      let score = 0;
-      if (!q) score = 70 - Math.min(n.length, 40);
-      else if (n.startsWith(q)) score = 300 - n.length;
-      else if (n.includes(` ${q}`)) score = 210 - n.length;
-      else if (n.includes(q)) score = 130 - n.length;
-      else continue;
-      rows.push({ t, s: score });
-    }
-    rows.sort((a, b) => b.s - a.s || a.t.localeCompare(b.t));
-    return rows.slice(0, DESC_SUGGEST_MAX).map((r) => r.t);
-  }
-
-  function hideDescSuggest() {
-    if (descSuggestTimer) window.clearTimeout(descSuggestTimer);
-    descSuggestTimer = null;
-    descSuggestActive = -1;
-    descSuggestEl.hidden = true;
-    descSuggestEl.innerHTML = '';
-  }
-
-  function applyDescSuggestion(text) {
-    descEl.value = text;
-    hideDescSuggest();
-    persistDraft();
-    try {
-      descEl.focus();
-    } catch {
-      /* */
-    }
-  }
-
-  function refreshDescSuggestHighlight() {
-    const items = descSuggestEl.querySelectorAll('li[role="option"]');
-    items.forEach((it, i) => {
-      it.setAttribute('aria-selected', i === descSuggestActive ? 'true' : 'false');
-    });
-  }
-
-  function renderDescSuggest(hits) {
-    descSuggestEl.innerHTML = '';
-    if (!hits.length) {
-      hideDescSuggest();
-      return;
-    }
-    descSuggestActive = 0;
-    hits.forEach((h, i) => {
-      const li = document.createElement('li');
-      li.id = `reporte-ev-desc-opt-${i}`;
-      li.setAttribute('role', 'option');
-      li.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
-      li.textContent = h;
-      li.addEventListener('mousedown', (ev) => {
-        ev.preventDefault();
-        applyDescSuggestion(h);
-      });
-      descSuggestEl.appendChild(li);
-    });
-    descSuggestEl.hidden = false;
-  }
-
-  function scheduleDescSuggest(forceNow = false) {
-    if (descSuggestTimer) window.clearTimeout(descSuggestTimer);
-    const run = () => {
-      descSuggestTimer = null;
-      const hits = rankDescSuggestions(descEl.value, buildDescSuggestPool());
-      renderDescSuggest(hits);
-    };
-    if (forceNow) run();
-    else descSuggestTimer = window.setTimeout(run, DESC_SUGGEST_DEBOUNCE_MS);
   }
 
   function updatePhaseDom() {
@@ -438,7 +291,6 @@ export function initReporteEventoSidebar(opts) {
       onArmingChanged?.(false);
       updatePhaseDom();
       refreshFechaText();
-      scheduleDescSuggest(true);
       setStatus('Montar evento: punto libre fijado. Completa el formulario y guarda.');
       try {
         tipoEl.focus();
@@ -472,7 +324,6 @@ export function initReporteEventoSidebar(opts) {
 
     updatePhaseDom();
     refreshFechaText();
-    scheduleDescSuggest(true);
     setStatus(
       `Montar evento: punto fijado en «${pinnedRouteLabel || f.id}». Completa el formulario y guarda.`
     );
@@ -549,7 +400,6 @@ export function initReporteEventoSidebar(opts) {
     onArmingChanged?.(false);
     updatePhaseDom();
     refreshFechaText();
-    scheduleDescSuggest(true);
     setStatus(`Montar evento: punto fijado. ${msgExtra} Completa y guarda.`);
     try {
       tipoEl.focus();
@@ -645,7 +495,6 @@ export function initReporteEventoSidebar(opts) {
 
         updatePhaseDom();
         refreshFechaText();
-        scheduleDescSuggest(true);
         const accTxt = Number.isFinite(acc) ? ` ±${Math.round(acc)} m` : '';
         const accLevel = !Number.isFinite(acc)
           ? 'info'
@@ -911,7 +760,6 @@ export function initReporteEventoSidebar(opts) {
   }
 
   function resetFormAfterSubmit() {
-    hideDescSuggest();
     descEl.value = '';
     clearDraft();
     if (distEl) distEl.value = '';
@@ -1029,12 +877,10 @@ export function initReporteEventoSidebar(opts) {
     if (!pinnedLngLat) {
       showPlacementChooser();
     }
-    hideDescSuggest();
     updatePhaseDom();
   }
 
   function notifyReportePanelClosed() {
-    hideDescSuggest();
     pickPlacementMode = null;
     if (placementRow) placementRow.hidden = false;
     cancelAwaitingMapPickOnly();
@@ -1080,12 +926,7 @@ export function initReporteEventoSidebar(opts) {
 
   tipoEl.addEventListener('change', () => {
     syncActionsForTipo();
-    scheduleDescSuggest(true);
   });
-  estadoEl.addEventListener('change', () => scheduleDescSuggest(true));
-  accionEl.addEventListener('change', () => scheduleDescSuggest(true));
-
-  btnSuggestDesc.addEventListener('click', () => scheduleDescSuggest(true));
 
   /* Detectar edición manual del campo Dist ODF para no sobreescribirlo luego. */
   distEl?.addEventListener('input', () => {
@@ -1096,42 +937,6 @@ export function initReporteEventoSidebar(opts) {
   /* Borrador automático de la descripción. */
   descEl.addEventListener('input', () => {
     persistDraft();
-    scheduleDescSuggest();
-  });
-  descEl.addEventListener('focus', () => scheduleDescSuggest());
-  descEl.addEventListener('blur', () => {
-    window.setTimeout(() => hideDescSuggest(), 180);
-  });
-  descEl.addEventListener('keydown', (ev) => {
-    if (descSuggestEl.hidden) return;
-    const items = descSuggestEl.querySelectorAll('li[role="option"]');
-    const n = items.length;
-    if (!n) return;
-    if (ev.key === 'Escape') {
-      ev.preventDefault();
-      hideDescSuggest();
-      return;
-    }
-    if (ev.key === 'ArrowDown') {
-      ev.preventDefault();
-      descSuggestActive = Math.min(descSuggestActive + 1, n - 1);
-      refreshDescSuggestHighlight();
-      return;
-    }
-    if (ev.key === 'ArrowUp') {
-      ev.preventDefault();
-      descSuggestActive = Math.max(descSuggestActive - 1, 0);
-      refreshDescSuggestHighlight();
-      return;
-    }
-    if ((ev.key === 'Tab' || ev.key === 'Enter') && descSuggestActive >= 0) {
-      const li = items[descSuggestActive];
-      const t = li?.textContent?.trim();
-      if (t) {
-        ev.preventDefault();
-        applyDescSuggestion(t);
-      }
-    }
   });
 
   syncActionsForTipo();

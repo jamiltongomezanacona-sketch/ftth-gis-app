@@ -44,7 +44,7 @@ import {
   fmtTotalHuman
 } from './measurePolylineLayer.js';
 import { initEditorGpsDock } from './editorGpsDock.js';
-import { initReporteEventoSidebar } from './reporteEventoSidebar.js?v=20260426reporteQuitarRepickRapido';
+import { initReporteEventoSidebar } from './reporteEventoSidebar.js?v=20260426quitarSugerirDesc';
 import { initMontarCierreModal } from './montarCierreModal.js?v=20260425montarCierreFieldMobile';
 import { createTrazarController } from './trazarTool.js';
 import { bringTrazarCutLayerToFront, bringTrazarRefLayerToFront } from './trazarCutLayer.js';

@@ -3934,55 +3934,6 @@ body.editor-body #sidebar {
   line-height: 1.45;
 }
 
-.reporte-ev-smart-row {
-  display: flex;
-  justify-content: flex-end;
-  margin: 0 0 6px;
-}
-
-.reporte-ev-btn--smart {
-  min-height: 30px;
-  padding: 5px 10px;
-  font-size: 0.74rem;
-}
-
-.reporte-ev-combo {
-  position: relative;
-}
-
-.reporte-ev-suggest {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 4px);
-  bottom: auto;
-  margin: 0;
-  padding: 4px 0;
-  list-style: none;
-  max-height: min(220px, 32vh);
-  overflow-y: auto;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
-  z-index: 35;
-}
-
-.reporte-ev-suggest li {
-  margin: 0;
-  padding: 8px 10px;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: #0f172a;
-  cursor: pointer;
-}
-
-.reporte-ev-suggest li:hover,
-.reporte-ev-suggest li[aria-selected='true'] {
-  background: #eff6ff;
-  color: #1e3a8a;
-}
-
 .reporte-ev-select {
   cursor: pointer;
   appearance: none;
