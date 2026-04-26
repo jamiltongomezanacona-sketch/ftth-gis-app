@@ -490,13 +490,21 @@
 
         <div class="reporte-ev-field">
           <label class="reporte-ev-label" for="reporte-ev-descripcion">Descripción <span class="reporte-ev-req">*</span></label>
-          <textarea
-            class="reporte-ev-textarea"
-            id="reporte-ev-descripcion"
-            rows="4"
-            maxlength="8000"
-            placeholder="Describe el incidente…"
-          ></textarea>
+          <div class="reporte-ev-smart-row">
+            <button type="button" class="reporte-ev-btn reporte-ev-btn--ghost-sm reporte-ev-btn--smart" id="btn-reporte-ev-suggest-desc">
+              Sugerir descripción
+            </button>
+          </div>
+          <div class="reporte-ev-combo">
+            <textarea
+              class="reporte-ev-textarea"
+              id="reporte-ev-descripcion"
+              rows="4"
+              maxlength="8000"
+              placeholder="Describe el incidente…"
+            ></textarea>
+            <ul id="reporte-ev-desc-suggest" class="reporte-ev-suggest" role="listbox" aria-label="Sugerencias de descripción" hidden></ul>
+          </div>
           <span id="reporte-ev-desc-draft" class="reporte-ev-auto-tag" hidden>borrador</span>
         </div>
 
@@ -582,6 +590,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260428montarCierre"></script>
+  <script type="module" src="/js/app.js?v=20260425montarEventoSmart"></script>
 </body>
 </html>
