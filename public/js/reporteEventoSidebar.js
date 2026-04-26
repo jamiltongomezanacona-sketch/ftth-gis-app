@@ -110,14 +110,11 @@ export function initReporteEventoSidebar(opts) {
   const btnSuggestDesc = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-ev-suggest-desc'));
   const descDraftTag = document.getElementById('reporte-ev-desc-draft');
   const btnGuardar = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-evento-guardar'));
-  const btnRapido = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-evento-rapido'));
   const btnCancelWait = document.getElementById('btn-reporte-cancel-wait');
-  const btnRepick = document.getElementById('btn-reporte-repick');
   const btnUseGps = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-reporte-use-gps'));
   const presetSelect = /** @type {HTMLSelectElement | null} */ (document.getElementById('reporte-ev-preset-select'));
   const gpsStatusEl = document.getElementById('reporte-ev-gps-status');
   const offlineNoteEl = document.getElementById('reporte-ev-offline-note');
-  const pinCardEl = document.getElementById('reporte-ev-pin-card');
   const toastEl = document.getElementById('reporte-ev-toast');
   const presetBtns = /** @type {NodeListOf<HTMLButtonElement>} */ (
     document.querySelectorAll('.reporte-ev-preset[data-preset]')
@@ -176,7 +173,6 @@ export function initReporteEventoSidebar(opts) {
     if (phaseWait) phaseWait.hidden = false;
     if (phaseForm) phaseForm.hidden = true;
     updatePhaseDom();
-    updatePinCard();
   }
 
   function hasMoleculeSelected() {
@@ -344,7 +340,6 @@ export function initReporteEventoSidebar(opts) {
     const has = pinnedLngLat != null;
     phaseWait.hidden = has;
     phaseForm.hidden = !has;
-    updatePinCard();
     refreshMoleculeLine();
   }
 
@@ -352,15 +347,6 @@ export function initReporteEventoSidebar(opts) {
     if (!gpsStatusEl) return;
     gpsStatusEl.textContent = msg || '';
     gpsStatusEl.dataset.level = level || '';
-  }
-
-  function updatePinCard() {
-    if (!pinCardEl) return;
-    if (!pinnedLngLat) {
-      pinCardEl.hidden = true;
-      return;
-    }
-    pinCardEl.hidden = false;
   }
 
   function startAwaitingMapPick() {
@@ -371,7 +357,6 @@ export function initReporteEventoSidebar(opts) {
       if (phaseForm) phaseForm.hidden = true;
       if (phaseWait) phaseWait.hidden = false;
       if (placementRow) placementRow.hidden = false;
-      updatePinCard();
       return;
     }
     if (!pickPlacementMode) {
@@ -709,23 +694,6 @@ export function initReporteEventoSidebar(opts) {
     if (phaseForm) phaseForm.hidden = true;
     if (phaseWait) phaseWait.hidden = false;
     onArmingChanged?.(false);
-    updatePinCard();
-  }
-
-  function clearPinnedAndRearm() {
-    pinnedLngLat = null;
-    pinnedRouteLabel = null;
-    lastGpsAccuracy = null;
-    autoComputedDistOdf = null;
-    distOdfIsManual = false;
-    if (distAutoTag) distAutoTag.hidden = true;
-    if (distEl) distEl.value = '';
-    setReportePin(null);
-    setGpsStatus('', '');
-    updatePinCard();
-    if (isReportePanelOpen()) {
-      showPlacementChooser();
-    }
   }
 
   function routeContext() {
@@ -959,7 +927,6 @@ export function initReporteEventoSidebar(opts) {
     presetBtns.forEach((b) => b.classList.remove('is-active'));
     setReportePin(null);
     setGpsStatus('', '');
-    updatePinCard();
     if (isReportePanelOpen()) showPlacementChooser();
     refreshFechaText();
   }
@@ -1100,37 +1067,7 @@ export function initReporteEventoSidebar(opts) {
     startAwaitingMapPick();
   });
 
-  btnRepick?.addEventListener('click', () => {
-    clearPinnedAndRearm();
-    setStatus('Montar evento: vuelve a elegir el punto (GPS o toque en el cable).');
-  });
-
   btnUseGps?.addEventListener('click', () => handleGpsPick());
-  btnRapido?.addEventListener('click', async () => {
-    if (!ensureMoleculeSelected(true)) return;
-    if (btnRapido.disabled) return;
-    btnRapido.disabled = true;
-    try {
-      let hasPoint =
-        !!pinnedLngLat &&
-        Number.isFinite(pinnedLngLat.lng) &&
-        Number.isFinite(pinnedLngLat.lat);
-      if (!hasPoint) {
-        hasPoint = await handleGpsPick({ silent: false });
-      }
-      if (!hasPoint) {
-        setStatus('Evento rápido: no se pudo fijar ubicación GPS.');
-        return;
-      }
-      applyPreset('corte-obras');
-      if (!String(descEl.value || '').trim()) {
-        descEl.value = 'Evento rápido en campo';
-      }
-      await submit();
-    } finally {
-      btnRapido.disabled = false;
-    }
-  });
 
   presetBtns.forEach((b) => {
     b.addEventListener('click', () => applyPreset(b.dataset.preset || ''));

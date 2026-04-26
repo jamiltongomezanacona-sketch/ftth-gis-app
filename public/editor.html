@@ -20,7 +20,7 @@
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet" />
   <link href="/vendor/mapbox-gl-draw.css" rel="stylesheet" />
   <!-- v: bumpear este número en cada release para invalidar caché del navegador. -->
-  <link rel="stylesheet" href="/css/app.css?v=20260426reporteMapPickPass" />
+  <link rel="stylesheet" href="/css/app.css?v=20260426reporteQuitarRepickRapido" />
   <script defer src="/js/pwa-register.js"></script>
 </head>
 <body class="editor-body">
@@ -469,12 +469,6 @@
       </div>
 
       <div id="reporte-ev-phase-form" hidden>
-        <div id="reporte-ev-pin-card" class="reporte-ev-pin-card" hidden>
-          <div class="reporte-ev-pin-card__actions">
-            <button type="button" id="btn-reporte-repick" class="reporte-ev-btn reporte-ev-repick">Cambiar ubicación</button>
-          </div>
-        </div>
-
         <div class="reporte-ev-field">
           <label class="reporte-ev-label" for="reporte-ev-dist-odf">Dist. ODF (m) <span id="reporte-ev-dist-auto" class="reporte-ev-auto-tag" hidden>auto</span></label>
           <input class="reporte-ev-input" type="number" min="0" step="0.1" id="reporte-ev-dist-odf" placeholder="Opcional" />
@@ -544,7 +538,6 @@
           <button type="button" class="reporte-ev-btn reporte-ev-btn--guardar" id="btn-reporte-evento-guardar">
             <span class="reporte-ev-save-ico" aria-hidden="true">✓</span> Guardar evento
           </button>
-          <button type="button" class="reporte-ev-btn reporte-ev-btn--ghost-sm" id="btn-reporte-evento-rapido">Evento rápido (GPS)</button>
         </div>
       </div>
     </div>
@@ -612,6 +605,6 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
   <script src="/vendor/mapbox-gl-draw.js"></script>
   <script src="/vendor/turf.min.js"></script>
-  <script type="module" src="/js/app.js?v=20260426montarEventoModalMcParity"></script>
+  <script type="module" src="/js/app.js?v=20260426reporteQuitarRepickRapido"></script>
 </body>
 </html>
