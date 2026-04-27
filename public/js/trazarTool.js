@@ -5,6 +5,7 @@ import {
   lineLengthMeters,
   cutPointFromOtdrFiberMeters,
   cutPointFromFiberFromClickRef,
+  geometricLengthFromFiberLengthMeters,
   distanceFromStartAlongLineMeters,
   lengthWithReserve20Pct,
   pointAlongLineAtGeometricDistance
@@ -329,6 +330,21 @@ export function createTrazarController(ctx) {
     } else if (origen === 'B') {
       r = cutPointFromOtdrFiberMeters(line, fib, 'end', turfNs);
     } else {
+      const lineLen = lineLengthMeters(line, turfNs);
+      const refGeom = Math.min(Math.max(0, Number(refDistFromStartM)), lineLen);
+      const maxGeom = getDireccion() === 'toward_start' ? refGeom : Math.max(0, lineLen - refGeom);
+      const reqGeom = geometricLengthFromFiberLengthMeters(fib);
+      if (reqGeom > maxGeom + 0.01) {
+        return {
+          point: null,
+          overflow: true,
+          maxFiberM: lengthWithReserve20Pct(maxGeom),
+          lineLengthM: lineLen,
+          fiberReadingM: fib,
+          geometricFromRefM: reqGeom,
+          distanceFromStartAlongLineM: refGeom
+        };
+      }
       r = cutPointFromFiberFromClickRef(
         line,
         /** @type {number} */ (refDistFromStartM),
@@ -364,6 +380,13 @@ export function createTrazarController(ctx) {
       }
     }
     const r = compute();
+    if (origen === 'punto' && r && r.overflow) {
+      const max = Number(r.maxFiberM);
+      setStatus(
+        `Trazar: fibra fuera de rango para esta dirección. Máximo permitido desde el pin: ${Number.isFinite(max) ? fmtM(max) : '—'}.`
+      );
+      return;
+    }
     if (!r || !r.point) {
       setStatus('Trazar: no se pudo colocar el corte; revisa fibra (m) o la geometría.');
       return;
