@@ -1328,6 +1328,87 @@ body.editor-body .editor-field-sidebar__item-title {
 
 /* Ajuste fino móvil: menú Campo más cómodo y legible en pantallas estrechas. */
 @media (max-width: 640px) {
+  /* Trazar en móvil: modal más compacto para dejar más mapa visible. */
+  #editor-trazar-modal.editor-trazar-modal {
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  body.editor-body .editor-trazar-modal__panel {
+    width: min(360px, calc(100vw - 16px));
+    max-height: min(76dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 14px));
+    margin-top: calc(var(--editor-chrome-stack, 80px) - 4px);
+    border-radius: 14px;
+  }
+
+  body.editor-body .editor-trazar-modal__titlebar {
+    padding: 7px 8px;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .editor-trazar-modal__body {
+    padding: 5px 6px 7px;
+  }
+
+  .editor-trazar-card {
+    margin: 0 0 8px;
+    padding: 8px 8px 9px;
+    border-radius: 10px;
+  }
+
+  .editor-trazar-card__title {
+    margin: 0 0 6px;
+    font-size: 0.84rem;
+  }
+
+  .editor-trazar-punto-workspace {
+    margin: 0 0 10px;
+    padding: 10px 8px 8px;
+    border-radius: 10px;
+  }
+
+  .editor-trazar-punto-head {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .editor-trazar-punto-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+  }
+
+  .editor-trazar-seg-grid {
+    gap: 6px;
+  }
+
+  .editor-trazar-seg-grid--2 {
+    gap: 6px;
+  }
+
+  .editor-trazar-seg__face {
+    min-height: 46px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+  }
+
+  .editor-trazar-seg__face--dir {
+    min-height: 44px;
+  }
+
+  .editor-trazar-seg__face--dir .editor-trazar-seg__t {
+    font-size: 0.8rem;
+  }
+
+  .editor-trazar-input {
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
   body.editor-body .editor-field-sidebar {
     max-width: min(94vw, 360px);
     border-radius: 0 18px 18px 0;
