@@ -166,6 +166,23 @@ export function createTrazarController(ctx) {
     return n;
   }
 
+  /**
+   * Topes de fibra desde el pin de referencia por dirección (convención ×1,2).
+   * @param {GeoJSON.LineString | null} line
+   * @returns {{ toward_start_fiber_m: number, toward_end_fiber_m: number } | null}
+   */
+  function directionalFiberCapsFromRef(line) {
+    if (!line || refDistFromStartM == null || !Number.isFinite(refDistFromStartM)) return null;
+    const L = lineLengthMeters(line, getTurfNs());
+    if (!Number.isFinite(L) || L < 0) return null;
+    const toStartGeom = Math.min(Math.max(0, refDistFromStartM), L);
+    const toEndGeom = Math.max(0, L - toStartGeom);
+    return {
+      toward_start_fiber_m: lengthWithReserve20Pct(toStartGeom),
+      toward_end_fiber_m: lengthWithReserve20Pct(toEndGeom)
+    };
+  }
+
   function getOrigen() {
     for (const el of origenEls) {
       if (el instanceof HTMLInputElement && el.checked) {
@@ -280,8 +297,9 @@ export function createTrazarController(ctx) {
       return;
     }
     const L = lineLengthMeters(line, turfNs);
+    const caps = directionalFiberCapsFromRef(line);
     refHintEl.classList.add('editor-trazar-ref--ok');
-    refHintEl.textContent = `Pin colocado. Desde el inicio del tramo (A) hasta el pin: ≈ ${fmtM(refDistFromStartM)} · Longitud total del tendido: ≈ ${fmtM(L)}.`;
+    refHintEl.textContent = `Pin colocado. Desde el inicio del tramo (A) hasta el pin: ≈ ${fmtM(refDistFromStartM)} · Longitud total del tendido: ≈ ${fmtM(L)}.${caps ? ` Máximo desde pin -> hacia central: ≈ ${fmtM(caps.toward_start_fiber_m)} · hacia final: ≈ ${fmtM(caps.toward_end_fiber_m)}.` : ''}`;
   }
 
   function compute() {
@@ -373,7 +391,13 @@ export function createTrazarController(ctx) {
     }
     scheduleMapResize?.();
     if (r.clamped && origen === 'punto') {
-      setStatus('Trazar: punto marcado en el extremo del cable (la fibra desde el pin supera el tramo disponible).');
+      const line = resolveLineStringGeometry(f?.geometry);
+      const caps = directionalFiberCapsFromRef(line);
+      const maxFiber =
+        direccion === 'toward_start' ? caps?.toward_start_fiber_m : caps?.toward_end_fiber_m;
+      setStatus(
+        `Trazar: punto marcado en el extremo del cable (tope en esta dirección: ${Number.isFinite(maxFiber) ? fmtM(Number(maxFiber)) : '—'}).`
+      );
     } else {
       setStatus(
         r.clamped
