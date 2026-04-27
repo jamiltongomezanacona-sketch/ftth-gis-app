@@ -141,10 +141,18 @@ export function createTrazarController(ctx) {
   }
 
   /**
-   * Distancia desde central hasta el corte (valor en metros con convención ×1,2; sin texto en etiqueta).
+   * Etiqueta del pin según el origen de medida activo.
+   * - A/B: mantiene "desde central" (histórico).
+   * - Punto tramo: muestra metros efectivos "desde pin".
    */
-  function cutCentralLabel(r) {
-    const d = r?.distanceFromStartAlongLineM;
+  function cutLabel(r) {
+    if (origen === 'punto') {
+      const fromRefGeom = Number(r?.geometricFromRefM);
+      if (!Number.isFinite(fromRefGeom)) return null;
+      const fibFromRef = lengthWithReserve20Pct(fromRefGeom);
+      return { primary: fmtM(fibFromRef), secondary: 'desde pin' };
+    }
+    const d = Number(r?.distanceFromStartAlongLineM);
     if (!Number.isFinite(d)) return null;
     const fib = lengthWithReserve20Pct(d);
     return { primary: fmtM(fib), secondary: 'desde central' };
@@ -344,7 +352,7 @@ export function createTrazarController(ctx) {
     }
     const coords = r.point.geometry.coordinates;
     ensureTrazarCutLayers(map);
-    setTrazarCutMarker(map, [coords[0], coords[1]], { centralLabel: cutCentralLabel(r) });
+    setTrazarCutMarker(map, [coords[0], coords[1]], { centralLabel: cutLabel(r) });
     try {
       bumpLayersAfterPolylineMeasure?.();
       bringTrazarCutLayerToFront(map);
@@ -364,11 +372,15 @@ export function createTrazarController(ctx) {
       }
     }
     scheduleMapResize?.();
-    setStatus(
-      r.clamped
-        ? 'Trazar: punto marcado (distancia ajustada al tramo).'
-        : 'Trazar: punto de corte marcado en el mapa.'
-    );
+    if (r.clamped && origen === 'punto') {
+      setStatus('Trazar: punto marcado en el extremo del cable (la fibra desde el pin supera el tramo disponible).');
+    } else {
+      setStatus(
+        r.clamped
+          ? 'Trazar: punto marcado (distancia ajustada al tramo).'
+          : 'Trazar: punto de corte marcado en el mapa.'
+      );
+    }
   }
 
   function onInput() {
@@ -384,7 +396,7 @@ export function createTrazarController(ctx) {
     const r = compute();
     if (r?.point) {
       const c = r.point.geometry.coordinates;
-      setTrazarCutMarker(map, [c[0], c[1]], { centralLabel: cutCentralLabel(r) });
+      setTrazarCutMarker(map, [c[0], c[1]], { centralLabel: cutLabel(r) });
       try {
         bumpLayersAfterPolylineMeasure?.();
         bringTrazarCutLayerToFront(map);
