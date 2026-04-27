@@ -29,6 +29,33 @@ const ACCIONES = new Set([
 const MAX_DESC = 8000;
 
 /**
+ * Normaliza textos de catálogos para comparar sin fallar por acentos/espaciado.
+ * @param {unknown} v
+ */
+function normalizeCatalogToken(v) {
+  return String(v ?? '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
+/**
+ * @param {Set<string>} catalog
+ * @param {unknown} rawValue
+ * @returns {string}
+ */
+function resolveCatalogValue(catalog, rawValue) {
+  const wanted = normalizeCatalogToken(rawValue);
+  if (!wanted) return '';
+  for (const item of catalog) {
+    if (normalizeCatalogToken(item) === wanted) return item;
+  }
+  return '';
+}
+
+/**
  * @param {import('pg').Pool} pool
  * @param {{ requireBearerAuth: import('express').RequestHandler }} opts
  */
@@ -76,9 +103,7 @@ export function createEventosReporteRouter(pool, opts) {
       const patch = {};
 
       if (Object.prototype.hasOwnProperty.call(body, 'tipo_evento')) {
-        const tipo_evento = String(body.tipo_evento ?? '')
-          .trim()
-          .toUpperCase();
+        const tipo_evento = resolveCatalogValue(TIPOS, body.tipo_evento);
         if (!TIPOS.has(tipo_evento)) {
           res.status(400).json({ error: 'tipo_evento no válido' });
           return;
@@ -86,9 +111,7 @@ export function createEventosReporteRouter(pool, opts) {
         patch.tipo_evento = tipo_evento;
       }
       if (Object.prototype.hasOwnProperty.call(body, 'estado')) {
-        const estado = String(body.estado ?? '')
-          .trim()
-          .toUpperCase();
+        const estado = resolveCatalogValue(ESTADOS, body.estado);
         if (!ESTADOS.has(estado)) {
           res.status(400).json({ error: 'estado no válido' });
           return;
@@ -96,10 +119,7 @@ export function createEventosReporteRouter(pool, opts) {
         patch.estado = estado;
       }
       if (Object.prototype.hasOwnProperty.call(body, 'accion')) {
-        let accion = String(body.accion ?? '').trim();
-        if (accion.toUpperCase() === 'INTERVENCION TECNICA') {
-          accion = 'INTERVENCIÓN TECNICA';
-        }
+        const accion = resolveCatalogValue(ACCIONES, body.accion);
         if (!ACCIONES.has(accion)) {
           res.status(400).json({ error: 'accion no válida' });
           return;
@@ -253,16 +273,9 @@ export function createEventosReporteRouter(pool, opts) {
       }
 
       const body = req.body && typeof req.body === 'object' ? req.body : {};
-      const tipo_evento = String(body.tipo_evento ?? '')
-        .trim()
-        .toUpperCase();
-      const estado = String(body.estado ?? '')
-        .trim()
-        .toUpperCase();
-      let accion = String(body.accion ?? '').trim();
-      if (accion.toUpperCase() === 'INTERVENCION TECNICA') {
-        accion = 'INTERVENCIÓN TECNICA';
-      }
+      const tipo_evento = resolveCatalogValue(TIPOS, body.tipo_evento);
+      const estado = resolveCatalogValue(ESTADOS, body.estado);
+      const accion = resolveCatalogValue(ACCIONES, body.accion);
       const descripcion = String(body.descripcion ?? '').trim().slice(0, MAX_DESC);
 
       if (!TIPOS.has(tipo_evento)) {
