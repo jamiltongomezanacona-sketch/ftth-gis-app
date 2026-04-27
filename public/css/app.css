@@ -1326,6 +1326,51 @@ body.editor-body .editor-field-sidebar__item-title {
   min-width: 0;
 }
 
+/* Ajuste fino móvil: menú Campo más cómodo y legible en pantallas estrechas. */
+@media (max-width: 640px) {
+  body.editor-body .editor-field-sidebar {
+    max-width: min(94vw, 360px);
+    border-radius: 0 18px 18px 0;
+  }
+
+  body.editor-body .editor-field-sidebar::before {
+    opacity: 0.34;
+    filter: blur(16px);
+  }
+
+  body.editor-body .editor-field-sidebar__inner {
+    min-width: min(300px, calc(100vw - 16px));
+    padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.editor-body .editor-field-sidebar__head {
+    margin-bottom: 8px;
+    padding: 0 3px 7px;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+  }
+
+  body.editor-body .editor-field-sidebar__nav {
+    gap: 7px;
+  }
+
+  body.editor-body .editor-field-sidebar__item {
+    min-height: 50px;
+    padding: 10px 12px;
+    border-radius: 12px;
+  }
+
+  body.editor-body .editor-field-sidebar__item-ico {
+    width: 21px;
+    height: 21px;
+  }
+
+  body.editor-body .editor-field-sidebar__item-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+}
+
 /* Trazar: overlay a pantalla (móvil centrado; ≥901px alineado a la izquierda vía @media). */
 #editor-trazar-modal.editor-trazar-modal {
   position: fixed;
