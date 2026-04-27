@@ -2962,7 +2962,7 @@ export async function boot() {
         });
       },
       onSelectRoute: (f, meta) => {
-        if (redTipoOfFeature(f) !== appNetwork) {
+        if (redTipoOfFeature(f, appNetwork) !== appNetwork) {
           setStatus('Cable no pertenece a la red de esta sesión. Usa «Cambiar de red» o recarga.');
           return;
         }

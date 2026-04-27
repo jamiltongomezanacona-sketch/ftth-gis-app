@@ -12,13 +12,19 @@ export function normalizeSearchText(s) {
 }
 
 /**
- * Red efectiva del tendido (alineado con el servidor: null/vacío → FTTH).
+ * Red efectiva del tendido.
+ * Si `targetNetwork` es `corporativa`, `red_tipo` ausente cuenta como corporativa
+ * (la API ya devuelve solo esa red; evita vaciar el mapa si el GeoJSON no trae la propiedad).
+ * En cualquier otro caso, null/vacío → FTTH (alineado con COALESCE del servidor en FTTH).
  * @param {GeoJSON.Feature} f
+ * @param {'ftth'|'corporativa'|null|undefined} [targetNetwork] red de la sesión o del filtro activo
  * @returns {'ftth'|'corporativa'}
  */
-export function redTipoOfFeature(f) {
+export function redTipoOfFeature(f, targetNetwork) {
   const raw = f?.properties?.red_tipo;
-  if (raw == null || String(raw).trim() === '') return 'ftth';
+  if (raw == null || String(raw).trim() === '') {
+    return targetNetwork === 'corporativa' ? 'corporativa' : 'ftth';
+  }
   const s = String(raw).trim().toLowerCase();
   if (s === 'corporativa' || s === 'corp' || s === 'corporate') return 'corporativa';
   return 'ftth';
@@ -35,7 +41,7 @@ export function filterRoutesByNetwork(fc, redTipo) {
     return fc && typeof fc === 'object' ? fc : { type: 'FeatureCollection', features: [] };
   }
   const features = (fc?.features || []).filter(
-    (f) => f && f.type === 'Feature' && redTipoOfFeature(f) === redTipo
+    (f) => f && f.type === 'Feature' && redTipoOfFeature(f, redTipo) === redTipo
   );
   return { type: 'FeatureCollection', features };
 }
