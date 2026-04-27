@@ -277,29 +277,10 @@ export function createTrazarController(ctx) {
 
   function syncRefHint(geom, turfNs) {
     if (!refHintEl) return;
+    refHintEl.textContent = '';
+    refHintEl.hidden = true;
     refHintEl.classList.remove('editor-trazar-ref--waiting', 'editor-trazar-ref--ok');
-    if (origen !== 'punto') {
-      refHintEl.textContent = '';
-      refHintEl.hidden = true;
-      return;
-    }
-    refHintEl.hidden = false;
-    if (refDistFromStartM == null) {
-      refHintEl.classList.add('editor-trazar-ref--waiting');
-      refHintEl.textContent =
-        'Pulsa el tendido en el mapa.';
-      return;
-    }
-    const line = resolveLineStringGeometry(geom);
-    if (!line) {
-      refHintEl.classList.add('editor-trazar-ref--waiting');
-      refHintEl.textContent = 'Selecciona un tendido con geometría de línea.';
-      return;
-    }
-    const L = lineLengthMeters(line, turfNs);
-    const caps = directionalFiberCapsFromRef(line);
-    refHintEl.classList.add('editor-trazar-ref--ok');
-    refHintEl.textContent = `Pin colocado. Desde el inicio del tramo (A) hasta el pin: ≈ ${fmtM(refDistFromStartM)} · Longitud total del tendido: ≈ ${fmtM(L)}.${caps ? ` Máximo desde pin -> hacia central: ≈ ${fmtM(caps.toward_start_fiber_m)} · hacia final: ≈ ${fmtM(caps.toward_end_fiber_m)}.` : ''}`;
+    return;
   }
 
   function compute() {
