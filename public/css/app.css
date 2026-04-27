@@ -11059,3 +11059,46 @@ body.editor-body:has(#measure-polyline-dock:not([hidden])) .mapboxgl-ctrl-bottom
     padding: 14px 14px 16px;
   }
 }
+
+/* Override final: sidebar CAMPO ultra-compacto en móvil */
+@media (max-width: 640px) {
+  body.editor-body .editor-field-sidebar {
+    width: min(82vw, 300px) !important;
+    max-width: min(82vw, 300px) !important;
+    border-radius: 0 14px 14px 0 !important;
+  }
+
+  body.editor-body .editor-field-sidebar__inner {
+    min-width: auto !important;
+    width: 100% !important;
+    padding: 7px 7px calc(9px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  body.editor-body .editor-field-sidebar__head {
+    margin-bottom: 5px !important;
+    padding: 0 1px 5px !important;
+    font-size: 0.53rem !important;
+    letter-spacing: 0.14em !important;
+  }
+
+  body.editor-body .editor-field-sidebar__nav {
+    gap: 5px !important;
+  }
+
+  body.editor-body .editor-field-sidebar__item {
+    min-height: 40px !important;
+    padding: 7px 9px !important;
+    border-radius: 9px !important;
+    gap: 9px !important;
+  }
+
+  body.editor-body .editor-field-sidebar__item-ico {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  body.editor-body .editor-field-sidebar__item-title {
+    font-size: 0.78rem !important;
+    line-height: 1.15 !important;
+  }
+}
