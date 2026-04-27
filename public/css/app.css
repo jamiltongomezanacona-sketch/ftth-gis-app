@@ -1154,21 +1154,21 @@ body.editor-body .editor-field-sidebar {
   margin: 0;
   padding: 0;
   border: none;
-  border-right: 1px solid rgba(148, 163, 184, 0.16);
+  border-right: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 0 20px 20px 0;
   background: linear-gradient(
-    168deg,
-    rgba(51, 65, 85, 0.62) 0%,
-    rgba(30, 41, 59, 0.78) 38%,
-    rgba(15, 23, 42, 0.9) 72%,
-    rgba(2, 6, 23, 0.96) 100%
+    162deg,
+    rgba(59, 73, 97, 0.52) 0%,
+    rgba(32, 43, 63, 0.78) 34%,
+    rgba(14, 21, 35, 0.92) 70%,
+    rgba(2, 6, 15, 0.98) 100%
   );
-  backdrop-filter: blur(24px) saturate(1.35);
-  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  backdrop-filter: blur(22px) saturate(1.22);
+  -webkit-backdrop-filter: blur(22px) saturate(1.22);
   box-shadow:
-    18px 0 56px rgba(0, 0, 0, 0.38),
-    inset -1px 0 0 rgba(255, 255, 255, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    20px 0 56px rgba(0, 0, 0, 0.42),
+    inset -1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transform: translateX(-105%);
   visibility: hidden;
   pointer-events: none;
@@ -1187,11 +1187,11 @@ body.editor-body .editor-field-sidebar::before {
   height: 78%;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.52;
+  opacity: 0.42;
   background:
-    radial-gradient(56% 66% at 18% 34%, rgba(16, 185, 129, 0.36) 0%, rgba(16, 185, 129, 0.14) 36%, rgba(16, 185, 129, 0) 78%),
-    radial-gradient(40% 48% at 56% 12%, rgba(52, 211, 153, 0.28) 0%, rgba(52, 211, 153, 0.1) 40%, rgba(52, 211, 153, 0) 76%);
-  filter: blur(18px);
+    radial-gradient(58% 68% at 16% 32%, rgba(34, 197, 94, 0.28) 0%, rgba(34, 197, 94, 0.1) 38%, rgba(34, 197, 94, 0) 80%),
+    radial-gradient(42% 50% at 58% 14%, rgba(16, 185, 129, 0.22) 0%, rgba(16, 185, 129, 0.08) 42%, rgba(16, 185, 129, 0) 78%);
+  filter: blur(20px);
 }
 
 /* Lista Campo: sin columna vacía hasta el borde inferior del viewport */
@@ -1238,8 +1238,8 @@ body.editor-body .editor-field-sidebar__head {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   text-align: center;
-  color: #e2e8f0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  color: #f8fafc;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
 }
 
 body.editor-body .editor-field-sidebar__nav {
@@ -1259,14 +1259,14 @@ body.editor-body .editor-field-sidebar__item {
   padding: 10px 14px;
   white-space: nowrap;
   border-radius: 11px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   background: linear-gradient(
-    168deg,
-    rgba(255, 255, 255, 0.035) 0%,
-    rgba(30, 41, 59, 0.58) 45%,
-    rgba(15, 23, 42, 0.82) 100%
+    165deg,
+    rgba(255, 255, 255, 0.045) 0%,
+    rgba(35, 49, 74, 0.64) 46%,
+    rgba(10, 18, 33, 0.9) 100%
   );
-  color: #f1f5f9;
+  color: #f8fafc;
   text-align: left;
   font: inherit;
   cursor: pointer;
@@ -1284,7 +1284,7 @@ body.editor-body .editor-field-sidebar__item-ico {
   justify-content: center;
   width: 22px;
   height: 22px;
-  color: #5eead4;
+  color: #34d399;
   opacity: 0.95;
 }
 
@@ -1293,22 +1293,22 @@ body.editor-body .editor-field-sidebar__item-ico svg {
 }
 
 body.editor-body .editor-field-sidebar__item:hover .editor-field-sidebar__item-ico {
-  color: #99f6e4;
+  color: #6ee7b7;
   opacity: 1;
 }
 
 body.editor-body .editor-field-sidebar__item:hover {
-  border-color: rgba(34, 211, 238, 0.32);
+  border-color: rgba(52, 211, 153, 0.34);
   background: linear-gradient(
-    168deg,
-    rgba(34, 211, 238, 0.1) 0%,
-    rgba(30, 58, 95, 0.52) 48%,
-    rgba(15, 23, 42, 0.86) 100%
+    165deg,
+    rgba(16, 185, 129, 0.14) 0%,
+    rgba(37, 56, 86, 0.58) 48%,
+    rgba(10, 18, 33, 0.92) 100%
   );
   box-shadow:
-    0 10px 32px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(34, 211, 238, 0.1);
+    0 12px 34px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(16, 185, 129, 0.12);
   transform: translateY(-1px);
 }
 
@@ -1320,7 +1320,7 @@ body.editor-body .editor-field-sidebar__item-title {
   font-size: 0.86rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #f8fafc;
+  color: #ffffff;
   text-align: left;
   flex: 1;
   min-width: 0;
