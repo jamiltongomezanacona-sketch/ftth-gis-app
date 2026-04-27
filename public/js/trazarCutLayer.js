@@ -264,7 +264,7 @@ export function setTrazarCutMarker(map, lngLat, opts) {
   <circle class="editor-trazar-cut-pin-dot" cx="18" cy="16" r="3.35" fill="#fef2f2" stroke="#b91c1c" stroke-width="0.85" />
 </svg>`;
       const labEl = buildCutLabelElement(centralLabel);
-      if (labEl) stack.appendChild(labEl);
+      if (labEl) stack.insertBefore(labEl, stack.firstChild);
       el.appendChild(stack);
       trazarDomMarker = new mb.Marker({ element: el, anchor: 'bottom' }).setLngLat(ll).addTo(map);
     }
