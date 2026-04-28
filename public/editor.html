@@ -237,10 +237,27 @@
             <div>
               <p class="editor-trazar-punto-head__title">Pin de referencia (origen de la medida)</p>
               <p class="editor-trazar-fiber-hint">
-                Toca el tendido en cualquier punto: desde ahí cuentan los metros de fibra hacia la central o hacia el
-                final.
+                «Desde central» en el mapa siempre parte del <strong>primer vértice</strong> del tendido. En punto tramo
+                la medida parte del pin: si no está en ese vértice, el máximo hacia un extremo es menor. Usa los atajos
+                abajo para igualar el origen.
               </p>
             </div>
+          </div>
+          <div class="editor-trazar-punto-quick-ref">
+            <button
+              type="button"
+              id="editor-trazar-ref-at-start"
+              class="reporte-ev-btn reporte-ev-btn--ghost-sm editor-trazar-quick-ref-btn"
+            >
+              Referencia = inicio del tendido (como «Desde central»)
+            </button>
+            <button
+              type="button"
+              id="editor-trazar-ref-at-end"
+              class="reporte-ev-btn reporte-ev-btn--ghost-sm editor-trazar-quick-ref-btn"
+            >
+              Referencia = final del tendido (como «Desde final»)
+            </button>
           </div>
           <p id="editor-trazar-ref-hint" class="editor-trazar-ref editor-trazar-ref--waiting" hidden></p>
 

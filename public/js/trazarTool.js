@@ -517,6 +517,45 @@ export function createTrazarController(ctx) {
     }
   }
 
+  /**
+   * Alinea la referencia al primer o último vértice del tendido seleccionado (misma geometría que modos A/B).
+   * @param {'start' | 'end'} which
+   */
+  function snapRefToLineVertex(which) {
+    if (getOrigen() !== 'punto') return;
+    const f = getSelectedFeature();
+    const line = resolveLineStringGeometry(f?.geometry);
+    if (!line?.coordinates?.length) {
+      setStatus('Trazar: selecciona antes un tendido en el mapa o por búsqueda.');
+      return;
+    }
+    const t = getTurfNs();
+    const c = line.coordinates;
+    const atStart = which === 'start';
+    /** @type {[number, number]} */
+    const lngLat = atStart
+      ? [c[0][0], c[0][1]]
+      : [c[c.length - 1][0], c[c.length - 1][1]];
+    refDistFromStartM = atStart ? 0 : lineLengthMeters(line, t);
+    refClickLngLat = lngLat;
+    const fid = f?.id;
+    refRouteId =
+      fid != null && String(fid).trim() !== '' ? String(fid) : null;
+    refEndsKey = endsKeyFromLine(line);
+    try {
+      refAnchorLenM = lineLengthMeters(line, t);
+    } catch {
+      refAnchorLenM = null;
+    }
+    setStatus(
+      atStart
+        ? 'Trazar: referencia en el inicio del tendido (0 m desde vértice inicial — mismo criterio que «Desde central»).'
+        : 'Trazar: referencia en el final del tendido — mismo criterio que «Desde final».'
+    );
+    syncForm();
+    onInput();
+  }
+
   function installDom() {
     for (const el of origenEls) {
       el.addEventListener('change', () => {
@@ -533,6 +572,12 @@ export function createTrazarController(ctx) {
     fiberIn?.addEventListener('input', onInput);
     fiberIn?.addEventListener('change', onInput);
     applyBtn?.addEventListener('click', () => applyToMap(true));
+    document.getElementById('editor-trazar-ref-at-start')?.addEventListener('click', () => {
+      snapRefToLineVertex('start');
+    });
+    document.getElementById('editor-trazar-ref-at-end')?.addEventListener('click', () => {
+      snapRefToLineVertex('end');
+    });
   }
 
   installDom();

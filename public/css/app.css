@@ -2117,6 +2117,21 @@ body.editor-mc-pick-map .mapboxgl-canvas-container.mapboxgl-interactive {
 .editor-trazar-card > .editor-trazar-fiber-hint {
   margin: 0 0 10px;
 }
+.editor-trazar-punto-quick-ref {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+.editor-trazar-quick-ref-btn.reporte-ev-btn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  padding: 8px 10px;
+  white-space: normal;
+}
 .editor-trazar-punto-workspace .editor-trazar-dir-block {
   margin: 0;
   border: 1px solid rgba(71, 85, 105, 0.45);
