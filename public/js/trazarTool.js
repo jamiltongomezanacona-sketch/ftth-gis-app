@@ -184,14 +184,14 @@ export function createTrazarController(ctx) {
       const primary = fmtM(fibFromRef);
       const askedFib = Number(r?.fiberReadingM);
       if (r?.clamped && Number.isFinite(askedFib) && askedFib > 0) {
-        const tope =
+        const extremo =
           direccion === 'toward_end'
-            ? 'Tope: final de esta polilínea en el mapa'
-            : 'Tope: inicio de esta polilínea (central)';
+            ? 'Corte en la punta del tendido (final en mapa)'
+            : 'Corte en la punta del tendido (lado central)';
         return {
           primary,
-          secondary: tope,
-          detail: `Pediste ${fmtM(askedFib)}`
+          secondary: extremo,
+          detail: `${fmtM(askedFib)} pedidos · hasta aquí llega el trazado GIS`
         };
       }
       return { primary, secondary: 'desde pin' };
@@ -474,10 +474,10 @@ export function createTrazarController(ctx) {
       const maxStr = Number.isFinite(maxFiber) ? fmtM(Number(maxFiber)) : '—';
       const askedStr = Number.isFinite(asked) ? fmtM(asked) : '—';
       const chainHint = pc?.chained
-        ? ' Se incluyeron tramos conectados por vértice en la capa actual.'
-        : ' Si falta tendido, revisa geometría GIS o busca la molécula para cargar todos los tramos.';
+        ? ' Tramos vecinos en mapa incluidos en la medida.'
+        : '';
       setStatus(
-        `Trazar: tope en la cadena dibujada (≈ ${maxStr} fibra desde el pin; pediste ${askedStr}).${chainHint} ÷1,2 tendido/fibra.`
+        `Trazar: ${askedStr} de fibra pedidos; el tendido dibujado alcanza ≈ ${maxStr} desde el pin en ese sentido → corte colocado en la punta del cable.${chainHint} Convención ÷1,2 (reserva tendido).`
       );
     } else {
       setStatus(
