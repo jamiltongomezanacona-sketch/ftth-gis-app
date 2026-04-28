@@ -253,12 +253,23 @@ export function createTrazarController(ctx) {
           refDistFromStartM,
           refClickLngLat,
           turfNs,
-          2.5
+          1
         );
-        if (m?.merged?.coordinates?.length >= 2) {
-          line = m.merged;
-          refAlong = m.refAlongMerged;
-          chained = Boolean(m.chained);
+        // Solo sustituir geometría cuando hay tramos vecinos reales. Si no, medimos como antes
+        // sobre el LineString del ancla + refDistFromStartM (evita redondeo/proyección distinta).
+        if (m?.merged?.coordinates?.length >= 2 && m.chained) {
+          const Lm = lineLengthMeters(m.merged, turfNs);
+          const La = lineLengthMeters(anchorLine, turfNs);
+          const ra = m.refAlongMerged;
+          const rs = refDistFromStartM;
+          const okLen = Lm + 0.25 >= La;
+          const okRef =
+            Number.isFinite(ra) && ra >= rs - 3 && ra <= Lm + 2;
+          if (okLen && okRef) {
+            line = m.merged;
+            refAlong = ra;
+            chained = true;
+          }
         }
       }
     } catch (e) {

@@ -181,6 +181,35 @@ function anchorFeatureFingerprint(f) {
 }
 
 /**
+ * Reduce cruces espurios en ciudades: si el ancla tiene molécula/central, prioriza mismos metadatos.
+ * Las features sin molécula se mantienen para no romper datos legacy.
+ * @param {GeoJSON.Feature[]} features
+ * @param {GeoJSON.Feature} anchorFeature
+ */
+function filterFeaturesForChain(features, anchorFeature) {
+  const rawMol = anchorFeature?.properties?.molecula;
+  const mol =
+    rawMol != null && String(rawMol).trim() !== '' ? String(rawMol).trim().toLowerCase() : '';
+  if (!mol) return features;
+  const rawCen = anchorFeature?.properties?.central;
+  const cen =
+    rawCen != null && String(rawCen).trim() !== '' ? String(rawCen).trim().toLowerCase() : '';
+  const filtered = features.filter((f) => {
+    const fmRaw = f?.properties?.molecula;
+    const fm =
+      fmRaw != null && String(fmRaw).trim() !== '' ? String(fmRaw).trim().toLowerCase() : '';
+    if (!fm) return true;
+    if (fm !== mol) return false;
+    if (!cen) return true;
+    const fcRaw = f?.properties?.central;
+    const fc =
+      fcRaw != null && String(fcRaw).trim() !== '' ? String(fcRaw).trim().toLowerCase() : '';
+    return !fc || fc === cen;
+  });
+  return filtered.length ? filtered : features;
+}
+
+/**
  * @param {GeoJSON.Feature[]} features
  * @param {GeoJSON.Feature} anchorFeature
  */
@@ -205,7 +234,7 @@ function findAnchorIndex(features, anchorFeature) {
  * @param {number} refDistOnAnchor Distancia desde el primer vértice del ancla hasta el pin (m tendido).
  * @param {[number, number]} refLngLat Clic de referencia [lng, lat].
  * @param {object} turf
- * @param {number} [tolM]
+ * @param {number} [tolM] empalme en vértice (metros); más bajo = menos cruces falsos en esquinas.
  * @returns {{ merged: GeoJSON.LineString; refAlongMerged: number; chained: boolean } | null}
  */
 export function mergeConnectedRouteLinesForTrazar(
@@ -214,9 +243,10 @@ export function mergeConnectedRouteLinesForTrazar(
   refDistOnAnchor,
   refLngLat,
   turf,
-  tolM = 2.5
+  tolM = 1
 ) {
   if (!features?.length || !anchorFeature || !refLngLat?.length) return null;
+  features = filterFeaturesForChain(features, anchorFeature);
   const anchorIdx = findAnchorIndex(features, anchorFeature);
   if (anchorIdx < 0) return null;
   const anchorLine = resolveLineStringGeometry(anchorFeature.geometry);
