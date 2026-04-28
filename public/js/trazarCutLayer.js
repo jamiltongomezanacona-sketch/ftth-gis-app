@@ -182,7 +182,7 @@ export function clearTrazarRefMarker(map) {
 }
 
 /**
- * @param {string | { primary: string; secondary: string } | null | undefined} cl
+ * @param {string | { primary: string; secondary: string; detail?: string } | null | undefined} cl
  * @returns {HTMLDivElement | null}
  */
 function buildCutLabelElement(cl) {
@@ -208,18 +208,30 @@ function buildCutLabelElement(cl) {
     const p = document.createElement('span');
     p.className = 'editor-trazar-cut-pin-label__primary';
     p.textContent = cl.primary.trim();
-    const row = document.createElement('span');
-    row.className = 'editor-trazar-cut-pin-label__row';
-    const dot = document.createElement('span');
-    dot.className = 'editor-trazar-cut-pin-label__dot';
-    dot.setAttribute('aria-hidden', 'true');
-    const s = document.createElement('span');
-    s.className = 'editor-trazar-cut-pin-label__secondary';
-    s.textContent = cl.secondary.trim();
-    row.appendChild(dot);
-    row.appendChild(s);
     lab.appendChild(p);
-    lab.appendChild(row);
+    const hasDetail = typeof cl.detail === 'string' && cl.detail.trim() !== '';
+    if (hasDetail) {
+      const sec = document.createElement('span');
+      sec.className = 'editor-trazar-cut-pin-label__secondary editor-trazar-cut-pin-label__secondary--stacked';
+      sec.textContent = cl.secondary.trim();
+      const det = document.createElement('span');
+      det.className = 'editor-trazar-cut-pin-label__detail';
+      det.textContent = cl.detail.trim();
+      lab.appendChild(sec);
+      lab.appendChild(det);
+    } else {
+      const row = document.createElement('span');
+      row.className = 'editor-trazar-cut-pin-label__row';
+      const dot = document.createElement('span');
+      dot.className = 'editor-trazar-cut-pin-label__dot';
+      dot.setAttribute('aria-hidden', 'true');
+      const s = document.createElement('span');
+      s.className = 'editor-trazar-cut-pin-label__secondary';
+      s.textContent = cl.secondary.trim();
+      row.appendChild(dot);
+      row.appendChild(s);
+      lab.appendChild(row);
+    }
     return lab;
   }
   return null;
@@ -228,7 +240,7 @@ function buildCutLabelElement(cl) {
 /**
  * @param {import('mapbox-gl').Map} map
  * @param {import('mapbox-gl').LngLatLike} lngLat
- * @param {{ centralLabel?: string | { primary: string; secondary: string } | null }} [opts]
+ * @param {{ centralLabel?: string | { primary: string; secondary: string; detail?: string } | null }} [opts]
  */
 export function setTrazarCutMarker(map, lngLat, opts) {
   const ll = /** @type {[number, number]} */ (

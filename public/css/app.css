@@ -2358,6 +2358,7 @@ body.editor-body .editor-trazar-apply-btn.reporte-ev-btn--ghost-sm:active {
   align-items: stretch;
   gap: 3px;
   text-align: left;
+  max-width: 200px;
 }
 .editor-trazar-cut-pin-label__primary {
   display: block;
@@ -2382,9 +2383,26 @@ body.editor-body .editor-trazar-apply-btn.reporte-ev-btn--ghost-sm:active {
 .editor-trazar-cut-pin-label__secondary {
   font-size: 9.5px;
   font-weight: 600;
-  text-transform: lowercase;
-  letter-spacing: 0.04em;
+  text-transform: none;
+  letter-spacing: 0.02em;
   color: #94a3b8;
+}
+.editor-trazar-cut-pin-label__secondary--stacked {
+  display: block;
+  margin-top: 1px;
+  line-height: 1.32;
+}
+.editor-trazar-cut-pin-label__detail {
+  display: block;
+  margin-top: 4px;
+  padding-top: 3px;
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  color: #fde68a;
+  text-transform: none;
 }
 #map .mapboxgl-marker .editor-trazar-cut-pin-svg,
 .mapboxgl-marker .editor-trazar-cut-pin-svg {

@@ -181,11 +181,12 @@ export function createTrazarController(ctx) {
       if (r?.clamped && Number.isFinite(askedFib) && askedFib > 0) {
         const tope =
           direccion === 'toward_end'
-            ? 'Tope al final del tendido'
-            : 'Tope hacia la central';
+            ? 'Tope: final de esta polilínea en el mapa'
+            : 'Tope: inicio de esta polilínea (central)';
         return {
           primary,
-          secondary: `${tope} · pediste ${fmtM(askedFib)}`
+          secondary: tope,
+          detail: `Pediste ${fmtM(askedFib)}`
         };
       }
       return { primary, secondary: 'desde pin' };
@@ -419,7 +420,7 @@ export function createTrazarController(ctx) {
       const maxStr = Number.isFinite(maxFiber) ? fmtM(Number(maxFiber)) : '—';
       const askedStr = Number.isFinite(asked) ? fmtM(asked) : '—';
       setStatus(
-        `Trazar: el tramo no alcanza ${askedStr} m de fibra en esta dirección; se colocó en el tope (≈ ${maxStr} m desde el pin). Convención tendido/fibra ÷1,2.`
+        `Trazar: tope en esta polilínea (≈ ${maxStr} fibra desde el pin; pediste ${askedStr}). Solo recorre el tendido dibujado en mapa; si el cable sigue en otro trazo GIS, repite ahí o unifica geometría. ÷1,2 tendido/fibra.`
       );
     } else {
       setStatus(
