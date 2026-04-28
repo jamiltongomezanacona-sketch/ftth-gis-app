@@ -1,5 +1,5 @@
 /**
- * Marcador visual y orden de capa del punto de corte (herramienta Trazar en editor).
+ * Marcador visual y orden de capa del punto de corte (Fibra GIS / medición OTDR en editor).
  */
 export const TRAZAR_CUT_SOURCE_ID = 'editor-trazar-cut-fc';
 const TRAZAR_CUT_LAYER = 'editor-trazar-cut-circle';
@@ -155,7 +155,7 @@ export function setTrazarRefMarker(map, lngLat) {
       const el = document.createElement('div');
       el.className = 'editor-trazar-ref-pin-wrap';
       el.innerHTML =
-        '<div class="editor-trazar-ref-pin-dot" aria-hidden="true" title="Referencia en el tendido (Trazar)"></div>';
+        '<div class="editor-trazar-ref-pin-dot" aria-hidden="true" title="Referencia en el tendido (Fibra GIS)"></div>';
       trazarRefDomMarker = new mb.Marker({ element: el, anchor: 'center' }).setLngLat(ll).addTo(map);
     }
   } catch (e) {

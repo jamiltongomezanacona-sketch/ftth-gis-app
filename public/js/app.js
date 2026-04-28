@@ -46,7 +46,7 @@ import {
 import { initEditorGpsDock } from './editorGpsDock.js';
 import { initReporteEventoSidebar } from './reporteEventoSidebar.js?v=20260426quitarHintMontarEvento';
 import { initMontarCierreModal } from './montarCierreModal.js?v=20260425montarCierreFieldMobile';
-import { createTrazarController } from './trazarTool.js';
+import { createFiberTraceController } from './fiberTraceTool.js';
 import { bringTrazarCutLayerToFront, bringTrazarRefLayerToFront } from './trazarCutLayer.js';
 async function loadConfig() {
   const deploy = await import('./config.deploy.js');
@@ -640,7 +640,7 @@ function initEditorChromeMapBridge(mapInstance, opts) {
 }
 
 /**
- * Menú ☰ (junto a la casita): panel con Trazar, Medir, Montar evento/cierre/ruta, etc.
+ * Menú ☰ (junto a la casita): panel con Fibra GIS, Medir, Montar evento/cierre/ruta, etc.
  * @param {{
  *   scheduleMapResize?: () => void,
  *   setStatus: (msg: string) => void,
@@ -683,9 +683,9 @@ function initEditorFieldSidebarMenu(opts) {
   const btn = document.getElementById('btn-editor-field-menu');
   const panel = document.getElementById('editor-field-sidebar');
   const backdrop = document.getElementById('editor-field-sidebar-backdrop');
-  const trazarModal = document.getElementById('editor-trazar-modal');
-  const trazarModalBackdrop = document.getElementById('editor-trazar-modal-backdrop');
-  const trazarView = document.getElementById('editor-field-view-trazar');
+  const trazarModal = document.getElementById('editor-ft-modal');
+  const trazarModalBackdrop = document.getElementById('editor-ft-modal-backdrop');
+  const trazarView = document.getElementById('editor-field-view-fiber');
   if (!btn || !panel || !backdrop) {
     return { leaveTrazarView: () => {} };
   }
@@ -700,7 +700,7 @@ function initEditorFieldSidebarMenu(opts) {
 
   let menuOpen = false;
 
-  /** Cierra solo el menú ☰ Campo (no afecta al modal Trazar). */
+  /** Cierra solo el menú ☰ Campo (no afecta al modal Fibra GIS). */
   function collapseFieldMenuUiOnly() {
     menuOpen = false;
     panel.classList.remove('editor-field-sidebar--open');
@@ -721,7 +721,7 @@ function initEditorFieldSidebarMenu(opts) {
       trazarModal.hidden = false;
       trazarModal.setAttribute('aria-hidden', 'false');
     }
-    document.body.classList.add('editor-trazar-side-open');
+    document.body.classList.add('editor-ft-workspace-open');
     collapseFieldMenuUiOnly();
   }
 
@@ -730,7 +730,7 @@ function initEditorFieldSidebarMenu(opts) {
       trazarModal.hidden = true;
       trazarModal.setAttribute('aria-hidden', 'true');
     }
-    document.body.classList.remove('editor-trazar-side-open');
+    document.body.classList.remove('editor-ft-workspace-open');
   }
 
   function openMenu() {
@@ -796,21 +796,21 @@ function initEditorFieldSidebarMenu(opts) {
     requestResize();
   });
 
-  document.getElementById('btn-trazar-back')?.addEventListener('click', (e) => {
+  document.getElementById('btn-ft-workspace-back')?.addEventListener('click', (e) => {
     e.stopPropagation();
     onTrazarSidebarHide();
     leaveTrazarView();
     requestResize();
   });
 
-  document.getElementById('btn-sidebar-trazar')?.addEventListener('click', (e) => {
+  document.getElementById('btn-sidebar-fiber-gis')?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (isEditing()) {
-      setStatus('Trazar: no disponible mientras editas un tendido.');
+      setStatus('Fibra GIS: no disponible mientras editas un tendido.');
       return;
     }
     if (isMeasurePolyDrawing()) {
-      setStatus('Trazar: desactiva primero la medición por trazo en el mapa.');
+      setStatus('Fibra GIS: desactiva primero la medición por trazo en el mapa.');
       return;
     }
     if (!trazarView) return;
@@ -858,7 +858,7 @@ function initEditorFieldSidebarMenu(opts) {
   wire('btn-sidebar-montar-ruta', () => {
     if (isTrazarViewOpen()) onTrazarDiscardMap();
     if (btnNewRoute.disabled || isMeasurePolyDrawing()) {
-      setStatus('Montar ruta: cierra Trazar, la medición o la edición de tendido antes de crear una ruta.');
+      setStatus('Montar ruta: cierra Fibra GIS, la medición o la edición de tendido antes de crear una ruta.');
       return;
     }
     btnNewRoute.click();
@@ -1808,8 +1808,8 @@ export async function boot() {
   let measurePolylineConfirmed = false;
   /** @type {[number, number][]} */
   let measurePolylineCoords = [];
-  /** @type {ReturnType<typeof createTrazarController> | null} */
-  let trazar = null;
+  /** @type {ReturnType<typeof createFiberTraceController> | null} */
+  let fiberTrace = null;
   let leaveTrazarViewMenu = () => {};
 
   function setReportePinForReporte(/** @type {[number, number] | null} */ lngLat) {
@@ -1874,8 +1874,8 @@ export async function boot() {
   }
 
   function openMontarEventoPanel() {
-    if (editing || (measurePolylineActive && !measurePolylineConfirmed) || trazar?.isOpen()) {
-      setStatus('Montar evento: termina edición, Trazar o medición antes.');
+    if (editing || (measurePolylineActive && !measurePolylineConfirmed) || fiberTrace?.isOpen()) {
+      setStatus('Montar evento: termina edición, Fibra GIS o medición antes.');
       return;
     }
     if (appNetwork === 'ftth' && !getMoleculeFilterForEventosApi()) {
@@ -2058,7 +2058,7 @@ export async function boot() {
 
   function syncButtons() {
     const polyDrawing = measurePolylineActive && !measurePolylineConfirmed;
-    const trOpen = Boolean(trazar?.isOpen());
+    const trOpen = Boolean(fiberTrace?.isOpen());
     btnNewRoute.disabled = editing || polyDrawing || trOpen;
     btnEdit.disabled = !selectedFeature || editing;
     btnSave.disabled = !editing;
@@ -2067,7 +2067,7 @@ export async function boot() {
     measureFab.classList.toggle('measure-fab--muted', editing);
     cableSearch?.setDisabled(editing || polyDrawing || trOpen);
     try {
-      trazar?.syncForm();
+      fiberTrace?.syncForm();
     } catch {
       /* */
     }
@@ -2248,7 +2248,7 @@ export async function boot() {
       syncButtons();
       return;
     }
-    trazar?.close();
+    fiberTrace?.close();
     leaveTrazarViewMenu();
     measurePolylineActive = true;
     measurePolylineConfirmed = false;
@@ -2264,7 +2264,7 @@ export async function boot() {
     setStatus('Medición: clics en el mapa para marcar el trazado. Panel inferior: distancia y +20 % reserva fibra.');
   }
 
-  trazar = createTrazarController({
+  fiberTrace = createFiberTraceController({
     map,
     getTurf: () => turf,
     getSelectedFeature: () => selectedFeature,
@@ -2297,17 +2297,17 @@ export async function boot() {
       isEditing: () => editing,
       btnNewRoute,
       isMeasurePolyDrawing: () => measurePolylineActive && !measurePolylineConfirmed,
-      isTrazarViewOpen: () => trazar?.isOpen() ?? false,
-      onTrazarEnter: () => trazar?.open(),
-      onTrazarSidebarHide: () => trazar?.close({ keepMapMark: true }),
-      onTrazarDiscardMap: () => trazar?.close(),
+      isTrazarViewOpen: () => fiberTrace?.isOpen() ?? false,
+      onTrazarEnter: () => fiberTrace?.open(),
+      onTrazarSidebarHide: () => fiberTrace?.close({ keepMapMark: true }),
+      onTrazarDiscardMap: () => fiberTrace?.close(),
       onMontarEvento: () => openMontarEventoPanel(),
       isReporteEventoOpen: () =>
         Boolean(document.getElementById('reporte-evento-details')?.classList.contains('editor-float-panel--open')),
       closeReporteEventoPanelUi: () => closeReporteEventoPanelUi(),
       onMontarCierre: () => {
-        if (editing || (measurePolylineActive && !measurePolylineConfirmed) || (trazar?.isOpen() ?? false)) {
-          setStatus('Montar cierre: termina edición, Trazar o medición antes.');
+        if (editing || (measurePolylineActive && !measurePolylineConfirmed) || (fiberTrace?.isOpen() ?? false)) {
+          setStatus('Montar cierre: termina edición, Fibra GIS o medición antes.');
           return;
         }
         if (appNetwork !== 'ftth' || !getMoleculeFilterForEventosApi()) {
@@ -2334,7 +2334,7 @@ export async function boot() {
     getSuppressMapSidebarCollapse: () => {
       if (editing) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
-      if (trazar?.isOpen()) return true;
+      if (fiberTrace?.isOpen()) return true;
       if (montarCierreCtlRef.ctl?.isOpen()) return true;
       if (reporteCtl?.isAwaitingRoutePick?.()) return true;
       return false;
@@ -2379,7 +2379,7 @@ export async function boot() {
 
   function clearMeasureClickModes() {
     deactivateMeasurePolyline();
-    trazar?.close();
+    fiberTrace?.close();
     leaveTrazarViewMenu();
     closeReporteEventoPanelUi();
   }
@@ -3106,7 +3106,7 @@ export async function boot() {
         clearCableFromMapOnly();
       },
       isInteractionLocked: () =>
-        editing || (measurePolylineActive && !measurePolylineConfirmed) || Boolean(trazar?.isOpen())
+        editing || (measurePolylineActive && !measurePolylineConfirmed) || Boolean(fiberTrace?.isOpen())
     });
 
     document.getElementById('btn-refresh-editor-catalog')?.addEventListener('click', () => {
@@ -3154,7 +3154,7 @@ export async function boot() {
       canOpen: () =>
         !editing &&
         !(measurePolylineActive && !measurePolylineConfirmed) &&
-        !(trazar?.isOpen() ?? false) &&
+        !(fiberTrace?.isOpen() ?? false) &&
         appNetwork === 'ftth',
       scheduleMapResize
     });
@@ -3473,7 +3473,7 @@ export async function boot() {
       const polyBusy = measurePolylineActive && !measurePolylineConfirmed;
       if (editing || polyBusy) return;
       const f0 = e.features?.[0];
-      if (f0 && trazar?.handleRouteLineClick(e, f0)) return;
+      if (f0 && fiberTrace?.handleRouteLineClick(e, f0)) return;
       const ovRoute = queryMoleculeOverlayFeatureAtPoint(e.point);
       if (ovRoute?.properties && String(ovRoute.properties.ftth_overlay_kind ?? '').trim()) {
         openCierreMapPopupFromFeature(ovRoute, e.lngLat);
@@ -3575,7 +3575,7 @@ export async function boot() {
       if (editing) return true;
       if (document.body.classList.contains('editor-pick-mode-active')) return true;
       if (measurePolylineActive && !measurePolylineConfirmed) return true;
-      if (trazar?.isOpen()) return true;
+      if (fiberTrace?.isOpen()) return true;
       if (reporteCtl?.isAwaitingRoutePick?.()) return true;
       return false;
     }

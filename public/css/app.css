@@ -1328,85 +1328,50 @@ body.editor-body .editor-field-sidebar__item-title {
 
 /* Ajuste fino móvil: menú Campo más cómodo y legible en pantallas estrechas. */
 @media (max-width: 640px) {
-  /* Trazar en móvil: modal más compacto para dejar más mapa visible. */
-  #editor-trazar-modal.editor-trazar-modal {
+  /* Fibra GIS en móvil: panel compacto. */
+  #editor-ft-modal.editor-ftw {
     padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
     align-items: flex-start;
     justify-content: center;
   }
 
-  body.editor-body .editor-trazar-modal__panel {
-    width: min(360px, calc(100vw - 16px));
-    max-height: min(76dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 14px));
+  body.editor-body .editor-ftw__panel {
+    width: min(380px, calc(100vw - 16px));
+    max-height: min(78dvh, calc(100dvh - var(--editor-chrome-stack, 80px) - 14px));
     margin-top: calc(var(--editor-chrome-stack, 80px) - 4px);
-    border-radius: 14px;
+    border-radius: 16px;
   }
 
-  body.editor-body .editor-trazar-modal__titlebar {
-    padding: 7px 8px;
-    border-radius: 14px 14px 0 0;
+  body.editor-body .editor-ftw__header {
+    padding: 8px 9px;
+    border-radius: 16px 16px 0 0;
   }
 
-  .editor-trazar-modal__body {
-    padding: 5px 6px 7px;
+  .editor-ftw__body {
+    padding: 6px 7px 8px;
   }
 
-  .editor-trazar-card {
-    margin: 0 0 8px;
-    padding: 8px 8px 9px;
-    border-radius: 10px;
-  }
-
-  .editor-trazar-card__title {
-    margin: 0 0 6px;
-    font-size: 0.84rem;
-  }
-
-  .editor-trazar-punto-workspace {
-    margin: 0 0 10px;
-    padding: 10px 8px 8px;
-    border-radius: 10px;
-  }
-
-  .editor-trazar-punto-head {
-    gap: 8px;
+  .editor-ftw-section {
     margin-bottom: 8px;
+    padding: 8px 8px 9px;
+    border-radius: 11px;
   }
 
-  .editor-trazar-punto-badge {
-    width: 26px;
-    height: 26px;
-    border-radius: 8px;
-    font-size: 0.78rem;
-  }
-
-  .editor-trazar-seg-grid {
-    gap: 6px;
-  }
-
-  .editor-trazar-seg-grid--2 {
-    gap: 6px;
-  }
-
-  .editor-trazar-seg__face {
-    min-height: 46px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    font-size: 0.9rem;
-  }
-
-  .editor-trazar-seg__face--dir {
+  .editor-ftw-mode__face {
     min-height: 44px;
+    padding: 9px 10px;
+    border-radius: 11px;
   }
 
-  .editor-trazar-seg__face--dir .editor-trazar-seg__t {
-    font-size: 0.8rem;
+  .editor-ftw-dir__face {
+    min-height: 44px;
+    padding: 9px 10px;
   }
 
-  .editor-trazar-input {
+  .editor-ftw-input {
     min-height: 44px;
     padding: 10px 12px;
-    border-radius: 10px;
+    border-radius: 11px;
   }
 
   body.editor-body .editor-field-sidebar {
@@ -1453,8 +1418,8 @@ body.editor-body .editor-field-sidebar__item-title {
   }
 }
 
-/* Trazar: overlay a pantalla (móvil centrado; ≥901px alineado a la izquierda vía @media). */
-#editor-trazar-modal.editor-trazar-modal {
+/* Fibra GIS: overlay (móvil centrado; escritorio alineado a la izquierda). */
+#editor-ft-modal.editor-ftw {
   position: fixed;
   inset: 0;
   z-index: 600;
@@ -1466,50 +1431,52 @@ body.editor-body .editor-field-sidebar__item-title {
   pointer-events: none;
 }
 
-#editor-trazar-modal.editor-trazar-modal[hidden] {
+#editor-ft-modal.editor-ftw[hidden] {
   display: none !important;
 }
 
-#editor-trazar-modal.editor-trazar-modal:not([hidden]) {
+#editor-ft-modal.editor-ftw:not([hidden]) {
   pointer-events: auto;
 }
 
-.editor-trazar-modal__backdrop {
+.editor-ftw__backdrop {
   position: absolute;
   inset: 0;
   margin: 0;
   padding: 0;
   border: none;
-  /* Sin backdrop-filter: el mapa debe verse nítido (no “nublado”). Tinte muy suave solo para contraste del panel. */
-  background: rgba(2, 6, 23, 0.12);
+  background: rgba(2, 6, 23, 0.14);
   cursor: pointer;
   z-index: 0;
 }
 
-.editor-trazar-modal__panel {
+.editor-ftw__panel {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  width: min(400px, calc(100vw - 20px));
+  width: min(420px, calc(100vw - 20px));
   max-height: min(88dvh, calc(100dvh - var(--editor-chrome-h, 48px) - 20px));
   overflow: hidden;
   box-sizing: border-box;
   padding: 0;
-  border-radius: 16px;
-  border: 1px solid rgba(34, 197, 94, 0.22);
-  background:
-    linear-gradient(175deg, rgba(15, 23, 42, 0.95) 0%, rgba(17, 24, 39, 0.97) 62%, rgba(30, 41, 59, 0.96) 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  background: linear-gradient(
+    165deg,
+    rgba(15, 23, 42, 0.97) 0%,
+    rgba(15, 23, 42, 0.99) 55%,
+    rgba(17, 94, 89, 0.14) 100%
+  );
   box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.48),
-    0 0 0 1px rgba(0, 0, 0, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 44px -10px rgba(34, 197, 94, 0.2);
+    0 28px 56px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 48px -12px rgba(45, 212, 191, 0.22);
 }
 
-/* Escritorio: panel Trazar pegado a la izquierda, bajo la barra superior (no centrado). */
 @media (min-width: 901px) {
-  body.editor-body #editor-trazar-modal.editor-trazar-modal {
+  body.editor-body #editor-ft-modal.editor-ftw {
     justify-content: flex-start;
     align-items: flex-start;
     padding-left: max(14px, env(safe-area-inset-left, 0px));
@@ -1518,38 +1485,449 @@ body.editor-body .editor-field-sidebar__item-title {
     padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
   }
 
-  body.editor-body .editor-trazar-modal__panel {
+  body.editor-body .editor-ftw__panel {
     max-height: min(88dvh, calc(100dvh - var(--editor-chrome-stack) - 24px));
   }
 }
 
-/* Cabecera alineada con «Montar evento» (verde + cierre ×). */
-body.editor-body .editor-trazar-modal__titlebar {
+.editor-ftw__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid rgba(45, 212, 191, 0.22);
+  background: linear-gradient(180deg, rgba(13, 148, 136, 0.32), rgba(15, 23, 42, 0.45));
+  border-radius: 18px 18px 0 0;
+}
+
+.editor-ftw__brand {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
   gap: 10px;
-  margin: 0;
-  padding: 8px 10px;
-  border-bottom: 1px solid rgba(34, 197, 94, 0.28);
-  background: linear-gradient(180deg, rgba(22, 163, 74, 0.24), rgba(15, 23, 42, 0.55));
-  border-radius: 16px 16px 0 0;
+  min-width: 0;
 }
 
-body.editor-body .editor-trazar-modal__title.editor-float-panel__title {
+.editor-ftw__glyph {
+  flex-shrink: 0;
+  display: flex;
+  color: #5eead4;
+  filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.35));
+}
+
+.editor-ftw__titles {
+  min-width: 0;
+}
+
+.editor-ftw__title {
   margin: 0;
+  font-size: 1.06rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #f8fafc;
   text-align: left;
+  line-height: 1.15;
 }
 
-/* ——— Trazar: cuerpo y formulario (estilo compartido con reporte) ——— */
-.editor-trazar-modal__body {
+.editor-ftw__subtitle {
+  margin: 3px 0 0;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(153, 246, 228, 0.78);
+}
+
+body.editor-body .editor-ftw__close.editor-float-panel__close {
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+.editor-ftw__body {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
-  padding: 6px 8px 8px;
+  padding: 8px 10px 12px;
+}
+
+.editor-ftw-kicker {
+  margin: 0 0 8px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #5eead4;
+}
+
+.editor-ftw-section {
+  margin: 0 0 10px;
+  padding: 10px 11px 11px;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.42);
+  border: 1px solid rgba(71, 85, 105, 0.38);
+}
+
+.editor-ftw-section--nested {
+  margin-top: 10px;
+  background: rgba(2, 6, 23, 0.35);
+}
+
+.editor-ftw-section--fiber {
+  border-color: rgba(45, 212, 191, 0.22);
+}
+
+.editor-ftw-help {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  line-height: 1.42;
+  font-weight: 500;
+  color: rgba(148, 163, 184, 0.96);
+  text-align: left;
+}
+
+.editor-ftw-help strong {
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.editor-ftw-mode-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-ftw-mode {
+  display: block;
+  margin: 0;
+  cursor: pointer;
+}
+
+.editor-ftw-mode__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.editor-ftw-mode__face {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 11px 13px;
+  min-height: 52px;
+  border-radius: 12px;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  background: linear-gradient(160deg, rgba(45, 212, 191, 0.1) 0%, rgba(15, 23, 42, 0.92) 72%);
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.editor-ftw-mode__name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+}
+
+.editor-ftw-mode__hint {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: rgba(148, 163, 184, 0.88);
+  line-height: 1.25;
+}
+
+.editor-ftw-mode__input:checked + .editor-ftw-mode__face {
+  border-color: rgba(45, 212, 191, 0.65);
+  background: linear-gradient(135deg, #0d9488 0%, #115e59 58%, #134e4a 100%);
+  box-shadow:
+    0 12px 28px rgba(13, 148, 136, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.editor-ftw-mode__input:checked + .editor-ftw-mode__face .editor-ftw-mode__name,
+.editor-ftw-mode__input:checked + .editor-ftw-mode__face .editor-ftw-mode__hint {
+  color: #ecfdf5;
+}
+
+.editor-ftw-mode__input:focus-visible + .editor-ftw-mode__face {
+  outline: 2px solid rgba(94, 234, 212, 0.75);
+  outline-offset: 2px;
+}
+
+.editor-ftw-punto {
+  margin: 0 0 12px;
+  padding: 12px 11px 11px;
+  border-radius: 13px;
+  border: 1px solid rgba(45, 212, 191, 0.32);
+  background: linear-gradient(168deg, rgba(13, 148, 136, 0.2), rgba(15, 23, 42, 0.78));
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+}
+
+.editor-ftw-punto[hidden] {
+  display: none !important;
+}
+
+.editor-ftw-punto__head {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.editor-ftw-step {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ecfdf5;
+  background: linear-gradient(135deg, #14b8a6, #0f766e);
+  box-shadow: 0 2px 12px rgba(13, 148, 136, 0.45);
+}
+
+.editor-ftw-step--inline {
+  display: inline-flex;
+  width: auto;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin-right: 6px;
+  padding: 0 5px;
+  font-size: 0.65rem;
+  vertical-align: middle;
+}
+
+.editor-ftw-step--ghost {
+  background: rgba(15, 23, 42, 0.65);
+  color: #94a3b8;
+  box-shadow: none;
+  border: 1px solid rgba(45, 212, 191, 0.28);
+}
+
+.editor-ftw-punto__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+}
+
+.editor-ftw-quick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.editor-ftw-chip {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  background: rgba(2, 6, 23, 0.45);
+  color: #ccfbf1;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.28;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.editor-ftw-chip:hover {
+  background: rgba(13, 148, 136, 0.22);
+  border-color: rgba(94, 234, 212, 0.55);
+}
+
+.editor-ftw-caps {
+  margin: 8px 0 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  background: rgba(2, 6, 23, 0.4);
+}
+
+.editor-ftw-caps__title {
+  margin: 0 0 8px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+.editor-ftw-caps__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.editor-ftw-cap {
+  padding: 8px 8px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.editor-ftw-cap__dir {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 3px;
+}
+
+.editor-ftw-cap__val {
+  font-size: 0.88rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #e2e8f0;
+}
+
+.editor-ftw-total {
+  margin: 0 0 8px;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: rgba(167, 243, 208, 0.85);
+}
+
+.editor-ftw-dir-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.editor-ftw-dir {
+  display: block;
+  margin: 0;
+  cursor: pointer;
+}
+
+.editor-ftw-dir__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.editor-ftw-dir__face {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 10px 8px;
+  border-radius: 11px;
+  border: 1px solid rgba(45, 212, 191, 0.38);
+  background: rgba(15, 23, 42, 0.65);
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+.editor-ftw-dir__ico {
+  font-size: 0.95rem;
+  opacity: 0.88;
+  font-weight: 700;
+}
+
+.editor-ftw-dir__t {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ecfdf5;
+}
+
+.editor-ftw-dir__input:checked + .editor-ftw-dir__face {
+  border-color: rgba(94, 234, 212, 0.65);
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.55), rgba(15, 23, 42, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.editor-ftw-dir__input:focus-visible + .editor-ftw-dir__face {
+  outline: 2px solid rgba(94, 234, 212, 0.75);
+  outline-offset: 2px;
+}
+
+.editor-ftw-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 13px;
+  border-radius: 11px;
+  border: 1px solid rgba(71, 85, 105, 0.55);
+  background: rgba(2, 6, 23, 0.55);
+  color: #f1f5f9;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color 0.16s,
+    box-shadow 0.16s;
+}
+
+.editor-ftw-input::placeholder {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.editor-ftw-input:focus {
+  outline: none;
+  border-color: rgba(45, 212, 191, 0.55);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18);
+}
+
+.editor-ftw-footer {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(45, 212, 191, 0.14);
+}
+
+.editor-ftw-cta {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  border: none;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  color: #042f2e;
+  background: linear-gradient(135deg, #5eead4 0%, #2dd4bf 45%, #14b8a6 100%);
+  box-shadow:
+    0 10px 28px rgba(13, 148, 136, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition:
+    transform 0.12s,
+    filter 0.12s;
+}
+
+.editor-ftw-cta:hover {
+  filter: brightness(1.06);
+}
+
+.editor-ftw-cta:active {
+  transform: scale(0.99);
+}
+
+body.editor-ft-workspace-open .map-fab-row--measure {
+  opacity: 0.92;
 }
 
 /* ——— Montar cierre (E1/E2): modal compacto, paleta gris / azul / blanco / verde ——— */
@@ -2046,291 +2424,7 @@ body.editor-mc-pick-map .mapboxgl-canvas-container.mapboxgl-interactive {
   }
 }
 
-.editor-trazar-card {
-  margin: 0 0 10px;
-  padding: 9px 10px 11px;
-  border-radius: 11px;
-  background: rgba(30, 41, 59, 0.4);
-  border: 1px solid rgba(71, 85, 105, 0.4);
-}
-.editor-trazar-card__title {
-  margin: 0 0 8px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  text-align: left;
-  color: #f8fafc;
-}
-/* Flujo «punto en tendido»: pin + dirección + fibra */
-.editor-trazar-punto-workspace {
-  margin: 0 0 12px;
-  padding: 12px 10px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(34, 197, 94, 0.28);
-  background: linear-gradient(165deg, rgba(22, 101, 52, 0.22), rgba(15, 23, 42, 0.72));
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
-}
-.editor-trazar-punto-workspace[hidden] {
-  display: none !important;
-}
-.editor-trazar-punto-head {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 10px;
-}
-.editor-trazar-punto-badge {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: #ecfdf5;
-  background: linear-gradient(135deg, #22c55e 0%, #0e7490 100%);
-  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.35);
-}
-.editor-trazar-punto-head__title {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #f8fafc;
-  letter-spacing: -0.02em;
-  text-align: left;
-}
-.editor-trazar-fiber-hint {
-  margin: 6px 0 0;
-  font-size: 0.72rem;
-  line-height: 1.38;
-  font-weight: 500;
-  color: rgba(148, 163, 184, 0.96);
-  text-align: left;
-}
-.editor-trazar-fiber-hint strong {
-  font-weight: 700;
-  color: rgba(226, 232, 240, 0.95);
-}
-.editor-trazar-card > .editor-trazar-fiber-hint {
-  margin: 0 0 10px;
-}
-.editor-trazar-punto-quick-ref {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 10px 0 12px;
-}
-.editor-trazar-quick-ref-btn.reporte-ev-btn {
-  width: 100%;
-  justify-content: center;
-  text-align: center;
-  font-size: 0.78rem;
-  line-height: 1.25;
-  padding: 8px 10px;
-  white-space: normal;
-}
-.editor-trazar-punto-workspace .editor-trazar-dir-block {
-  margin: 0;
-  border: 1px solid rgba(71, 85, 105, 0.45);
-  background: rgba(2, 6, 23, 0.35);
-}
-.editor-trazar-step-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.35rem;
-  height: 1.35rem;
-  margin-right: 6px;
-  padding: 0 5px;
-  border-radius: 7px;
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: #ecfdf5;
-  background: linear-gradient(135deg, #16a34a, #0e7490);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset;
-  vertical-align: middle;
-}
-.editor-trazar-step-pill--ghost {
-  background: rgba(15, 23, 42, 0.65);
-  color: #94a3b8;
-  box-shadow: none;
-  border: 1px solid rgba(34, 197, 94, 0.25);
-}
-.editor-trazar-seg__kicker {
-  display: block;
-  margin-bottom: 2px;
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #5eead4;
-}
-.editor-trazar-seg__face--dir {
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 48px;
-}
-.editor-trazar-seg__face--dir .editor-trazar-seg__t {
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-.editor-trazar-seg__dir-ico {
-  font-size: 0.95rem;
-  opacity: 0.85;
-  font-weight: 700;
-}
-.editor-trazar-ref--waiting {
-  color: #c4b5fd !important;
-  border-color: rgba(139, 92, 246, 0.45) !important;
-  background: rgba(49, 46, 129, 0.35) !important;
-}
-.editor-trazar-ref--ok {
-  color: #a7f3d0 !important;
-  border-color: rgba(45, 212, 191, 0.45) !important;
-  background: rgba(6, 78, 59, 0.28) !important;
-}
-
-.editor-trazar-seg-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.editor-trazar-seg-grid--2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.editor-trazar-seg {
-  display: block;
-  margin: 0;
-  cursor: pointer;
-}
-.editor-trazar-seg--wide {
-  margin-top: 0;
-}
-.editor-trazar-seg__input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-.editor-trazar-seg__face {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 4px;
-  padding: 12px 14px;
-  min-height: 52px;
-  border-radius: 12px;
-  border: 1px solid rgba(34, 197, 94, 0.45);
-  background: linear-gradient(160deg, rgba(34, 197, 94, 0.12) 0%, rgba(15, 23, 42, 0.9) 72%);
-  color: #ecfdf5;
-  text-align: left;
-  font-size: 0.95rem;
-  font-weight: 700;
-  transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s, filter 0.2s;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-.editor-trazar-seg__t {
-  display: block;
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.2;
-  color: #f8fafc;
-}
-.editor-trazar-seg__sub {
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 500;
-  line-height: 1.35;
-  color: rgba(236, 253, 245, 0.72);
-}
-.editor-trazar-seg__input:checked + .editor-trazar-seg__face {
-  border: 1px solid rgba(34, 197, 94, 0.6);
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 55%, #0e7490 100%);
-  color: #ffffff;
-  box-shadow:
-    0 10px 24px rgba(22, 163, 74, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  filter: none;
-}
-.editor-trazar-seg__input:checked + .editor-trazar-seg__face .editor-trazar-seg__t,
-.editor-trazar-seg__input:checked + .editor-trazar-seg__face {
-  color: #ffffff;
-}
-.editor-trazar-seg__input:checked + .editor-trazar-seg__face .editor-trazar-seg__sub {
-  color: rgba(255, 255, 255, 0.9);
-}
-.editor-trazar-seg__input:focus-visible + .editor-trazar-seg__face {
-  outline: 2px solid rgba(52, 211, 153, 0.7);
-  outline-offset: 2px;
-}
-
-.editor-trazar-ref {
-  margin: 8px 0 0;
-  font-size: 0.72rem;
-  line-height: 1.35;
-  color: #a5b4fc;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(49, 46, 129, 0.25);
-  border: 1px solid rgba(99, 102, 241, 0.25);
-}
-
-.editor-trazar-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(71, 85, 105, 0.6);
-  background: rgba(2, 6, 23, 0.5);
-  color: #f1f5f9;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  transition: border-color 0.16s, box-shadow 0.16s;
-}
-.editor-trazar-input::placeholder {
-  color: #475569;
-  font-weight: 500;
-}
-.editor-trazar-input:focus {
-  outline: none;
-  border-color: rgba(34, 197, 94, 0.5);
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
-}
-.editor-trazar-sticky-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 6px;
-  padding: 8px 0 0;
-  border-top: 1px solid rgba(34, 197, 94, 0.14);
-}
-/* «Fijar en mapa» = mismo botón claro que «Cancelar modo mapa» (reporte-ev + ghost en body). */
-body.editor-body .editor-trazar-apply-btn.reporte-ev-btn--ghost-sm {
-  width: 100%;
-  min-height: 48px;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-body.editor-body .editor-trazar-apply-btn.reporte-ev-btn--ghost-sm:active {
-  transform: scale(0.99);
-}
-
-/* Mapbox marker pin Trazar (animado) */
+/* Mapbox marker pin corte / referencia Fibra GIS (clases legacy editor-trazar-cut-* en DOM) */
 #map .mapboxgl-marker .editor-trazar-cut-pin-wrap,
 .mapboxgl-marker .editor-trazar-cut-pin-wrap {
   display: flex;

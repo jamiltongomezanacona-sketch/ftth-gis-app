@@ -99,11 +99,11 @@
         <div id="editor-field-view-main" class="editor-field-view editor-field-view--main">
         <p class="editor-field-sidebar__head">Campo</p>
         <nav class="editor-field-sidebar__nav" aria-label="Acciones de campo">
-          <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-trazar">
+          <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-fiber-gis">
             <span class="editor-field-sidebar__item-ico" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c2.5-7 4.5-7 7 0s4.5 7 7 0" /><circle cx="6" cy="17" r="1.5" fill="currentColor" stroke="none" /><circle cx="18" cy="17" r="1.5" fill="currentColor" stroke="none" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" /><circle cx="12" cy="12" r="3" /></svg>
             </span>
-            <span class="editor-field-sidebar__item-title">Trazar</span>
+            <span class="editor-field-sidebar__item-title">Fibra GIS</span>
           </button>
           <button type="button" class="editor-field-sidebar__item" id="btn-sidebar-medir">
             <span class="editor-field-sidebar__item-ico" aria-hidden="true">
@@ -178,142 +178,145 @@
     </div>
   </div>
 
-  <!-- Trazar: fuera de #layout (evita celda/grid en móvil y solapes con el mapa). -->
-  <div id="editor-trazar-modal" class="editor-trazar-modal" hidden aria-hidden="true">
+  <!-- Fibra GIS: medición OTDR sobre tendido (sustituye «Trazar»). -->
+  <div id="editor-ft-modal" class="editor-ftw" hidden aria-hidden="true">
     <button
       type="button"
-      class="editor-trazar-modal__backdrop"
-      id="editor-trazar-modal-backdrop"
-      aria-label="Cerrar Trazar"
+      class="editor-ftw__backdrop"
+      id="editor-ft-modal-backdrop"
+      aria-label="Cerrar Fibra GIS"
       tabindex="-1"
     ></button>
     <div
-      id="editor-trazar-modal-panel"
-      class="editor-trazar-modal__panel"
+      id="editor-ft-modal-panel"
+      class="editor-ftw__panel"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="editor-trazar-modal-title"
+      aria-labelledby="editor-ft-modal-title"
     >
-      <div class="editor-trazar-modal__titlebar editor-float-panel__titlebar">
-        <h2 id="editor-trazar-modal-title" class="editor-trazar-modal__title editor-float-panel__title">Trazar</h2>
+      <header class="editor-ftw__header">
+        <div class="editor-ftw__brand">
+          <span class="editor-ftw__glyph" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          </span>
+          <div class="editor-ftw__titles">
+            <h2 id="editor-ft-modal-title" class="editor-ftw__title">Fibra GIS</h2>
+            <p class="editor-ftw__subtitle">OTDR · tendido ÷1,2 · punto en mapa</p>
+          </div>
+        </div>
         <button
           type="button"
-          id="btn-trazar-back"
-          class="editor-trazar-modal__close editor-float-panel__close"
+          id="btn-ft-workspace-back"
+          class="editor-ftw__close editor-float-panel__close"
           title="Cerrar"
-          aria-label="Cerrar ventana Trazar"
+          aria-label="Cerrar Fibra GIS"
         >
           ×
         </button>
-      </div>
-      <div id="editor-field-view-trazar" class="editor-field-view editor-field-view--trazar editor-trazar-modal__body">
-        <section class="editor-trazar-card" aria-label="Origen de medida">
-          <h3 class="editor-trazar-card__title">Origen de la medida</h3>
-          <div class="editor-trazar-seg-grid" role="group" aria-label="Elegir origen">
-            <label class="editor-trazar-seg">
-              <input class="editor-trazar-seg__input" type="radio" name="editor-trazar-origen" value="A" checked />
-              <span class="editor-trazar-seg__face">
-                <span class="editor-trazar-seg__t">Desde central</span>
+      </header>
+      <div id="editor-field-view-fiber" class="editor-ftw__body editor-field-view editor-field-view--fiber">
+        <section class="editor-ftw-section" aria-label="Modo de medida">
+          <p class="editor-ftw-kicker">Modo</p>
+          <div class="editor-ftw-mode-grid" role="group" aria-label="Origen de la lectura">
+            <label class="editor-ftw-mode">
+              <input class="editor-ftw-mode__input" type="radio" name="editor-ft-origen" value="A" checked />
+              <span class="editor-ftw-mode__face">
+                <span class="editor-ftw-mode__name">Desde central</span>
+                <span class="editor-ftw-mode__hint">Primer vértice del tendido</span>
               </span>
             </label>
-            <label class="editor-trazar-seg">
-              <input class="editor-trazar-seg__input" type="radio" name="editor-trazar-origen" value="B" />
-              <span class="editor-trazar-seg__face">
-                <span class="editor-trazar-seg__t">Desde final</span>
+            <label class="editor-ftw-mode">
+              <input class="editor-ftw-mode__input" type="radio" name="editor-ft-origen" value="B" />
+              <span class="editor-ftw-mode__face">
+                <span class="editor-ftw-mode__name">Desde final</span>
+                <span class="editor-ftw-mode__hint">Último vértice del tendido</span>
               </span>
             </label>
-            <label class="editor-trazar-seg editor-trazar-seg--wide">
-              <input class="editor-trazar-seg__input" type="radio" name="editor-trazar-origen" value="punto" />
-              <span class="editor-trazar-seg__face">
-                <span class="editor-trazar-seg__t">Punto tramo</span>
+            <label class="editor-ftw-mode editor-ftw-mode--wide">
+              <input class="editor-ftw-mode__input" type="radio" name="editor-ft-origen" value="punto" />
+              <span class="editor-ftw-mode__face">
+                <span class="editor-ftw-mode__name">Pin en cable</span>
+                <span class="editor-ftw-mode__hint">Referencia intermedia + sentido</span>
               </span>
             </label>
           </div>
         </section>
 
-        <div id="editor-trazar-punto-workspace" class="editor-trazar-punto-workspace" hidden>
-          <div class="editor-trazar-punto-head">
-            <span class="editor-trazar-punto-badge" aria-hidden="true">1</span>
+        <div id="editor-ft-punto-zone" class="editor-ftw-punto" hidden>
+          <div class="editor-ftw-punto__head">
+            <span class="editor-ftw-step" aria-hidden="true">1</span>
             <div>
-              <p class="editor-trazar-punto-head__title">Pin de referencia (origen de la medida)</p>
-              <p class="editor-trazar-fiber-hint">
-                «Desde central» en el mapa siempre parte del <strong>primer vértice</strong> del tendido. En punto tramo
-                la medida parte del pin: si no está en ese vértice, el máximo hacia un extremo es menor. Usa los atajos
-                abajo para igualar el origen.
+              <p class="editor-ftw-punto__title">Referencia en el tendido</p>
+              <p class="editor-ftw-help">
+                Toca el cable para el pin violeta. «Desde central/final» usan solo un extremo; aquí eliges el origen y el
+                <strong>sentido</strong>. El máximo de fibra por lado depende de dónde quede el pin.
               </p>
             </div>
           </div>
-          <div class="editor-trazar-punto-quick-ref">
-            <button
-              type="button"
-              id="editor-trazar-ref-at-start"
-              class="reporte-ev-btn reporte-ev-btn--ghost-sm editor-trazar-quick-ref-btn"
-            >
-              Referencia = inicio del tendido (como «Desde central»)
-            </button>
-            <button
-              type="button"
-              id="editor-trazar-ref-at-end"
-              class="reporte-ev-btn reporte-ev-btn--ghost-sm editor-trazar-quick-ref-btn"
-            >
-              Referencia = final del tendido (como «Desde final»)
-            </button>
+          <div class="editor-ftw-quick">
+            <button type="button" id="editor-ft-ref-start" class="editor-ftw-chip">Anclar al inicio (como central)</button>
+            <button type="button" id="editor-ft-ref-end" class="editor-ftw-chip">Anclar al final</button>
           </div>
-          <p id="editor-trazar-ref-hint" class="editor-trazar-ref editor-trazar-ref--waiting" hidden></p>
 
-          <section
-            id="editor-trazar-dir-block"
-            class="editor-trazar-card editor-trazar-dir-block"
-            aria-label="Sentido de la medida desde el pin"
-          >
-            <h3 class="editor-trazar-card__title">
-              <span class="editor-trazar-step-pill" aria-hidden="true">2</span>
-              Sentido desde el pin
-            </h3>
-            <div class="editor-trazar-seg-grid editor-trazar-seg-grid--2" role="group" aria-label="Dirección desde el pin">
-              <label class="editor-trazar-seg">
-                <input class="editor-trazar-seg__input" type="radio" name="editor-trazar-direccion" value="inicio" />
-                <span class="editor-trazar-seg__face editor-trazar-seg__face--dir">
-                  <span class="editor-trazar-seg__dir-ico" aria-hidden="true">←</span>
-                  <span class="editor-trazar-seg__t">Hacia central</span>
+          <div id="editor-ft-caps" class="editor-ftw-caps" hidden aria-live="polite">
+            <p class="editor-ftw-caps__title">Fibra disponible desde el pin (esta medida)</p>
+            <div class="editor-ftw-caps__row">
+              <div class="editor-ftw-cap">
+                <span class="editor-ftw-cap__dir">← Hacia central</span>
+                <span id="editor-ft-cap-start" class="editor-ftw-cap__val">—</span>
+              </div>
+              <div class="editor-ftw-cap">
+                <span class="editor-ftw-cap__dir">→ Hacia final</span>
+                <span id="editor-ft-cap-end" class="editor-ftw-cap__val">—</span>
+              </div>
+            </div>
+          </div>
+          <p id="editor-ft-total-hint" class="editor-ftw-total" hidden></p>
+
+          <section id="editor-ft-dir-block" class="editor-ftw-section editor-ftw-section--nested" aria-label="Sentido">
+            <p class="editor-ftw-kicker"><span class="editor-ftw-step editor-ftw-step--inline" aria-hidden="true">2</span> Sentido</p>
+            <div class="editor-ftw-dir-grid" role="group" aria-label="Dirección desde el pin">
+              <label class="editor-ftw-dir">
+                <input class="editor-ftw-dir__input" type="radio" name="editor-ft-direccion" value="inicio" />
+                <span class="editor-ftw-dir__face">
+                  <span class="editor-ftw-dir__ico" aria-hidden="true">←</span>
+                  <span class="editor-ftw-dir__t">Hacia central</span>
                 </span>
               </label>
-              <label class="editor-trazar-seg">
-                <input class="editor-trazar-seg__input" type="radio" name="editor-trazar-direccion" value="final" checked />
-                <span class="editor-trazar-seg__face editor-trazar-seg__face--dir">
-                  <span class="editor-trazar-seg__dir-ico" aria-hidden="true">→</span>
-                  <span class="editor-trazar-seg__t">Hacia el final de cable</span>
+              <label class="editor-ftw-dir">
+                <input class="editor-ftw-dir__input" type="radio" name="editor-ft-direccion" value="final" checked />
+                <span class="editor-ftw-dir__face">
+                  <span class="editor-ftw-dir__ico" aria-hidden="true">→</span>
+                  <span class="editor-ftw-dir__t">Hacia final</span>
                 </span>
               </label>
             </div>
           </section>
         </div>
 
-        <section class="editor-trazar-card" aria-label="Metros de fibra con convención de reserva de tendido">
-          <h3 class="editor-trazar-card__title">
-            <span class="editor-trazar-step-pill editor-trazar-step-pill--ghost" id="editor-trazar-fiber-step" hidden aria-hidden="true">3</span>
-            Metros de fibra (lectura OTDR / evento)
-          </h3>
-          <p class="editor-trazar-fiber-hint">
-            Reserva ~20 %: <strong>tendido geométrico = fibra ÷ 1,2</strong>. Puedes escribir
-            <strong>cualquier número</strong> (no hay máximo en la app). Si la lectura supera el cable dibujado, el
-            corte va al extremo; el recorrido real en mapa es el número <strong>grande</strong> en la etiqueta del pin.
-            Molécula: se encadenan tramos que comparten vértice.
+        <section class="editor-ftw-section editor-ftw-section--fiber" aria-label="Lectura en fibra">
+          <p class="editor-ftw-kicker">
+            <span class="editor-ftw-step editor-ftw-step--ghost" id="editor-ft-fiber-step" hidden aria-hidden="true">3</span>
+            Lectura (metros fibra)
+          </p>
+          <p class="editor-ftw-help">
+            Convención estándar: <strong>tendido en mapa = fibra ÷ 1,2</strong> (~20 % reserva). Cualquier valor; si
+            supera el tramo en el sentido elegido, el punto va al extremo del dibujo. Cadena: tramos con vértice común en la misma vista.
           </p>
           <input
             type="text"
-            class="editor-trazar-input"
-            id="editor-trazar-fiber-m"
+            class="editor-ftw-input"
+            id="editor-ft-fiber-m"
             inputmode="decimal"
             autocomplete="off"
-            placeholder="Ej. 850 o 12000"
-            title="Sin límite de metros; ÷1,2 entre fibra y tendido en mapa"
+            placeholder="Ej. 850, 1000, 12000"
+            title="Metros de fibra OTDR; sin techo artificial en la app"
           />
         </section>
 
-        <div class="editor-trazar-sticky-actions">
-          <button type="button" class="reporte-ev-btn reporte-ev-btn--ghost-sm editor-trazar-apply-btn" id="editor-trazar-apply">Fijar en mapa</button>
-        </div>
+        <footer class="editor-ftw-footer">
+          <button type="button" class="editor-ftw-cta" id="editor-ft-apply">Colocar en mapa</button>
+        </footer>
       </div>
     </div>
   </div>
