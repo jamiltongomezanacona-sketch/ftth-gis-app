@@ -172,14 +172,16 @@ export function createFiberTraceController(ctx) {
           const Lgeom = lineLengthMeters(ln, t);
           if (Number.isFinite(Lgeom) && Number.isFinite(pc.refAlong)) {
             meta = {
-              totalCableFiberM: lengthWithReserve20Pct(Lgeom),
+              totalLineGeomM: Lgeom,
               refAlongGeomM: pc.refAlong,
               lineGeomM: Lgeom
             };
           }
         }
       }
-      return buildPuntoTramoPinLabel(r, getDireccion(), fmtM, meta);
+      return buildPuntoTramoPinLabel(r, getDireccion(), fmtM, meta, {
+        otdrAlongMapGeometry: true
+      });
     }
     const d = Number(r?.distanceFromStartAlongLineM);
     if (!Number.isFinite(d)) return null;
@@ -198,7 +200,8 @@ export function createFiberTraceController(ctx) {
     return n;
   }
 
-  function directionalFiberCapsFromRef(line, refAlongFromLineStart) {
+  /** Metros de tendido (GIS) disponibles en cada sentido desde el pin — modo pin OTDR 1:1. */
+  function directionalGeomCapsFromRef(line, refAlongFromLineStart) {
     const refD =
       refAlongFromLineStart != null && Number.isFinite(refAlongFromLineStart)
         ? refAlongFromLineStart
@@ -209,8 +212,8 @@ export function createFiberTraceController(ctx) {
     const toStartGeom = Math.min(Math.max(0, refD), L);
     const toEndGeom = Math.max(0, L - toStartGeom);
     return {
-      toward_start_fiber_m: lengthWithReserve20Pct(toStartGeom),
-      toward_end_fiber_m: lengthWithReserve20Pct(toEndGeom)
+      toward_start_m: toStartGeom,
+      toward_end_m: toEndGeom
     };
   }
 
@@ -263,13 +266,13 @@ export function createFiberTraceController(ctx) {
     const pc = resolvePuntoMeasureContext();
     const capLine = pc?.line ?? resolveLineStringGeometry(f?.geometry);
     const refForCaps = pc?.refAlong ?? refDistFromStartM;
-    const caps = directionalFiberCapsFromRef(capLine, refForCaps);
+    const caps = directionalGeomCapsFromRef(capLine, refForCaps);
     if (!caps) {
       capsEl.hidden = true;
       return;
     }
-    capStartEl.textContent = fmtM(caps.toward_start_fiber_m);
-    capEndEl.textContent = fmtM(caps.toward_end_fiber_m);
+    capStartEl.textContent = fmtM(caps.toward_start_m);
+    capEndEl.textContent = fmtM(caps.toward_end_m);
     capsEl.hidden = false;
 
     if (totalHintEl && pc?.line) {
@@ -277,7 +280,7 @@ export function createFiberTraceController(ctx) {
       try {
         const L = lineLengthMeters(pc.line, t);
         if (Number.isFinite(L) && L > 0) {
-          totalHintEl.textContent = `Longitud tendido en esta medida: ~${fmtM(lengthWithReserve20Pct(L))} fibra (GIS${pc.chained ? ', cadena por vértices' : ''}).`;
+          totalHintEl.textContent = `Longitud tendido en esta medida: ~${fmtM(L)} m en mapa (GIS${pc.chained ? ', cadena por vértices' : ''}).`;
           totalHintEl.hidden = false;
         } else {
           totalHintEl.hidden = true;
@@ -412,7 +415,9 @@ export function createFiberTraceController(ctx) {
     } else {
       const pc = resolvePuntoMeasureContext();
       if (!pc) return null;
-      r = cutPointFromFiberFromClickRef(pc.line, pc.refAlong, fib, getDireccion(), turfNs);
+      r = cutPointFromFiberFromClickRef(pc.line, pc.refAlong, fib, getDireccion(), turfNs, {
+        useFiberReserve: false
+      });
     }
     const lng = r.point?.geometry?.coordinates?.[0];
     const lat = r.point?.geometry?.coordinates?.[1];
@@ -472,15 +477,15 @@ export function createFiberTraceController(ctx) {
       const pc = resolvePuntoMeasureContext();
       const capLine = pc?.line ?? resolveLineStringGeometry(f?.geometry);
       const refForCaps = pc?.refAlong ?? refDistFromStartM;
-      const caps = directionalFiberCapsFromRef(capLine, refForCaps);
-      const maxFiber =
-        direccion === 'toward_start' ? caps?.toward_start_fiber_m : caps?.toward_end_fiber_m;
+      const caps = directionalGeomCapsFromRef(capLine, refForCaps);
+      const maxGeom =
+        direccion === 'toward_start' ? caps?.toward_start_m : caps?.toward_end_m;
       const asked = Number(r.fiberReadingM);
-      const maxStr = Number.isFinite(maxFiber) ? fmtM(Number(maxFiber)) : '—';
+      const maxStr = Number.isFinite(maxGeom) ? fmtM(Number(maxGeom)) : '—';
       const askedStr = Number.isFinite(asked) ? fmtM(asked) : '—';
       const chainHint = pc?.chained ? ' Cadena GIS por vértices aplicada.' : '';
       setStatus(
-        `Fibra GIS: lectura ${askedStr}. En este sentido hay ≈ ${maxStr} fibra desde el pin; el punto quedó en el extremo del tendido.${chainHint} Convención ÷1,2.`
+        `Fibra GIS: lectura ${askedStr} m (OTDR sobre tendido). En este sentido hay ≈ ${maxStr} m de tendido desde el pin; el punto quedó en el extremo del trazado.${chainHint}`
       );
     } else {
       setStatus(
@@ -660,7 +665,7 @@ export function createFiberTraceController(ctx) {
       }
       refClickLngLat = [lng, lat];
       setStatus(
-        'Fibra GIS: pin de referencia fijado. Indica fibra (OTDR) y sentido; el mapa aplica tendido ÷ 1,2 (reserva ~20 %).'
+        'Fibra GIS: pin de referencia fijado. La lectura OTDR se mide en metros sobre el tendido dibujado (1:1); elige sentido y metros.'
       );
       syncForm();
       onInput();

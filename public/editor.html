@@ -248,8 +248,7 @@
             <div>
               <p class="editor-ftw-punto__title">Referencia en el tendido</p>
               <p class="editor-ftw-help">
-                Toca el cable para el pin violeta. «Desde central/final» usan solo un extremo; aquí eliges el origen y el
-                <strong>sentido</strong>. El máximo de fibra por lado depende de dónde quede el pin.
+                Toca el cable para el pin violeta. La lectura OTDR se recorre <strong>en metros sobre el tendido dibujado</strong> (1:1 con el trazado GIS). El máximo hacia cada lado es la longitud de tendido que quede desde el pin.
               </p>
             </div>
           </div>
@@ -259,7 +258,7 @@
           </div>
 
           <div id="editor-ft-caps" class="editor-ftw-caps" hidden aria-live="polite">
-            <p class="editor-ftw-caps__title">Fibra disponible desde el pin (esta medida)</p>
+            <p class="editor-ftw-caps__title">Metros de tendido (GIS) desde el pin</p>
             <div class="editor-ftw-caps__row">
               <div class="editor-ftw-cap">
                 <span class="editor-ftw-cap__dir">← Hacia central</span>
@@ -294,14 +293,13 @@
           </section>
         </div>
 
-        <section class="editor-ftw-section editor-ftw-section--fiber" aria-label="Lectura en fibra">
+        <section class="editor-ftw-section editor-ftw-section--fiber" aria-label="Lectura OTDR">
           <p class="editor-ftw-kicker">
             <span class="editor-ftw-step editor-ftw-step--ghost" id="editor-ft-fiber-step" hidden aria-hidden="true">3</span>
-            Lectura (metros fibra)
+            Lectura OTDR (metros)
           </p>
           <p class="editor-ftw-help">
-            Convención estándar: <strong>tendido en mapa = fibra ÷ 1,2</strong> (~20 % reserva). Cualquier valor; si
-            supera el tramo en el sentido elegido, el punto va al extremo del dibujo. Cadena: tramos con vértice común en la misma vista.
+            <strong>Pin en cable:</strong> los metros se aplican <strong>sobre el tendido dibujado</strong> (misma distancia que ves en el número grande del pin). <strong>Desde central / desde final:</strong> sigue la convención fibra en mapa con <strong>÷ 1,2</strong> (reserva). Si la lectura supera el tramo en el sentido elegido, el punto va al extremo del dibujo.
           </p>
           <input
             type="text"
@@ -309,8 +307,8 @@
             id="editor-ft-fiber-m"
             inputmode="decimal"
             autocomplete="off"
-            placeholder="Ej. 850, 1000, 12000"
-            title="Metros de fibra OTDR; sin techo artificial en la app"
+            placeholder="Ej. 3000, 850, 12000"
+            title="Metros OTDR; modo pin = metros sobre tendido GIS"
           />
         </section>
 

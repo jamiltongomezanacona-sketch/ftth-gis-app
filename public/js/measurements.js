@@ -124,20 +124,28 @@ export function cutPointFromOtdrFiberMeters(line, fiberMetersFromRef, from, turf
 }
 
 /**
- * Punto de corte: fibra OTDR desde un punto de referencia ya situado en el tendido (m desde inicio),
- * avanzando hacia el final o hacia el inicio del cable.
+ * Punto de corte: lectura OTDR desde un punto de referencia en el tendido (m desde inicio del LineString),
+ * avanzando hacia el final o hacia la central.
+ *
  * @param {'toward_end'|'toward_start'} direction
+ * @param {{ useFiberReserve?: boolean }} [opts] `useFiberReserve: false` — la lectura se recorre **1:1** como metros
+ *   sobre el tendido dibujado en GIS (flujo típico OTDR desde pin). Por defecto `true`: fibra → tendido con ÷1,2.
  */
 export function cutPointFromFiberFromClickRef(
   line,
   refDistFromStartM,
   fiberMeters,
   direction,
-  turf
+  turf,
+  opts
 ) {
-  /** Sin techo fijo de metros de fibra: lecturas grandes solo «clamp» al extremo geométrico del LineString. */
+  /** Sin techo fijo: lecturas grandes solo «clamp» al extremo geométrico del LineString. */
   const lineLen = lineLengthMeters(line, turf);
-  const delta = geometricLengthFromFiberLengthMeters(fiberMeters);
+  const useReserve = opts?.useFiberReserve !== false;
+  const rawFib = Number(fiberMeters);
+  const delta = useReserve
+    ? geometricLengthFromFiberLengthMeters(fiberMeters)
+    : Math.max(0, Number.isFinite(rawFib) ? rawFib : 0);
   const sign = direction === 'toward_end' ? 1 : -1;
   let distFromStart = refDistFromStartM + sign * delta;
   let clamped = false;
