@@ -179,7 +179,24 @@ export function createTrazarController(ctx) {
    */
   function cutLabel(r) {
     if (origen === 'punto') {
-      return buildPuntoTramoPinLabel(r, getDireccion(), fmtM);
+      /** @type {{ totalCableFiberM: number; refAlongGeomM: number; lineGeomM: number } | undefined} */
+      let meta;
+      if (r?.clamped) {
+        const pc = resolvePuntoMeasureContext();
+        const ln = pc?.line;
+        if (ln && pc.refAlong != null) {
+          const t = getTurfNs();
+          const Lgeom = lineLengthMeters(ln, t);
+          if (Number.isFinite(Lgeom) && Number.isFinite(pc.refAlong)) {
+            meta = {
+              totalCableFiberM: lengthWithReserve20Pct(Lgeom),
+              refAlongGeomM: pc.refAlong,
+              lineGeomM: Lgeom
+            };
+          }
+        }
+      }
+      return buildPuntoTramoPinLabel(r, getDireccion(), fmtM, meta);
     }
     const d = Number(r?.distanceFromStartAlongLineM);
     if (!Number.isFinite(d)) return null;
