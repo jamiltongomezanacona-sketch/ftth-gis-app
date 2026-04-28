@@ -54,7 +54,7 @@ export function buildPuntoTramoPinLabel(r, direccion, fmtM, meta) {
         maxFibThisWay
       )} fibra desde el pin. El tendido completo en mapa es ~${fmtM(
         meta.totalCableFiberM
-      )}; el resto queda del otro lado del pin.`;
+      )}; el resto queda del otro lado del pin. El corte se ancló al vértice de ese extremo (máximo recorrido en este sentido).`;
       if (direccion === 'toward_end' && remGeomTowardEnd < L * 0.22) {
         detail += ' Prueba «hacia central» o mueve el pin.';
       } else if (direccion === 'toward_start' && remGeomTowardStart < L * 0.22) {
@@ -68,8 +68,8 @@ export function buildPuntoTramoPinLabel(r, direccion, fmtM, meta) {
       primary: fmtM(fibFromRef),
       secondary:
         direccion === 'toward_end'
-          ? 'Pin en extremo del cable (final del trazado)'
-          : 'Pin en extremo del cable (lado central)',
+          ? 'Corte en la punta del tendido (vértice final en mapa)'
+          : 'Corte en la punta del tendido (vértice de central en mapa)',
       detail
     };
   }

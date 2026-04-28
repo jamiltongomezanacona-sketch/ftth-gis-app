@@ -47,17 +47,35 @@ function metersAlongLineFromSnapped(snapped) {
   return null;
 }
 
+/** Metros: tolerancia para anclar el pin exactamente al primer/último vértice (evita fallos de `along` en el extremo). */
+const ALONG_ENDPOINT_SNAP_M = 0.08;
+
 export function pointAlongLineAtGeometricDistance(line, distanceMetersFromStart, turf) {
   if (!line?.coordinates?.length) return null;
-  const lineFeature = turf.lineString(line.coordinates);
+  const coords = line.coordinates;
+  const lineFeature = turf.lineString(coords);
   let len;
   try {
     len = turf.length(lineFeature, { units: 'meters' });
   } catch {
     return null;
   }
+  if (len < 1e-9) {
+    try {
+      return turf.point(coords[0]);
+    } catch {
+      return null;
+    }
+  }
   const d = Math.min(Math.max(0, distanceMetersFromStart), len);
   try {
+    const canSnapEnds = len > ALONG_ENDPOINT_SNAP_M * 2.5;
+    if (canSnapEnds && d <= ALONG_ENDPOINT_SNAP_M) {
+      return turf.point(coords[0]);
+    }
+    if (canSnapEnds && d >= len - ALONG_ENDPOINT_SNAP_M) {
+      return turf.point(coords[coords.length - 1]);
+    }
     return turf.along(lineFeature, d, { units: 'meters' });
   } catch {
     return null;
