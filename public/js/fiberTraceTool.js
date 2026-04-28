@@ -159,7 +159,9 @@ export function createFiberTraceController(ctx) {
   }
 
   function cutLabel(r) {
-    if (origen === 'punto') {
+    /** Siempre leer el modo desde el DOM (evita «desde central» con pin cuando la variable interna va desfasada). */
+    const mode = getOrigen();
+    if (mode === 'punto') {
       /** @type {{ totalCableFiberM: number; refAlongGeomM: number; lineGeomM: number } | undefined} */
       let meta;
       if (r?.clamped) {
@@ -182,7 +184,10 @@ export function createFiberTraceController(ctx) {
     const d = Number(r?.distanceFromStartAlongLineM);
     if (!Number.isFinite(d)) return null;
     const fib = lengthWithReserve20Pct(d);
-    return { primary: fmtM(fib), secondary: 'desde central' };
+    return {
+      primary: fmtM(fib),
+      secondary: mode === 'B' ? 'desde final' : 'desde central'
+    };
   }
 
   function parseFiberM() {
@@ -380,6 +385,8 @@ export function createFiberTraceController(ctx) {
   }
 
   function compute() {
+    origen = getOrigen();
+    direccion = getDireccion();
     const f = getSelectedFeature();
     const line = resolveLineStringGeometry(f?.geometry);
     if (!line) {
@@ -417,6 +424,8 @@ export function createFiberTraceController(ctx) {
   }
 
   function applyToMap(focus) {
+    origen = getOrigen();
+    direccion = getDireccion();
     const f = getSelectedFeature();
     if (!isLineStringFeature(f)) {
       setStatus('Fibra GIS: selecciona un tendido en el mapa o en la búsqueda.');
@@ -459,7 +468,7 @@ export function createFiberTraceController(ctx) {
       }
     }
     scheduleMapResize?.();
-    if (r.clamped && origen === 'punto') {
+    if (r.clamped && getOrigen() === 'punto') {
       const pc = resolvePuntoMeasureContext();
       const capLine = pc?.line ?? resolveLineStringGeometry(f?.geometry);
       const refForCaps = pc?.refAlong ?? refDistFromStartM;
