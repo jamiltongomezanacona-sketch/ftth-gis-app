@@ -22,6 +22,7 @@ import {
   ensureTrazarCutLayers
 } from './trazarCutLayer.js';
 import { mergeConnectedRouteLinesForTrazar } from './routeChainGeometry.js';
+import { buildPuntoTramoPinLabel } from './trazarPuntoLabel.js';
 
 /**
  * Línea única para medidas: LineString o MultiLineString (partes concatenadas).
@@ -178,23 +179,7 @@ export function createTrazarController(ctx) {
    */
   function cutLabel(r) {
     if (origen === 'punto') {
-      const fromRefGeom = Number(r?.geometricFromRefM);
-      if (!Number.isFinite(fromRefGeom)) return null;
-      const fibFromRef = lengthWithReserve20Pct(fromRefGeom);
-      const primary = fmtM(fibFromRef);
-      const askedFib = Number(r?.fiberReadingM);
-      if (r?.clamped && Number.isFinite(askedFib) && askedFib > 0) {
-        const extremo =
-          direccion === 'toward_end'
-            ? 'Corte en la punta del tendido (final en mapa)'
-            : 'Corte en la punta del tendido (lado central)';
-        return {
-          primary,
-          secondary: extremo,
-          detail: `${fmtM(askedFib)} pedidos · hasta aquí llega el trazado GIS`
-        };
-      }
-      return { primary, secondary: 'desde pin' };
+      return buildPuntoTramoPinLabel(r, getDireccion(), fmtM);
     }
     const d = Number(r?.distanceFromStartAlongLineM);
     if (!Number.isFinite(d)) return null;
@@ -473,11 +458,9 @@ export function createTrazarController(ctx) {
       const asked = Number(r.fiberReadingM);
       const maxStr = Number.isFinite(maxFiber) ? fmtM(Number(maxFiber)) : '—';
       const askedStr = Number.isFinite(asked) ? fmtM(asked) : '—';
-      const chainHint = pc?.chained
-        ? ' Tramos vecinos en mapa incluidos en la medida.'
-        : '';
+      const chainHint = pc?.chained ? ' Cadena GIS por vértices incluida.' : '';
       setStatus(
-        `Trazar: ${askedStr} de fibra pedidos; el tendido dibujado alcanza ≈ ${maxStr} desde el pin en ese sentido → corte colocado en la punta del cable.${chainHint} Convención ÷1,2 (reserva tendido).`
+        `Trazar: lectura ${askedStr}. El mapa solo tiene ≈ ${maxStr} de fibra desde el pin en ese sentido; el corte se ubicó en el extremo del tendido.${chainHint} ÷1,2 tendido/fibra.`
       );
     } else {
       setStatus(

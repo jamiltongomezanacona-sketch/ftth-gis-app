@@ -117,6 +117,7 @@ export function cutPointFromFiberFromClickRef(
   direction,
   turf
 ) {
+  /** Sin techo fijo de metros de fibra: lecturas grandes solo «clamp» al extremo geométrico del LineString. */
   const lineLen = lineLengthMeters(line, turf);
   const delta = geometricLengthFromFiberLengthMeters(fiberMeters);
   const sign = direction === 'toward_end' ? 1 : -1;

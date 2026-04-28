@@ -2358,7 +2358,7 @@ body.editor-body .editor-trazar-apply-btn.reporte-ev-btn--ghost-sm:active {
   align-items: stretch;
   gap: 3px;
   text-align: left;
-  max-width: 200px;
+  max-width: min(240px, calc(100vw - 48px));
 }
 .editor-trazar-cut-pin-label__primary {
   display: block;
