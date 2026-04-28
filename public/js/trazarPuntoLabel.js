@@ -1,6 +1,9 @@
 /**
  * Modelo de etiqueta para Trazar «Punto tramo»: separa lectura OTDR (campo) de recorrido efectivo en GIS.
  * Sin techo artificial de metros: el clamp solo acota al extremo geométrico del tendido dibujado.
+ *
+ * Cuando la lectura es mayor que el trazado, el número GRANDE es siempre el **recorrido en mapa**
+ * (coincide con el pin). Mostrar primero la lectura OTDR confundía (ej. 10000 parecía «límite del sistema»).
  */
 import { lengthWithReserve20Pct } from './measurements.js';
 
@@ -19,14 +22,14 @@ export function buildPuntoTramoPinLabel(r, direccion, fmtM) {
 
   if (clamped && Number.isFinite(askedFib) && askedFib >= 0) {
     return {
-      /** Número principal = lectura que reporta el técnico (OTDR / orden de trabajo). */
-      primary: fmtM(askedFib),
+      /** Grande = fibra equivalente al tendido real desde el pin hasta el corte (lo que «cabe» en GIS). */
+      primary: fmtM(fibFromRef),
       secondary:
         direccion === 'toward_end'
-          ? 'Corte en extremo del tendido (final en mapa)'
-          : 'Corte en extremo del tendido (central en mapa)',
-      /** Fibra equivalente al tramo geométrico realmente recorrido desde el pin (÷1,2 ya aplicado en la medida). */
-      detail: `Recorrido tendido desde el pin: ${fmtM(fibFromRef)}`
+          ? 'Pin en extremo del cable (final del trazado)'
+          : 'Pin en extremo del cable (lado central)',
+      /** Lectura de campo aparte: cualquier valor admisible; no hay máximo en la aplicación. */
+      detail: `Lectura cargada ${fmtM(askedFib)} · mayor que el trazado GIS`
     };
   }
 

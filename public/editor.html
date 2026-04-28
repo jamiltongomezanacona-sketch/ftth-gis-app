@@ -278,10 +278,10 @@
             Metros de fibra (lectura OTDR / evento)
           </h3>
           <p class="editor-trazar-fiber-hint">
-            El cable se tiende con reserva (~20 %): en el mapa se recorre el <strong>tendido geométrico</strong> =
-            metros de fibra ÷ 1,2.             Puedes cargar <strong>cualquier lectura en metros</strong>; si supera el tendido dibujado, el corte se
-            coloca en la <strong>punta del cable</strong> en ese sentido. Con varios tramos (molécula), se encadenan
-            los que comparten vértice en mapa.
+            Reserva ~20 %: <strong>tendido geométrico = fibra ÷ 1,2</strong>. Puedes escribir
+            <strong>cualquier número</strong> (no hay máximo en la app). Si la lectura supera el cable dibujado, el
+            corte va al extremo; el recorrido real en mapa es el número <strong>grande</strong> en la etiqueta del pin.
+            Molécula: se encadenan tramos que comparten vértice.
           </p>
           <input
             type="text"
@@ -289,8 +289,8 @@
             id="editor-trazar-fiber-m"
             inputmode="decimal"
             autocomplete="off"
-            placeholder="Ej. 1000"
-            title="Metros de fibra; el mapa aplica ÷1,2 para tendido geométrico (reserva ~20 %)"
+            placeholder="Ej. 850 o 12000"
+            title="Sin límite de metros; ÷1,2 entre fibra y tendido en mapa"
           />
         </section>
 
