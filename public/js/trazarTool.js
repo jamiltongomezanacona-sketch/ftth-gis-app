@@ -21,6 +21,7 @@ import {
   bringTrazarRefLayerToFront,
   ensureTrazarCutLayers
 } from './trazarCutLayer.js';
+import { mergeConnectedRouteLinesForTrazar } from './routeChainGeometry.js';
 
 /**
  * Línea única para medidas: LineString o MultiLineString (partes concatenadas).
@@ -76,6 +77,7 @@ function isLineStringFeature(f) {
  * @property {() => boolean} isEditing
  * @property {() => boolean} isPolyDrawing
  * @property {(n: number) => string} fmtM
+ * @property {() => GeoJSON.Feature[]} [getRouteLinesForChain] tendidos visibles en capa (p. ej. molécula) para encadenar medida
  */
 
 /**
@@ -94,7 +96,8 @@ export function createTrazarController(ctx) {
     deactivateMeasurePolyline,
     isEditing,
     isPolyDrawing,
-    fmtM
+    fmtM,
+    getRouteLinesForChain
   } = ctx;
 
   const fiberIn = /** @type {HTMLInputElement | null} */ (document.getElementById('editor-trazar-fiber-m'));
@@ -122,6 +125,8 @@ export function createTrazarController(ctx) {
   let refAnchorLenM = /** @type {number | null} */ (null);
   /** @type {string | number | null} */
   let lastLineId = null;
+  /** Clic que fijó el pin (para encadenar polilíneas y recalcular posición sobre la línea unida). */
+  let refClickLngLat = /** @type {[number, number] | null} */ (null);
   /** Tras ocultar el sidebar con marcas en mapa, se permite seguir pulsando el tendido sin `open`. */
   let allowRefPickWithoutPanel = false;
 
@@ -207,19 +212,59 @@ export function createTrazarController(ctx) {
 
   /**
    * Topes de fibra desde el pin de referencia por dirección (convención ×1,2).
-   * @param {GeoJSON.LineString | null} line
+   * @param {GeoJSON.LineString | null} line línea de medida (ancla o encadenada)
+   * @param {number | null | undefined} refAlongFromLineStart m desde el inicio de `line` hasta el pin (encadenado u ancla)
    * @returns {{ toward_start_fiber_m: number, toward_end_fiber_m: number } | null}
    */
-  function directionalFiberCapsFromRef(line) {
-    if (!line || refDistFromStartM == null || !Number.isFinite(refDistFromStartM)) return null;
+  function directionalFiberCapsFromRef(line, refAlongFromLineStart) {
+    const refD =
+      refAlongFromLineStart != null && Number.isFinite(refAlongFromLineStart)
+        ? refAlongFromLineStart
+        : refDistFromStartM;
+    if (!line || refD == null || !Number.isFinite(refD)) return null;
     const L = lineLengthMeters(line, getTurfNs());
     if (!Number.isFinite(L) || L < 0) return null;
-    const toStartGeom = Math.min(Math.max(0, refDistFromStartM), L);
+    const toStartGeom = Math.min(Math.max(0, refD), L);
     const toEndGeom = Math.max(0, L - toStartGeom);
     return {
       toward_start_fiber_m: lengthWithReserve20Pct(toStartGeom),
       toward_end_fiber_m: lengthWithReserve20Pct(toEndGeom)
     };
+  }
+
+  /**
+   * Línea efectiva modo punto (ancla ± tendidos conectados en la misma capa).
+   * @returns {{ line: GeoJSON.LineString; refAlong: number; chained: boolean } | null}
+   */
+  function resolvePuntoMeasureContext() {
+    const f = getSelectedFeature();
+    const anchorLine = resolveLineStringGeometry(f?.geometry);
+    if (!anchorLine || refDistFromStartM == null || !Number.isFinite(refDistFromStartM)) return null;
+    const turfNs = getTurfNs();
+    let line = anchorLine;
+    let refAlong = refDistFromStartM;
+    let chained = false;
+    try {
+      const flist = typeof getRouteLinesForChain === 'function' ? getRouteLinesForChain() : [];
+      if (flist?.length >= 1 && refClickLngLat) {
+        const m = mergeConnectedRouteLinesForTrazar(
+          flist,
+          f,
+          refDistFromStartM,
+          refClickLngLat,
+          turfNs,
+          2.5
+        );
+        if (m?.merged?.coordinates?.length >= 2) {
+          line = m.merged;
+          refAlong = m.refAlongMerged;
+          chained = Boolean(m.chained);
+        }
+      }
+    } catch (e) {
+      console.warn('Trazar encadenado rutas', e);
+    }
+    return { line, refAlong, chained };
   }
 
   function getOrigen() {
@@ -351,13 +396,9 @@ export function createTrazarController(ctx) {
     } else if (origen === 'B') {
       r = cutPointFromOtdrFiberMeters(line, fib, 'end', turfNs);
     } else {
-      r = cutPointFromFiberFromClickRef(
-        line,
-        /** @type {number} */ (refDistFromStartM),
-        fib,
-        getDireccion(),
-        turfNs
-      );
+      const pc = resolvePuntoMeasureContext();
+      if (!pc) return null;
+      r = cutPointFromFiberFromClickRef(pc.line, pc.refAlong, fib, getDireccion(), turfNs);
     }
     const lng = r.point?.geometry?.coordinates?.[0];
     const lat = r.point?.geometry?.coordinates?.[1];
@@ -412,15 +453,20 @@ export function createTrazarController(ctx) {
     }
     scheduleMapResize?.();
     if (r.clamped && origen === 'punto') {
-      const line = resolveLineStringGeometry(f?.geometry);
-      const caps = directionalFiberCapsFromRef(line);
+      const pc = resolvePuntoMeasureContext();
+      const capLine = pc?.line ?? resolveLineStringGeometry(f?.geometry);
+      const refForCaps = pc?.refAlong ?? refDistFromStartM;
+      const caps = directionalFiberCapsFromRef(capLine, refForCaps);
       const maxFiber =
         direccion === 'toward_start' ? caps?.toward_start_fiber_m : caps?.toward_end_fiber_m;
       const asked = Number(r.fiberReadingM);
       const maxStr = Number.isFinite(maxFiber) ? fmtM(Number(maxFiber)) : '—';
       const askedStr = Number.isFinite(asked) ? fmtM(asked) : '—';
+      const chainHint = pc?.chained
+        ? ' Se incluyeron tramos conectados por vértice en la capa actual.'
+        : ' Si falta tendido, revisa geometría GIS o busca la molécula para cargar todos los tramos.';
       setStatus(
-        `Trazar: tope en esta polilínea (≈ ${maxStr} fibra desde el pin; pediste ${askedStr}). Solo recorre el tendido dibujado en mapa; si el cable sigue en otro trazo GIS, repite ahí o unifica geometría. ÷1,2 tendido/fibra.`
+        `Trazar: tope en la cadena dibujada (≈ ${maxStr} fibra desde el pin; pediste ${askedStr}).${chainHint} ÷1,2 tendido/fibra.`
       );
     } else {
       setStatus(
@@ -575,6 +621,7 @@ export function createTrazarController(ctx) {
       } catch {
         refAnchorLenM = null;
       }
+      refClickLngLat = [lng, lat];
       setStatus(
         'Trazar: origen de medida fijado en el tendido. Indica metros de fibra (OTDR/evento) y sentido; el mapa usa tendido ÷ 1,2 (reserva ~20 %).'
       );

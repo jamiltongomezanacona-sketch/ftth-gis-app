@@ -2276,7 +2276,14 @@ export async function boot() {
     deactivateMeasurePolyline,
     isEditing: () => editing,
     isPolyDrawing: () => measurePolylineActive && !measurePolylineConfirmed,
-    fmtM
+    fmtM,
+    getRouteLinesForChain: () => {
+      try {
+        return routesLayer.getFeatureList();
+      } catch {
+        return [];
+      }
+    }
   });
 
   /** Controlador modal «Montar cierre» (se asigna tras definir `refreshFtthMoleculeOverlayIfFiltered`). */
