@@ -29,7 +29,8 @@ export function buildPuntoTramoPinLabel(r, direccion, fmtM, meta) {
   const clamped = Boolean(r?.clamped);
 
   if (clamped && Number.isFinite(askedFib) && askedFib >= 0) {
-    let detail = `Lectura ${fmtM(askedFib)} · mayor que lo disponible en GIS`;
+    /** Texto que evita la confusión «total tendido grande pero pin en medio». */
+    let detail = '';
     if (
       meta &&
       Number.isFinite(meta.totalCableFiberM) &&
@@ -39,19 +40,28 @@ export function buildPuntoTramoPinLabel(r, direccion, fmtM, meta) {
     ) {
       const L = meta.lineGeomM;
       const ra = meta.refAlongGeomM;
-      const remTowardEnd = Math.max(0, L - ra);
-      const remTowardStart = Math.max(0, ra);
-      detail += ` · tendido dibujado ~${fmtM(meta.totalCableFiberM)} fibra total`;
-      if (direccion === 'toward_end' && remTowardEnd < L * 0.22) {
-        detail +=
-          ' · poco cable hacia «final»: el pin está cerca de ese extremo del dibujo → prueba «hacia central» o mueve el pin';
-      } else if (direccion === 'toward_start' && remTowardStart < L * 0.22) {
-        detail +=
-          ' · poco cable hacia «central»: el pin está cerca de ese extremo → prueba «hacia final» o mueve el pin';
-      } else if (meta.totalCableFiberM + 5 < askedFib) {
-        detail +=
-          ' · si el cable real es más largo, falta tendido en el mapa o revisar dirección del trazo';
+      const remGeomTowardEnd = Math.max(0, L - ra);
+      const remGeomTowardStart = Math.max(0, ra);
+      const maxFibThisWay =
+        direccion === 'toward_end'
+          ? lengthWithReserve20Pct(remGeomTowardEnd)
+          : lengthWithReserve20Pct(remGeomTowardStart);
+      const sentido =
+        direccion === 'toward_end' ? 'final del dibujo' : 'central (inicio del dibujo)';
+      detail = `Pediste ${fmtM(
+        askedFib
+      )} · hacia el ${sentido} solo caben ~${fmtM(
+        maxFibThisWay
+      )} fibra desde el pin. El tendido completo en mapa es ~${fmtM(
+        meta.totalCableFiberM
+      )}; el resto queda del otro lado del pin.`;
+      if (direccion === 'toward_end' && remGeomTowardEnd < L * 0.22) {
+        detail += ' Prueba «hacia central» o mueve el pin.';
+      } else if (direccion === 'toward_start' && remGeomTowardStart < L * 0.22) {
+        detail += ' Prueba «hacia final» o mueve el pin.';
       }
+    } else {
+      detail = `Pediste ${fmtM(askedFib)} · lectura mayor que el tramo en este sentido; pin en extremo.`;
     }
 
     return {
