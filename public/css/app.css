@@ -2102,6 +2102,21 @@ body.editor-mc-pick-map .mapboxgl-canvas-container.mapboxgl-interactive {
   letter-spacing: -0.02em;
   text-align: left;
 }
+.editor-trazar-fiber-hint {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.38;
+  font-weight: 500;
+  color: rgba(148, 163, 184, 0.96);
+  text-align: left;
+}
+.editor-trazar-fiber-hint strong {
+  font-weight: 700;
+  color: rgba(226, 232, 240, 0.95);
+}
+.editor-trazar-card > .editor-trazar-fiber-hint {
+  margin: 0 0 10px;
+}
 .editor-trazar-punto-workspace .editor-trazar-dir-block {
   margin: 0;
   border: 1px solid rgba(71, 85, 105, 0.45);

@@ -176,7 +176,19 @@ export function createTrazarController(ctx) {
       const fromRefGeom = Number(r?.geometricFromRefM);
       if (!Number.isFinite(fromRefGeom)) return null;
       const fibFromRef = lengthWithReserve20Pct(fromRefGeom);
-      return { primary: fmtM(fibFromRef), secondary: 'desde pin' };
+      const primary = fmtM(fibFromRef);
+      const askedFib = Number(r?.fiberReadingM);
+      if (r?.clamped && Number.isFinite(askedFib) && askedFib > 0) {
+        const tope =
+          direccion === 'toward_end'
+            ? 'Tope al final del tendido'
+            : 'Tope hacia la central';
+        return {
+          primary,
+          secondary: `${tope} · pediste ${fmtM(askedFib)}`
+        };
+      }
+      return { primary, secondary: 'desde pin' };
     }
     const d = Number(r?.distanceFromStartAlongLineM);
     if (!Number.isFinite(d)) return null;
@@ -403,8 +415,11 @@ export function createTrazarController(ctx) {
       const caps = directionalFiberCapsFromRef(line);
       const maxFiber =
         direccion === 'toward_start' ? caps?.toward_start_fiber_m : caps?.toward_end_fiber_m;
+      const asked = Number(r.fiberReadingM);
+      const maxStr = Number.isFinite(maxFiber) ? fmtM(Number(maxFiber)) : '—';
+      const askedStr = Number.isFinite(asked) ? fmtM(asked) : '—';
       setStatus(
-        `Trazar: punto marcado en el extremo del cable (tope en esta dirección: ${Number.isFinite(maxFiber) ? fmtM(Number(maxFiber)) : '—'}).`
+        `Trazar: el tramo no alcanza ${askedStr} m de fibra en esta dirección; se colocó en el tope (≈ ${maxStr} m desde el pin). Convención tendido/fibra ÷1,2.`
       );
     } else {
       setStatus(
@@ -560,7 +575,7 @@ export function createTrazarController(ctx) {
         refAnchorLenM = null;
       }
       setStatus(
-        'Trazar: pin de referencia colocado. Elige hacia central o final de cable e indica los metros de fibra.'
+        'Trazar: origen de medida fijado en el tendido. Indica metros de fibra (OTDR/evento) y sentido; el mapa usa tendido ÷ 1,2 (reserva ~20 %).'
       );
       syncForm();
       onInput();

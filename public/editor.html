@@ -235,7 +235,11 @@
           <div class="editor-trazar-punto-head">
             <span class="editor-trazar-punto-badge" aria-hidden="true">1</span>
             <div>
-              <p class="editor-trazar-punto-head__title">Pin de referencia</p>
+              <p class="editor-trazar-punto-head__title">Pin de referencia (origen de la medida)</p>
+              <p class="editor-trazar-fiber-hint">
+                Toca el tendido en cualquier punto: desde ahí cuentan los metros de fibra hacia la central o hacia el
+                final.
+              </p>
             </div>
           </div>
           <p id="editor-trazar-ref-hint" class="editor-trazar-ref editor-trazar-ref--waiting" hidden></p>
@@ -247,7 +251,7 @@
           >
             <h3 class="editor-trazar-card__title">
               <span class="editor-trazar-step-pill" aria-hidden="true">2</span>
-              Hacia dónde mides desde el pin
+              Sentido desde el pin
             </h3>
             <div class="editor-trazar-seg-grid editor-trazar-seg-grid--2" role="group" aria-label="Dirección desde el pin">
               <label class="editor-trazar-seg">
@@ -268,18 +272,23 @@
           </section>
         </div>
 
-        <section class="editor-trazar-card" aria-label="Lectura en fibra">
+        <section class="editor-trazar-card" aria-label="Metros de fibra con convención de reserva de tendido">
           <h3 class="editor-trazar-card__title">
             <span class="editor-trazar-step-pill editor-trazar-step-pill--ghost" id="editor-trazar-fiber-step" hidden aria-hidden="true">3</span>
-            Fibra (m)
+            Metros de fibra (lectura OTDR / evento)
           </h3>
+          <p class="editor-trazar-fiber-hint">
+            El cable se tiende con reserva (~20 %): en el mapa se recorre el <strong>tendido geométrico</strong> =
+            metros de fibra ÷ 1,2.
+          </p>
           <input
             type="text"
             class="editor-trazar-input"
             id="editor-trazar-fiber-m"
             inputmode="decimal"
             autocomplete="off"
-            placeholder="Ej. 850"
+            placeholder="Ej. 1000"
+            title="Metros de fibra; el mapa aplica ÷1,2 para tendido geométrico (reserva ~20 %)"
           />
         </section>
 
