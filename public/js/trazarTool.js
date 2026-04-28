@@ -9,6 +9,9 @@ import {
   lengthWithReserve20Pct,
   pointAlongLineAtGeometricDistance
 } from './measurements.js';
+
+/** Tolerancia (m) para considerar el mismo tendido si cambia levemente la fuente GeoJSON. */
+const ROUTE_LEN_MATCH_TOLERANCE_M = 3;
 import {
   setTrazarCutMarker,
   setTrazarRefMarker,
@@ -111,8 +114,12 @@ export function createTrazarController(ctx) {
   let direccion = /** @type {'toward_start' | 'toward_end'} */ ('toward_end');
   /** m desde inicio, solo origen=punto */
   let refDistFromStartM = /** @type {number | null} */ (null);
-  /** Clave del tendido al que pertenece la referencia (modo punto). */
-  let refLineKey = /** @type {string | null} */ (null);
+  /** Id del tendido anclado al pin (si la feature lo trae en el clic). */
+  let refRouteId = /** @type {string | null} */ (null);
+  /** Extremos del tendido al anclar (evita fallos id vs sin-id entre capa y búsqueda). */
+  let refEndsKey = /** @type {string | null} */ (null);
+  /** Longitud del tendido (m) al anclar; compara con tolerancia si la geometría viene de otra fuente. */
+  let refAnchorLenM = /** @type {number | null} */ (null);
   /** @type {string | number | null} */
   let lastLineId = null;
   /** Tras ocultar el sidebar con marcas en mapa, se permite seguir pulsando el tendido sin `open`. */
@@ -123,21 +130,40 @@ export function createTrazarController(ctx) {
   }
 
   /**
-   * Clave estable de tendido para invalidar referencia al cambiar de cable,
-   * incluso cuando la feature no trae `id`.
-   * @param {GeoJSON.Feature<GeoJSON.LineString> | import('mapbox-gl').MapboxGeoJSONFeature | null | undefined} f
-   * @returns {string | null}
+   * Primer y último vértice redondeados (estable entre fuentes / precisión flotante).
+   * @param {GeoJSON.LineString | null} line
    */
-  function routeKeyOfFeature(f) {
-    if (!f) return null;
-    const id = f.id;
-    if (id != null && String(id).trim() !== '') return `id:${String(id)}`;
-    const line = resolveLineStringGeometry(f.geometry);
-    if (!line || !Array.isArray(line.coordinates) || line.coordinates.length < 2) return null;
+  function endsKeyFromLine(line) {
+    if (!line?.coordinates?.length) return null;
     const a = line.coordinates[0];
     const z = line.coordinates[line.coordinates.length - 1];
-    if (!a || !z) return null;
-    return `geom:${line.coordinates.length}:${a[0]},${a[1]}:${z[0]},${z[1]}`;
+    const r = (/** @type {number} */ x) => Math.round(x * 1e6) / 1e6;
+    return `${r(a[0])},${r(a[1])}|${r(z[0])},${r(z[1])}`;
+  }
+
+  /**
+   * El tendido seleccionado es el mismo al que se ancló el pin (modo punto).
+   * Resuelve el caso clic sin `id` + selección desde búsqueda con `id` (o geometría equivalente).
+   * @param {GeoJSON.Feature<GeoJSON.LineString> | import('mapbox-gl').MapboxGeoJSONFeature | null | undefined} f
+   */
+  function routeMatchesAnchor(f) {
+    const line = resolveLineStringGeometry(f?.geometry);
+    if (!line) return false;
+    const tid = f?.id != null && String(f.id).trim() !== '' ? String(f.id) : null;
+    if (refRouteId != null && tid != null && refRouteId === tid) return true;
+    if (!refEndsKey) return false;
+    if (endsKeyFromLine(line) !== refEndsKey) return false;
+    if (refAnchorLenM == null || !Number.isFinite(refAnchorLenM)) {
+      return true;
+    }
+    const t = getTurfNs();
+    let curLen = 0;
+    try {
+      curLen = lineLengthMeters(line, t);
+    } catch {
+      return true;
+    }
+    return Math.abs(curLen - refAnchorLenM) <= ROUTE_LEN_MATCH_TOLERANCE_M;
   }
 
   /**
@@ -260,19 +286,24 @@ export function createTrazarController(ctx) {
     }
   }
 
+  function clearAnchorState() {
+    refDistFromStartM = null;
+    refRouteId = null;
+    refEndsKey = null;
+    refAnchorLenM = null;
+  }
+
   function clearRefIfCableChanged() {
     const f = getSelectedFeature();
     const id = f?.id != null ? f.id : null;
     if (lastLineId != null && id != null && id !== lastLineId) {
-      refDistFromStartM = null;
-      refLineKey = null;
+      clearAnchorState();
     }
     lastLineId = id;
     if (!f || origen !== 'punto') return;
-    const currentKey = routeKeyOfFeature(f);
-    if (!currentKey || !refLineKey || currentKey === refLineKey) return;
-    refDistFromStartM = null;
-    refLineKey = null;
+    if (refDistFromStartM != null && Number.isFinite(refDistFromStartM) && !routeMatchesAnchor(f)) {
+      clearAnchorState();
+    }
   }
 
   function syncRefHint(geom, turfNs) {
@@ -297,11 +328,8 @@ export function createTrazarController(ctx) {
     if (origen === 'punto' && (refDistFromStartM == null || !Number.isFinite(refDistFromStartM))) {
       return null;
     }
-    if (origen === 'punto') {
-      const currentKey = routeKeyOfFeature(f);
-      if (!currentKey || !refLineKey || currentKey !== refLineKey) {
-        return null;
-      }
+    if (origen === 'punto' && !routeMatchesAnchor(f)) {
+      return null;
     }
 
     let r;
@@ -337,12 +365,11 @@ export function createTrazarController(ctx) {
       setStatus('Trazar: fija primero un punto de referencia tocando el cable.');
       return;
     }
-    if (origen === 'punto') {
-      const currentKey = routeKeyOfFeature(f);
-      if (!currentKey || !refLineKey || currentKey !== refLineKey) {
-        setStatus('Trazar: la referencia no coincide con el tendido actual. Pulsa de nuevo el cable para fijar el pin.');
-        return;
-      }
+    if (origen === 'punto' && !routeMatchesAnchor(f)) {
+      setStatus(
+        'Trazar: la referencia no coincide con el tendido actual. Pulsa de nuevo el cable para fijar el pin.'
+      );
+      return;
     }
     const r = compute();
     if (!r || !r.point) {
@@ -422,8 +449,7 @@ export function createTrazarController(ctx) {
       el.addEventListener('change', () => {
         origen = getOrigen();
         if (origen !== 'punto') {
-          refDistFromStartM = null;
-          refLineKey = null;
+          clearAnchorState();
         }
         onInput();
       });
@@ -497,8 +523,7 @@ export function createTrazarController(ctx) {
         /* */
       }
       if (!keepMapMark) {
-        refDistFromStartM = null;
-        refLineKey = null;
+        clearAnchorState();
       }
       refreshToolbar?.();
     },
@@ -525,7 +550,15 @@ export function createTrazarController(ctx) {
         [lng, lat],
         t
       );
-      refLineKey = routeKeyOfFeature(/** @type {any} */ (f));
+      const fid = f.id;
+      refRouteId =
+        fid != null && String(fid).trim() !== '' ? String(fid) : null;
+      refEndsKey = endsKeyFromLine(line);
+      try {
+        refAnchorLenM = lineLengthMeters(line, t);
+      } catch {
+        refAnchorLenM = null;
+      }
       setStatus(
         'Trazar: pin de referencia colocado. Elige hacia central o final de cable e indica los metros de fibra.'
       );
