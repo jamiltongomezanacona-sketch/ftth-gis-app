@@ -108,10 +108,6 @@ export function createFiberTraceController(ctx) {
   const dirEls = document.querySelectorAll('input[name="editor-ft-direccion"]');
   const dirBlock = document.getElementById('editor-ft-dir-block');
   const applyBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('editor-ft-apply'));
-  const capsEl = document.getElementById('editor-ft-caps');
-  const capStartEl = document.getElementById('editor-ft-cap-start');
-  const capEndEl = document.getElementById('editor-ft-cap-end');
-  const totalHintEl = document.getElementById('editor-ft-total-hint');
 
   /** @type {boolean} */
   let open = false;
@@ -237,43 +233,6 @@ export function createFiberTraceController(ctx) {
     return { line, refAlong, chained };
   }
 
-  function updateCapabilityStrip() {
-    if (!capsEl || !capStartEl || !capEndEl) return;
-    if (origen !== 'punto' || refDistFromStartM == null || !Number.isFinite(refDistFromStartM)) {
-      capsEl.hidden = true;
-      return;
-    }
-    const f = getSelectedFeature();
-    const pc = resolvePuntoMeasureContext();
-    const capLine = pc?.line ?? resolveLineStringGeometry(f?.geometry);
-    const refForCaps = pc?.refAlong ?? refDistFromStartM;
-    const caps = directionalGeomCapsFromRef(capLine, refForCaps);
-    if (!caps) {
-      capsEl.hidden = true;
-      return;
-    }
-    capStartEl.textContent = fmtM(caps.toward_start_m);
-    capEndEl.textContent = fmtM(caps.toward_end_m);
-    capsEl.hidden = false;
-
-    if (totalHintEl && pc?.line) {
-      const t = getTurfNs();
-      try {
-        const L = lineLengthMeters(pc.line, t);
-        if (Number.isFinite(L) && L > 0) {
-          totalHintEl.textContent = `Longitud tendido en esta medida: ~${fmtM(L)} m en mapa (GIS${pc.chained ? ', cadena por vértices' : ''}).`;
-          totalHintEl.hidden = false;
-        } else {
-          totalHintEl.hidden = true;
-        }
-      } catch {
-        totalHintEl.hidden = true;
-      }
-    } else if (totalHintEl) {
-      totalHintEl.hidden = true;
-    }
-  }
-
   function getOrigen() {
     for (const el of origenEls) {
       if (el instanceof HTMLInputElement && el.checked) {
@@ -306,8 +265,6 @@ export function createFiberTraceController(ctx) {
     if (dirBlock) {
       dirBlock.setAttribute('aria-hidden', isPunto ? 'false' : 'true');
     }
-    if (!isPunto && capsEl) capsEl.hidden = true;
-    if (!isPunto && totalHintEl) totalHintEl.hidden = true;
   }
 
   function placeRefPinIfNeeded(geom, turfNs) {
@@ -485,7 +442,6 @@ export function createFiberTraceController(ctx) {
     const f = getSelectedFeature();
     const geom = f?.geometry;
     placeRefPinIfNeeded(geom, getTurfNs());
-    updateCapabilityStrip();
     if (isPolyDrawing() || isEditing()) return;
     const r = compute();
     if (r?.point) {
@@ -579,7 +535,6 @@ export function createFiberTraceController(ctx) {
     } else {
       placeRefPinIfNeeded(null, getTurfNs());
     }
-    updateCapabilityStrip();
   }
 
   return {

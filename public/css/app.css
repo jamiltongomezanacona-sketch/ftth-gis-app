@@ -1753,58 +1753,6 @@ body.editor-body .editor-ftw__close.editor-float-panel__close {
   border-color: rgba(94, 234, 212, 0.55);
 }
 
-.editor-ftw-caps {
-  margin: 8px 0 10px;
-  padding: 9px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(71, 85, 105, 0.45);
-  background: rgba(2, 6, 23, 0.4);
-}
-
-.editor-ftw-caps__title {
-  margin: 0 0 8px;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.95);
-}
-
-.editor-ftw-caps__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.editor-ftw-cap {
-  padding: 8px 8px;
-  border-radius: 8px;
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(51, 65, 85, 0.5);
-}
-
-.editor-ftw-cap__dir {
-  display: block;
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: #94a3b8;
-  margin-bottom: 3px;
-}
-
-.editor-ftw-cap__val {
-  font-size: 0.88rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: #e2e8f0;
-}
-
-.editor-ftw-total {
-  margin: 0 0 8px;
-  font-size: 0.68rem;
-  line-height: 1.35;
-  color: rgba(167, 243, 208, 0.85);
-}
-
 .editor-ftw-dir-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
