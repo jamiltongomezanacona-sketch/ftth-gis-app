@@ -162,26 +162,7 @@ export function createFiberTraceController(ctx) {
     /** Siempre leer el modo desde el DOM (evita «desde central» con pin cuando la variable interna va desfasada). */
     const mode = getOrigen();
     if (mode === 'punto') {
-      /** @type {{ totalCableFiberM: number; refAlongGeomM: number; lineGeomM: number } | undefined} */
-      let meta;
-      if (r?.clamped) {
-        const pc = resolvePuntoMeasureContext();
-        const ln = pc?.line;
-        if (ln && pc.refAlong != null) {
-          const t = getTurfNs();
-          const Lgeom = lineLengthMeters(ln, t);
-          if (Number.isFinite(Lgeom) && Number.isFinite(pc.refAlong)) {
-            meta = {
-              totalLineGeomM: Lgeom,
-              refAlongGeomM: pc.refAlong,
-              lineGeomM: Lgeom
-            };
-          }
-        }
-      }
-      return buildPuntoTramoPinLabel(r, getDireccion(), fmtM, meta, {
-        otdrAlongMapGeometry: true
-      });
+      return buildPuntoTramoPinLabel(r, getDireccion(), fmtM);
     }
     const d = Number(r?.distanceFromStartAlongLineM);
     if (!Number.isFinite(d)) return null;

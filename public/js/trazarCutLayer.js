@@ -182,7 +182,7 @@ export function clearTrazarRefMarker(map) {
 }
 
 /**
- * @param {string | { primary: string; secondary: string; detail?: string } | null | undefined} cl
+ * @param {string | { primary: string; secondary?: string; detail?: string } | null | undefined} cl
  * @returns {HTMLDivElement | null}
  */
 function buildCutLabelElement(cl) {
@@ -196,12 +196,20 @@ function buildCutLabelElement(cl) {
     lab.textContent = t;
     return lab;
   }
-  if (
-    typeof cl === 'object' &&
-    typeof cl.primary === 'string' &&
-    typeof cl.secondary === 'string' &&
-    cl.primary.trim() !== ''
-  ) {
+  if (typeof cl === 'object' && typeof cl.primary === 'string' && cl.primary.trim() !== '') {
+    const secondary = typeof cl.secondary === 'string' ? cl.secondary.trim() : '';
+    const hasDetail = typeof cl.detail === 'string' && cl.detail.trim() !== '';
+    const hasSecondary = secondary.length > 0;
+
+    /** Solo número grande (p. ej. modo pin Fibra GIS). */
+    if (!hasSecondary && !hasDetail) {
+      const labOnly = document.createElement('div');
+      labOnly.className = 'editor-trazar-cut-pin-label';
+      labOnly.setAttribute('role', 'status');
+      labOnly.textContent = cl.primary.trim();
+      return labOnly;
+    }
+
     const lab = document.createElement('div');
     lab.className = 'editor-trazar-cut-pin-label editor-trazar-cut-pin-label--split';
     lab.setAttribute('role', 'status');
@@ -209,14 +217,13 @@ function buildCutLabelElement(cl) {
     p.className = 'editor-trazar-cut-pin-label__primary';
     p.textContent = cl.primary.trim();
     lab.appendChild(p);
-    const hasDetail = typeof cl.detail === 'string' && cl.detail.trim() !== '';
     if (hasDetail) {
       const sec = document.createElement('span');
       sec.className = 'editor-trazar-cut-pin-label__secondary editor-trazar-cut-pin-label__secondary--stacked';
-      sec.textContent = cl.secondary.trim();
+      sec.textContent = secondary;
       const det = document.createElement('span');
       det.className = 'editor-trazar-cut-pin-label__detail';
-      det.textContent = cl.detail.trim();
+      det.textContent = /** @type {string} */ (cl.detail).trim();
       lab.appendChild(sec);
       lab.appendChild(det);
     } else {
@@ -227,7 +234,7 @@ function buildCutLabelElement(cl) {
       dot.setAttribute('aria-hidden', 'true');
       const s = document.createElement('span');
       s.className = 'editor-trazar-cut-pin-label__secondary';
-      s.textContent = cl.secondary.trim();
+      s.textContent = secondary;
       row.appendChild(dot);
       row.appendChild(s);
       lab.appendChild(row);
@@ -240,7 +247,7 @@ function buildCutLabelElement(cl) {
 /**
  * @param {import('mapbox-gl').Map} map
  * @param {import('mapbox-gl').LngLatLike} lngLat
- * @param {{ centralLabel?: string | { primary: string; secondary: string; detail?: string } | null }} [opts]
+ * @param {{ centralLabel?: string | { primary: string; secondary?: string; detail?: string } | null }} [opts]
  */
 export function setTrazarCutMarker(map, lngLat, opts) {
   const ll = /** @type {[number, number]} */ (
