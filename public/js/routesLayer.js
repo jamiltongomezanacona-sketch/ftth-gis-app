@@ -99,31 +99,50 @@ export class RoutesLayer {
   }
 
   /**
-   * Features actuales en el source GeoJSON (p. ej. hit test por distancia si el píxel no pilla la línea fina).
-   * Mapbox GL 2/3: `querySourceFeatures` es fiable; `_data` del source interno a veces viene vacío.
+   * Todas las rutas LineString/MultiLineString del source GeoJSON cargado.
+   * Importante: **`querySourceFeatures` suele devolver solo features en el viewport**; para Fibra GIS /
+   * encadenado de tendidos hay que usar los datos completos del source (serialize / `_data`).
    * @returns {GeoJSON.Feature[]}
    */
   getFeatureList() {
     this.ensureLayer();
+    const src = /** @type {any} */ (this.map.getSource(this.sourceId));
+    if (!src) return [];
+
+    const lineOk = (/** @type {GeoJSON.Feature} */ f) =>
+      f?.geometry &&
+      (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString');
+
+    /** Dataset completo del GeoJSON (no recortado por zoom / teselas visibles). */
+    /** @type {GeoJSON.Feature[] | null} */
+    let allFeatures = null;
+    if (typeof src.serialize === 'function') {
+      try {
+        const ser = src.serialize();
+        const data = ser?.data;
+        if (data?.type === 'FeatureCollection' && Array.isArray(data.features)) {
+          allFeatures = data.features;
+        }
+      } catch {
+        /* */
+      }
+    }
+    if (!allFeatures?.length && src._data?.type === 'FeatureCollection' && Array.isArray(src._data.features)) {
+      allFeatures = src._data.features;
+    }
+    if (allFeatures?.length) {
+      const lines = allFeatures.filter(lineOk);
+      if (lines.length) return lines;
+    }
+
     try {
       if (this.map && typeof this.map.querySourceFeatures === 'function' && this.map.isStyleLoaded()) {
-        const all = this.map.querySourceFeatures(this.sourceId) || [];
-        const lines = all.filter(
-          (f) =>
-            f?.geometry &&
-            (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString')
-        );
-        if (lines.length) {
-          return lines;
-        }
+        const queried = this.map.querySourceFeatures(this.sourceId) || [];
+        const lines = queried.filter(lineOk);
+        if (lines.length) return lines;
       }
     } catch (e) {
       console.warn('rutas getFeatureList (querySourceFeatures):', e);
-    }
-    const src = /** @type {any} */ (this.map.getSource(this.sourceId));
-    if (!src || !src._data) return [];
-    if (src._data.type === 'FeatureCollection' && Array.isArray(src._data.features)) {
-      return src._data.features;
     }
     return [];
   }
