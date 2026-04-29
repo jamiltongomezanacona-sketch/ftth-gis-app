@@ -2279,7 +2279,18 @@ export async function boot() {
     fmtM,
     getRouteLinesForChain: () => {
       try {
-        return routesLayer.getFeatureList();
+        /**
+         * Lista completa de tendidos de la red activa (no el source del mapa).
+         * `routesLayer.getFeatureList()` puede acabar en `querySourceFeatures`, que en Mapbox
+         * solo devuelve geometrías en el viewport: con **zoom alto** faltan tramos vecinos y el
+         * encadenado por vértices queda “cortado”.
+         */
+        const fc = filterRoutesByNetwork(allRoutesFc, appNetwork);
+        return (fc?.features ?? []).filter(
+          (f) =>
+            f?.geometry &&
+            (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString')
+        );
       } catch {
         return [];
       }
