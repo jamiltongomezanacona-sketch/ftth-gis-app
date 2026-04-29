@@ -13,6 +13,9 @@ import {
 
 const ROUTE_LEN_MATCH_TOLERANCE_M = 3;
 
+/** Tolerancia en empalmes de vértice (m) al buscar tramos vecinos — 1 m fallaba en GIS con pequeños huecos entre features. */
+const CHAIN_VERTEX_TOL_M = 3;
+
 import {
   setTrazarCutMarker,
   setTrazarRefMarker,
@@ -211,16 +214,26 @@ export function createFiberTraceController(ctx) {
           refDistFromStartM,
           refClickLngLat,
           turfNs,
-          1
+          CHAIN_VERTEX_TOL_M
         );
         if (m?.merged?.coordinates?.length >= 2 && m.chained) {
           const Lm = lineLengthMeters(m.merged, turfNs);
           const La = lineLengthMeters(anchorLine, turfNs);
-          const ra = m.refAlongMerged;
-          const rs = refDistFromStartM;
           const okLen = Lm + 0.25 >= La;
-          const okRef = Number.isFinite(ra) && ra >= rs - 3 && ra <= Lm + 2;
-          if (okLen && okRef) {
+          /**
+           * No comparar `refAlong` del fusionado con `refDistFromStartM` del solo ancla: si el merge
+           * añade tramos **antes** del primer vértice del tendido elegido, la distancia desde el
+           * inicio del LineString fusionado hasta el pin **no** coincide con la medida sobre el ancla.
+           * La antigua `okRef` rechazaba merges válidos (sobre todo con zoom cercano / pin lejos del vértice).
+           */
+          let ra = m.refAlongMerged;
+          try {
+            const raRecalc = distanceFromStartAlongLineMeters(m.merged, refClickLngLat, turfNs);
+            if (Number.isFinite(raRecalc)) ra = raRecalc;
+          } catch {
+            /* */
+          }
+          if (okLen && Number.isFinite(ra) && ra >= -0.05 && ra <= Lm + 0.05) {
             line = m.merged;
             refAlong = ra;
             chained = true;
