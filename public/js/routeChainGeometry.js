@@ -1,5 +1,6 @@
 /**
- * Une tendidos conectados por vértices (misma capa / molécula) para medir fibra en cadena.
+ * Une tendidos conectados por vértices (misma capa / molécula) para medir en cadena.
+ * Incluye: orientación dual del ancla + pasadas extra desde extremos del fusionado (empalmes en T hacia la central).
  */
 import { distanceFromStartAlongLineMeters, lineLengthMeters } from './measurements.js';
 
@@ -169,6 +170,95 @@ function extendOpenChainFromTip(tip, features, usedIndices, turf, tolM) {
 }
 
 /**
+ * Sigue enganchando tramos desde ambos extremos de una línea ya fusionada (captura ramas que solo aparecen tras el primer ensamble).
+ * @param {GeoJSON.LineString} merged
+ * @param {Set<number>} usedIndices copia viva (se muta)
+ */
+function growMergedLineFromEndpoints(merged, features, usedIndices, turf, tolM) {
+  let coords = merged.coordinates.slice();
+  let iter = 0;
+  while (iter++ < 28) {
+    let changed = false;
+    const pStart = coords[0];
+    const pEnd = coords[coords.length - 1];
+    const extS = extendOpenChainFromTip(pStart, features, usedIndices, turf, tolM);
+    const extN = extendOpenChainFromTip(pEnd, features, usedIndices, turf, tolM);
+    if (extS.coords.length) {
+      coords = dedupeConsecutiveCoords([...[...extS.coords].reverse(), ...coords]);
+      changed = true;
+    }
+    if (extN.coords.length) {
+      coords = dedupeConsecutiveCoords([...coords, ...extN.coords]);
+      changed = true;
+    }
+    if (!changed) break;
+  }
+  return /** @type {GeoJSON.LineString} */ ({
+    type: 'LineString',
+    coordinates: coords
+  });
+}
+
+/**
+ * Una orientación del ancla + split en pin + crecimiento desde extremos del fusionado.
+ * @returns {{ merged: GeoJSON.LineString; refAlongMerged: number; chained: boolean } | null}
+ */
+function mergeConnectedRouteLinesSingleOrientation(
+  features,
+  anchorIdx,
+  anchorLine,
+  refDistOnAnchor,
+  refLngLat,
+  turf,
+  tolM
+) {
+  const usedIndices = new Set([anchorIdx]);
+  const p0 = anchorLine.coordinates[0];
+  const pn = anchorLine.coordinates[anchorLine.coordinates.length - 1];
+
+  const extBack = extendOpenChainFromTip(p0, features, usedIndices, turf, tolM);
+  const extFwd = extendOpenChainFromTip(pn, features, usedIndices, turf, tolM);
+
+  const split = splitLineStringAtDistanceFromStart(anchorLine, refDistOnAnchor, turf);
+  if (!split) return null;
+
+  const revBack = extBack.coords.length ? [...extBack.coords].reverse() : [];
+  const backwardPart = dedupeConsecutiveCoords([...revBack, ...split.before.coordinates]);
+  const forwardPart = dedupeConsecutiveCoords([...split.after.coordinates, ...extFwd.coords]);
+
+  if (backwardPart.length < 1 || forwardPart.length < 1) return null;
+
+  const fullCoords = dedupeConsecutiveCoords([...backwardPart, ...forwardPart.slice(1)]);
+  if (fullCoords.length < 2) return null;
+
+  const lenBeforeGrow = lineLengthMeters({ type: 'LineString', coordinates: fullCoords }, turf);
+
+  let merged = /** @type {GeoJSON.LineString} */ ({
+    type: 'LineString',
+    coordinates: fullCoords
+  });
+
+  merged = growMergedLineFromEndpoints(merged, features, usedIndices, turf, tolM);
+
+  let refAlongMerged = 0;
+  try {
+    refAlongMerged = distanceFromStartAlongLineMeters(merged, refLngLat, turf);
+  } catch {
+    refAlongMerged = lineLengthMeters({ type: 'LineString', coordinates: backwardPart }, turf);
+  }
+  if (!Number.isFinite(refAlongMerged) || refAlongMerged < 0) return null;
+
+  const lenAfterGrow = lineLengthMeters(merged, turf);
+  const chained =
+    extBack.coords.length > 0 ||
+    extFwd.coords.length > 0 ||
+    (Number.isFinite(lenAfterGrow) &&
+      Number.isFinite(lenBeforeGrow) &&
+      lenAfterGrow > lenBeforeGrow + 0.25);
+  return { merged, refAlongMerged, chained };
+}
+
+/**
  * @param {GeoJSON.Feature} f
  */
 function anchorFeatureFingerprint(f) {
@@ -252,41 +342,44 @@ export function mergeConnectedRouteLinesForTrazar(
   const anchorLine = resolveLineStringGeometry(anchorFeature.geometry);
   if (!anchorLine?.coordinates?.length) return null;
 
-  const usedIndices = new Set([anchorIdx]);
-  const p0 = anchorLine.coordinates[0];
-  const pn = anchorLine.coordinates[anchorLine.coordinates.length - 1];
+  const la = lineLengthMeters(anchorLine, turf);
+  if (!Number.isFinite(la) || la <= 0) return null;
 
-  const extBack = extendOpenChainFromTip(p0, features, usedIndices, turf, tolM);
-  const extFwd = extendOpenChainFromTip(pn, features, usedIndices, turf, tolM);
+  const forward = mergeConnectedRouteLinesSingleOrientation(
+    features,
+    anchorIdx,
+    anchorLine,
+    refDistOnAnchor,
+    refLngLat,
+    turf,
+    tolM
+  );
 
-  const split = splitLineStringAtDistanceFromStart(anchorLine, refDistOnAnchor, turf);
-  if (!split) return null;
-
-  const revBack = extBack.coords.length ? [...extBack.coords].reverse() : [];
-  const backwardPart = dedupeConsecutiveCoords([...revBack, ...split.before.coordinates]);
-  const forwardPart = dedupeConsecutiveCoords([...split.after.coordinates, ...extFwd.coords]);
-
-  if (backwardPart.length < 1 || forwardPart.length < 1) return null;
-
-  const fullCoords = dedupeConsecutiveCoords([...backwardPart, ...forwardPart.slice(1)]);
-  if (fullCoords.length < 2) return null;
-
-  const merged = /** @type {GeoJSON.LineString} */ ({
+  const anchorRev = /** @type {GeoJSON.LineString} */ ({
     type: 'LineString',
-    coordinates: fullCoords
+    coordinates: [...anchorLine.coordinates].reverse()
   });
+  const refRev = Math.min(Math.max(0, la - refDistOnAnchor), la);
 
-  let refAlongMerged = 0;
-  try {
-    refAlongMerged = distanceFromStartAlongLineMeters(merged, refLngLat, turf);
-  } catch {
-    refAlongMerged = lineLengthMeters(
-      { type: 'LineString', coordinates: backwardPart },
-      turf
-    );
+  const backward = mergeConnectedRouteLinesSingleOrientation(
+    features,
+    anchorIdx,
+    anchorRev,
+    refRev,
+    refLngLat,
+    turf,
+    tolM
+  );
+
+  if (!forward?.merged && !backward?.merged) return null;
+  if (!forward?.merged) return backward;
+  if (!backward?.merged) return forward;
+
+  const Lf = lineLengthMeters(forward.merged, turf);
+  const Lb = lineLengthMeters(backward.merged, turf);
+  if (Math.abs(Lf - Lb) > 0.5) {
+    return Lf >= Lb ? forward : backward;
   }
-  if (!Number.isFinite(refAlongMerged) || refAlongMerged < 0) return null;
-
-  const chained = extBack.coords.length > 0 || extFwd.coords.length > 0;
-  return { merged, refAlongMerged, chained };
+  /** Empate en longitud: prioriza más metros desde el inicio del fusionado hasta el pin (mejor “hacia atrás” en GIS). */
+  return forward.refAlongMerged >= backward.refAlongMerged ? forward : backward;
 }
