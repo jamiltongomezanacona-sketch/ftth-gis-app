@@ -2191,6 +2191,8 @@ export async function boot() {
   /** @type {number[]} */
   let overlayBumpTimers = [];
   let overlayBumpTicket = 0;
+  /** Último listener `idle` pendiente para poder hacer `off` y no acumular callbacks si hay ráfagas de bumps. */
+  let overlayBumpIdleHandler = /** @type {(() => void) | null} */ (null);
   /**
    * Evita duplicar ráfagas de reordenamiento: conserva solo la secuencia más reciente.
    * Menos timeouts que antes + `idle`: mismo orden visual con menos `moveLayer` redundantes.
@@ -2201,14 +2203,27 @@ export async function boot() {
     const ticket = overlayBumpTicket;
     for (const t of overlayBumpTimers) window.clearTimeout(t);
     overlayBumpTimers = [];
+    if (overlayBumpIdleHandler) {
+      try {
+        map.off('idle', overlayBumpIdleHandler);
+      } catch {
+        /* */
+      }
+      overlayBumpIdleHandler = null;
+    }
     const runIfCurrent = () => {
       if (ticket !== overlayBumpTicket) return;
       bringOperationalLayersToFront();
     };
+    const onIdle = () => {
+      overlayBumpIdleHandler = null;
+      runIfCurrent();
+    };
+    overlayBumpIdleHandler = onIdle;
     try {
-      map.once('idle', runIfCurrent);
+      map.once('idle', onIdle);
     } catch {
-      /* */
+      overlayBumpIdleHandler = null;
     }
     for (const ms of delaysMs) {
       overlayBumpTimers.push(
