@@ -106,7 +106,6 @@ export function createFiberTraceController(ctx) {
 
   const fiberIn = /** @type {HTMLInputElement | null} */ (document.getElementById('editor-ft-fiber-m'));
   const puntoWorkspace = document.getElementById('editor-ft-punto-zone');
-  const fiberStepPill = document.getElementById('editor-ft-fiber-step');
   const origenEls = document.querySelectorAll('input[name="editor-ft-origen"]');
   const dirEls = document.querySelectorAll('input[name="editor-ft-direccion"]');
   const dirBlock = document.getElementById('editor-ft-dir-block');
@@ -270,10 +269,6 @@ export function createFiberTraceController(ctx) {
     const isPunto = origen === 'punto';
     if (puntoWorkspace instanceof HTMLElement) {
       puntoWorkspace.hidden = !isPunto;
-    }
-    if (fiberStepPill instanceof HTMLElement) {
-      fiberStepPill.hidden = !isPunto;
-      fiberStepPill.setAttribute('aria-hidden', isPunto ? 'false' : 'true');
     }
     if (dirBlock) {
       dirBlock.setAttribute('aria-hidden', isPunto ? 'false' : 'true');

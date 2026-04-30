@@ -1614,13 +1614,6 @@ body.editor-body .editor-ftw__close.editor-float-panel__close {
   vertical-align: middle;
 }
 
-.editor-ftw-step--ghost {
-  background: rgba(15, 23, 42, 0.65);
-  color: #94a3b8;
-  box-shadow: none;
-  border: 1px solid rgba(45, 212, 191, 0.28);
-}
-
 .editor-ftw-punto__title {
   margin: 0;
   font-size: 0.9rem;
