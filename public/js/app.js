@@ -1766,13 +1766,11 @@ export async function boot() {
       } catch (e) {
         console.warn('Orden de capas (eventos):', e);
       }
-      map.once('idle', () => {
-        try {
-          scheduleOperationalLayersBump([0, 120]);
-        } catch {
-          /* */
-        }
-      });
+      try {
+        scheduleOperationalLayersBump([0, 120]);
+      } catch {
+        /* */
+      }
       syncEditorChromeBarMeta();
     } catch (e) {
       if (e?.name === 'AbortError') return;
@@ -2874,7 +2872,6 @@ export async function boot() {
 
       cableSearch?.reset();
       cableSearch?.refresh();
-      routesLayer.setSelected(null);
       selectedFeature = null;
       editing = false;
       isNewRoute = false;
@@ -3079,12 +3076,13 @@ export async function boot() {
                 setStatus(
                   `Búsqueda «${mol}»: ${nL} tendido(s) en mapa · ${pts.length} punto(s) cierre/NAP (GeoJSON + BD). Cable activo «${f.properties?.nombre ?? f.id}». × limpia.`
                 );
+                scheduleOperationalLayersBump([0, 160]);
               })
               .catch((e) => {
                 console.error(e);
                 setStatus(`No se pudieron cargar cierres: ${e?.message ?? e}`);
+                scheduleOperationalLayersBump([0, 160]);
               });
-            scheduleOperationalLayersBump([0, 160]);
             syncButtons();
             void refreshEventosReporteDisplay();
             return;
