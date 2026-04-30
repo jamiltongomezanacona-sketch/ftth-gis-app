@@ -742,7 +742,8 @@ export function initMontarCierreModal(opts) {
     b.type = 'button';
     b.className = 'editor-mc-card';
     b.setAttribute('data-mc-kind', t.id);
-    b.innerHTML = `<span class="editor-mc-card__badge editor-mc-card__badge--${t.id.toLowerCase()}" aria-hidden="true">${escapeHtml(t.short)}</span><span class="editor-mc-card__title">${escapeHtml(t.label)}</span><span class="editor-mc-card__hint">${escapeHtml(t.hint)}</span>`;
+    b.innerHTML = `<span class="editor-mc-card__badge editor-mc-card__badge--${t.id.toLowerCase()}" aria-hidden="true">${escapeHtml(t.short)}</span><span class="editor-mc-card__title">${escapeHtml(t.label)}</span>`;
+    b.setAttribute('aria-label', `${t.label}. ${t.hint}`);
     b.addEventListener('click', () => {
       const hit = MONTAR_CIERRE_TIPOS.find((x) => x.id === t.id);
       if (hit) showStepForm(hit);

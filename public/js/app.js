@@ -45,7 +45,7 @@ import {
 } from './measurePolylineLayer.js';
 import { initEditorGpsDock } from './editorGpsDock.js';
 import { initReporteEventoSidebar } from './reporteEventoSidebar.js?v=20260426quitarHintMontarEvento';
-import { initMontarCierreModal } from './montarCierreModal.js?v=20260425montarCierreFieldMobile';
+import { initMontarCierreModal } from './montarCierreModal.js?v=20260429montarCierreTitlesOnly';
 import { createFiberTraceController } from './fiberTraceTool.js';
 import { bringTrazarCutLayerToFront, bringTrazarRefLayerToFront } from './trazarCutLayer.js';
 async function loadConfig() {
