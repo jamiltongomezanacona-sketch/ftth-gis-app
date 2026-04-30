@@ -6618,7 +6618,7 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze.map-field-sidebar--c
 
   /* Chrome en una fila: los FAB del mapa van justo bajo la barra */
   body.editor-body #map .mapboxgl-ctrl-top-right {
-    --map-fab-size: 38px;
+    --map-fab-size: 24px;
     margin: calc(var(--editor-chrome-stack) + 10px) max(12px, env(safe-area-inset-right, 0px)) 0 0;
   }
 }
@@ -6886,6 +6886,42 @@ body.editor-body .editor-map-tool-fab--active:not(:disabled) .editor-map-tool-fa
 
 body.editor-body.editor-network-corporativa .editor-map-tool-fab:hover:not(:disabled) {
   border-color: rgba(96, 165, 250, 0.38);
+}
+
+/* Móvil: Trazar + Medir — solo icono (aria-label/title conservan accesibilidad), superficie mínima. */
+@media (max-width: 900px) {
+  body.editor-body .editor-map-tools-stack {
+    gap: 5px;
+    max-width: none;
+    top: calc(var(--editor-chrome-stack) + 4px);
+    right: max(8px, env(safe-area-inset-right, 0px));
+  }
+
+  body.editor-body .editor-map-tool-fab {
+    min-height: 0;
+    width: auto;
+    padding: 4px;
+    gap: 0;
+    border-radius: 10px;
+    justify-content: center;
+    font-size: 0;
+    letter-spacing: 0;
+  }
+
+  body.editor-body .editor-map-tool-fab__txt {
+    display: none;
+  }
+
+  body.editor-body .editor-map-tool-fab__ico {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+  }
+
+  body.editor-body .editor-map-tool-fab__ico svg {
+    width: 15px;
+    height: 15px;
+  }
 }
 
 /* Botón GPS: apariencia plana (sin resplandores/gradientes que se confundan con un halo). */
@@ -9091,13 +9127,13 @@ body.editor-body .cable-search-mount--chrome .cable-search-wrap.cable-search--co
   }
 
   body.editor-body #map .mapboxgl-ctrl-top-right {
-    --map-fab-size: 38px;
-    --map-fab-gap: 6px;
+    --map-fab-size: 24px;
+    --map-fab-gap: 4px;
     margin: calc(var(--editor-chrome-stack) + 10px) max(10px, env(safe-area-inset-right, 0px)) 0 0;
   }
 
   body.editor-body #map .mapboxgl-ctrl-bottom-right {
-    --map-fab-size: 38px;
+    --map-fab-size: 24px;
     margin-right: max(10px, env(safe-area-inset-right, 0px));
   }
 
@@ -9111,9 +9147,9 @@ body.editor-body .cable-search-mount--chrome .cable-search-wrap.cable-search--co
   }
 
   body.editor-body #map .measure-fab .measure-fab-ico {
-    width: 20px;
-    height: 20px;
-    background-size: 20px 20px !important;
+    width: 14px;
+    height: 14px;
+    background-size: 14px 14px !important;
   }
 
   body.editor-body #sidebar h1,
