@@ -1293,11 +1293,21 @@ export async function boot() {
   mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
   const api = createRutasApi(API_BASE, appNetwork);
 
+  /** Móvil: fade de teselas a 0 reduce trabajo GPU al cargar/panear; escritorio mantiene transición breve. */
+  let editorMobileViewport = false;
+  try {
+    editorMobileViewport = window.matchMedia('(max-width: 900px)').matches;
+  } catch {
+    editorMobileViewport = window.innerWidth <= 900;
+  }
+
   const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v12',
     center: MAP_FTTH_CUNI_VIEW.center,
-    zoom: MAP_FTTH_CUNI_VIEW.zoom
+    zoom: MAP_FTTH_CUNI_VIEW.zoom,
+    fadeDuration: editorMobileViewport ? 0 : 220,
+    renderWorldCopies: false
   });
 
   let mapResizeTimer = 0;
@@ -1758,7 +1768,7 @@ export async function boot() {
       }
       map.once('idle', () => {
         try {
-          scheduleOperationalLayersBump([0, 80, 220]);
+          scheduleOperationalLayersBump([0, 120]);
         } catch {
           /* */
         }
@@ -2185,9 +2195,10 @@ export async function boot() {
   let overlayBumpTicket = 0;
   /**
    * Evita duplicar ráfagas de reordenamiento: conserva solo la secuencia más reciente.
+   * Menos timeouts que antes + `idle`: mismo orden visual con menos `moveLayer` redundantes.
    * @param {number[]} [delaysMs]
    */
-  function scheduleOperationalLayersBump(delaysMs = [0, 100, 300]) {
+  function scheduleOperationalLayersBump(delaysMs = [0, 160]) {
     overlayBumpTicket += 1;
     const ticket = overlayBumpTicket;
     for (const t of overlayBumpTimers) window.clearTimeout(t);
@@ -2641,7 +2652,7 @@ export async function boot() {
     setStatus(
       `Molécula «${molecula}» (${label}): ${linesFc.features?.length ?? 0} tendido(s) en mapa · ${pts.length} punto(s) cierre/NAP (GeoJSON + BD). × limpia el mapa.`
     );
-    scheduleOperationalLayersBump([0, 100, 300]);
+    scheduleOperationalLayersBump([0, 160]);
     syncButtons();
     void refreshEventosReporteDisplay();
   }
@@ -2743,7 +2754,7 @@ export async function boot() {
     setStatus(
       `Cierre «${nom}» (${String(props.tipo ?? '—')}) · ${String(props.molecula_codigo ?? '')}. ${linesFc.features?.length ?? 0} tendido(s), ${pts.length} punto(s). × limpia.`
     );
-    scheduleOperationalLayersBump([0, 100, 300]);
+    scheduleOperationalLayersBump([0, 160]);
     syncButtons();
     void refreshEventosReporteDisplay();
   }
@@ -2966,7 +2977,7 @@ export async function boot() {
         setStatus(
           `«${nom}» · ${nodoOcentral} del catálogo. (×) quita búsqueda; tendidos solo con otro resultado del buscador.`
         );
-        scheduleOperationalLayersBump([0, 100]);
+        scheduleOperationalLayersBump([0, 140]);
         syncButtons();
       },
       getMoleculeBrowseHits:
@@ -3073,7 +3084,7 @@ export async function boot() {
                 console.error(e);
                 setStatus(`No se pudieron cargar cierres: ${e?.message ?? e}`);
               });
-            scheduleOperationalLayersBump([0, 100, 300]);
+            scheduleOperationalLayersBump([0, 160]);
             syncButtons();
             void refreshEventosReporteDisplay();
             return;
@@ -3113,7 +3124,7 @@ export async function boot() {
         void refreshEventosReporteDisplay();
         fitMapToRouteFeature(f);
         setStatus(`Cable «${f.properties?.nombre ?? f.id}» · usa el buscador (×) para volver a solo centrales.`);
-        scheduleOperationalLayersBump([0, 100, 300]);
+        scheduleOperationalLayersBump([0, 160]);
         syncButtons();
       },
       onSelectCoordinates: ({ lng, lat }) => {
@@ -3492,7 +3503,7 @@ export async function boot() {
     });
 
     /** Centrales encima de rutas; cierres/NAP encima; polilínea de medición; eventos por encima del trazo. */
-    scheduleOperationalLayersBump([0, 80, 250, 600]);
+    scheduleOperationalLayersBump([0, 100, 380]);
 
     const ROUTE_HIT_PAD_PX = 20;
     routesLayer.onLineClick((e) => {

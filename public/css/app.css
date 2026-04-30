@@ -851,6 +851,15 @@ body.editor-body #layout {
   overflow: visible;
 }
 
+@media (max-width: 900px) {
+  .editor-chrome {
+    backdrop-filter: blur(8px) saturate(1.08);
+    -webkit-backdrop-filter: blur(8px) saturate(1.08);
+    /* Sombra algo más ligera que en escritorio: menos capas para el compositor. */
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.32), var(--edge-glow-mix);
+  }
+}
+
 /* Referencia para buscador centrado */
 body.editor-body .editor-chrome {
   position: relative;
@@ -6909,6 +6918,20 @@ body.editor-body.editor-network-corporativa .editor-map-tool-fab:hover:not(:disa
   body.editor-body .editor-map-tool-fab__ico svg {
     width: 17px;
     height: 17px;
+  }
+
+  /* Menos blur en FAB sobre el lienzo Mapbox (compositor móvil). */
+  body.editor-body .editor-map-tool-fab {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.editor-body .editor-map-tool-fab,
+  body.editor-body .editor-chrome-toggle,
+  body.editor-body .editor-chrome-home {
+    transition-duration: 0.01ms !important;
   }
 }
 
