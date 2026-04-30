@@ -1,0 +1,1331 @@
+/* Pin de borrador (Montar cierre) — mismo espíritu que Trazar ref, icono E1/E2 */
+.editor-mc-map-pin {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 42px;
+  height: 46px;
+  pointer-events: auto;
+  filter: drop-shadow(0 3px 8px rgba(15, 23, 42, 0.38));
+}
+
+.editor-mc-map-pin img {
+  display: block;
+  width: 36px;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+}
+
+.editor-mc-combo {
+  position: relative;
+  z-index: 4;
+}
+
+.editor-mc-suggest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  max-height: min(200px, 32vh);
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  z-index: 20;
+}
+
+.editor-mc-suggest li {
+  margin: 0;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  color: #0f172a;
+  cursor: pointer;
+  line-height: 1.25;
+}
+
+.editor-mc-suggest li:hover,
+.editor-mc-suggest li[aria-selected='true'] {
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.editor-mc-lab {
+  display: block;
+  margin: 6px 0 3px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.editor-mc-req {
+  color: #1e40af;
+}
+
+.editor-mc-input,
+.editor-mc-ta {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 9px;
+  font-size: 0.8rem;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.editor-mc-ta {
+  resize: vertical;
+  min-height: 48px;
+  line-height: 1.35;
+}
+
+.editor-mc-modal__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.editor-mc-btn {
+  appearance: none;
+  margin: 0;
+  padding: 6px 14px;
+  min-height: 34px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.editor-mc-btn--ghost {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.editor-mc-btn--ghost:hover {
+  background: #f1f5f9;
+}
+
+.editor-mc-btn--primary {
+  border-color: #166534;
+  background: #15803d;
+  color: #ffffff;
+}
+
+.editor-mc-btn--primary:hover {
+  background: #166534;
+}
+
+@media (max-width: 520px) {
+  .editor-mc-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-mc-modal__panel {
+    width: min(100vw - 8px, 440px);
+    max-height: min(86dvh, calc(100dvh - var(--editor-chrome-h, 48px) - 8px));
+    border-radius: 14px 14px 10px 10px;
+  }
+
+  .editor-mc-modal {
+    align-items: flex-end;
+    padding: max(4px, env(safe-area-inset-top)) 4px max(6px, env(safe-area-inset-bottom));
+  }
+
+  .editor-mc-modal__head {
+    padding: 12px 12px 10px;
+  }
+
+  .editor-mc-modal__body {
+    padding: 12px 12px 10px;
+  }
+
+  .editor-mc-btn {
+    min-height: 42px;
+    padding: 9px 14px;
+    font-size: 0.86rem;
+  }
+
+  .editor-mc-btn--sm {
+    min-height: 40px;
+    font-size: 0.82rem;
+  }
+
+  .editor-mc-input,
+  .editor-mc-ta,
+  .editor-mc-input--sm {
+    min-height: 40px;
+    font-size: 0.95rem;
+  }
+
+  .editor-mc-ta {
+    min-height: 72px;
+  }
+
+  .editor-mc-smart-tools {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .editor-mc-smart-tools > * {
+    flex: 1 1 auto;
+  }
+
+  .editor-mc-coord-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .editor-mc-modal.editor-mc-modal--map-pick .editor-mc-modal__panel {
+    max-height: min(42dvh, 280px);
+  }
+}
+
+/* Mapbox marker pin corte / referencia Fibra GIS (clases legacy editor-trazar-cut-* en DOM) */
+#map .mapboxgl-marker .editor-trazar-cut-pin-wrap,
+.mapboxgl-marker .editor-trazar-cut-pin-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 8px rgba(15, 23, 42, 0.28));
+  animation: editor-trazar-pin-bob 1.6s ease-in-out infinite;
+}
+.editor-trazar-cut-pin-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.editor-trazar-cut-pin-label {
+  max-width: 156px;
+  padding: 6px 10px 6px 11px;
+  margin-top: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.28;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: #e2e8f0;
+  background: linear-gradient(165deg, rgba(51, 65, 85, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 10px;
+  border-left: 3px solid #ef4444;
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  white-space: normal;
+  backdrop-filter: blur(6px);
+}
+.editor-trazar-cut-pin-label--split {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  text-align: left;
+  max-width: min(240px, calc(100vw - 48px));
+}
+.editor-trazar-cut-pin-label__primary {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.01em;
+}
+.editor-trazar-cut-pin-label__row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.editor-trazar-cut-pin-label__dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 1.5px rgba(254, 242, 242, 0.55);
+}
+.editor-trazar-cut-pin-label__secondary {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: #94a3b8;
+}
+.editor-trazar-cut-pin-label__secondary--stacked {
+  display: block;
+  margin-top: 1px;
+  line-height: 1.32;
+}
+.editor-trazar-cut-pin-label__detail {
+  display: block;
+  margin-top: 4px;
+  padding-top: 3px;
+  border-top: 1px solid rgba(148, 163, 184, 0.22);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  color: #fde68a;
+  text-transform: none;
+}
+#map .mapboxgl-marker .editor-trazar-cut-pin-svg,
+.mapboxgl-marker .editor-trazar-cut-pin-svg {
+  display: block;
+  width: 28px;
+  height: 37px;
+}
+#map .mapboxgl-marker .editor-trazar-cut-pin-body,
+.mapboxgl-marker .editor-trazar-cut-pin-body,
+#map .mapboxgl-marker .editor-trazar-cut-pin-dot,
+.mapboxgl-marker .editor-trazar-cut-pin-dot {
+  pointer-events: none;
+}
+@keyframes editor-trazar-pin-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Referencia en cable (modo punto): disco violeta, distinto del pin de corte */
+.mapboxgl-marker .editor-trazar-ref-pin-wrap,
+#map .mapboxgl-marker .editor-trazar-ref-pin-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.editor-trazar-ref-pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #a78bfa 0%, #6366f1 100%);
+  border: 2px solid rgba(248, 250, 252, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.35),
+    0 2px 10px rgba(99, 102, 241, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.editor-body .editor-field-sidebar,
+  body.editor-body .editor-field-sidebar-backdrop {
+    transition: none;
+  }
+  body.editor-body .editor-field-sidebar__item,
+  body.editor-body .editor-field-sidebar__item:hover,
+  body.editor-body .editor-field-sidebar__item:active {
+    transition: none;
+    transform: none;
+  }
+  .editor-trazar-cut-pin-wrap {
+    animation: none !important;
+  }
+}
+
+#sidebar {
+  position: relative;
+  grid-column: 1;
+  grid-row: 2;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  align-self: start;
+  justify-self: stretch;
+  /* Altura al contenido; tope para no tapar del todo el mapa en móvil */
+  height: auto;
+  max-height: min(88vh, calc(100dvh - var(--editor-chrome-h, 48px) - 20px));
+  border-right: none;
+  border-bottom: 1px solid var(--sidebar-border);
+  padding: 20px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--sidebar-bg);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  box-shadow: var(--sidebar-shadow);
+  border-radius: 16px;
+  margin: 8px;
+}
+
+body.editor-body #sidebar {
+  max-height: min(88vh, calc(100dvh - var(--editor-chrome-stack) - 20px));
+}
+
+/* Cabecera del panel lateral (solo título) */
+.sidebar-header {
+  flex-shrink: 0;
+  margin: 0 0 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--sidebar-header-border);
+  background: var(--sidebar-header-bg);
+  border-radius: 12px;
+  box-shadow: var(--sidebar-panel-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.sidebar-header--compact {
+  padding-bottom: 10px;
+  margin-bottom: 0;
+}
+
+.brand--compact {
+  gap: 10px;
+  align-items: center;
+}
+
+.brand--compact .brand-mark {
+  width: 26px;
+  height: 26px;
+}
+
+#sidebar .sidebar-header--compact h1 {
+  margin: 0;
+}
+
+.brand-kicker {
+  margin: 0 0 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #7dd3fc;
+  opacity: 0.88;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Escritorio: mapa a pantalla completa; panel flotante tipo herramientas */
+@media (min-width: 901px) {
+  #layout {
+    display: block;
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .editor-chrome {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    grid-row: auto;
+  }
+
+  #map-wrap {
+    position: absolute;
+    inset: 0;
+    padding-top: var(--editor-chrome-h);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    grid-column: auto;
+    grid-row: auto;
+    min-height: 0;
+  }
+
+  /* Editor: mapa a borde superior; cabecera solo controles flotantes */
+  body.editor-body #map-wrap {
+    padding-top: 0;
+  }
+
+  #sidebar {
+    position: absolute;
+    left: max(12px, env(safe-area-inset-left, 0px));
+    top: calc(var(--editor-chrome-h) + 12px);
+    bottom: auto;
+    width: auto;
+    min-width: 144px;
+    max-width: 184px;
+    height: fit-content;
+    max-height: calc(100dvh - var(--editor-chrome-h) - 24px - env(safe-area-inset-bottom, 0px));
+    grid-column: auto;
+    grid-row: auto;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 6px;
+    box-shadow: none;
+    z-index: 480;
+    transition:
+      transform 0.38s cubic-bezier(0.22, 1, 0.32, 1),
+      opacity 0.28s ease,
+      visibility 0.28s ease;
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  #layout.sidebar-collapsed #sidebar {
+    transform: translate3d(calc(-100% - 28px), 0, 0);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  body.editor-body #sidebar {
+    top: calc(var(--editor-chrome-stack) + 8px);
+    max-height: calc(100dvh - var(--editor-chrome-stack) - 24px - env(safe-area-inset-bottom, 0px));
+  }
+
+  #sidebar::before {
+    display: none;
+  }
+
+  #sidebar .panel-block,
+  #sidebar details.panel-block {
+    border-radius: 16px;
+    border: 1px solid var(--sidebar-panel-border);
+    background: var(--sidebar-panel-bg);
+    box-shadow: var(--sidebar-panel-shadow);
+    transition: all 0.2s ease;
+  }
+}
+
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.sidebar-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+#sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent) 30%, transparent);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border-strong);
+  box-shadow:
+    0 4px 16px rgba(79, 70, 229, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+#sidebar h1 {
+  margin: 0;
+  color: var(--sidebar-title-color);
+  text-shadow: 0 2px 8px rgba(30, 64, 175, 0.15);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* Cabecera del editor + títulos de panel/plegable/reporte: misma tipografía */
+#sidebar h1,
+#sidebar .panel-block h2,
+#sidebar .sidebar-details > summary,
+#sidebar .reporte-ev-summary-title {
+  font-size: var(--sidebar-title-fs);
+  font-weight: var(--sidebar-title-fw);
+  letter-spacing: var(--sidebar-title-ls);
+  line-height: var(--sidebar-title-lh);
+  text-transform: uppercase;
+  font-family: var(--font);
+}
+
+.panel-block {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 16px;
+  padding: 14px 15px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.panel-block:hover {
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow:
+    0 16px 44px rgba(0, 0, 0, 0.32),
+    0 0 40px rgba(52, 211, 153, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.panel-block.panel-status {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(251, 191, 36, 0.16), transparent 58%),
+    radial-gradient(80% 70% at 100% 100%, rgba(56, 189, 248, 0.1), transparent 52%),
+    rgba(10, 14, 22, 0.42);
+  border-color: rgba(251, 191, 36, 0.14);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.28),
+    0 0 48px rgba(251, 191, 36, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.panel-block.panel-metrics {
+  background:
+    radial-gradient(100% 85% at 10% 0%, rgba(52, 211, 153, 0.12), transparent 55%),
+    radial-gradient(90% 80% at 95% 80%, rgba(100, 116, 139, 0.14), transparent 50%),
+    rgba(8, 14, 22, 0.4);
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.28),
+    0 0 36px rgba(52, 211, 153, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.panel-block.panel-otdr {
+  background:
+    radial-gradient(120% 95% at 0% 0%, rgba(52, 211, 153, 0.08), transparent 52%),
+    radial-gradient(100% 90% at 100% 100%, rgba(71, 85, 105, 0.22), transparent 55%),
+    linear-gradient(165deg, rgba(51, 65, 85, 0.48), rgba(15, 23, 42, 0.78));
+  border-color: rgba(100, 116, 139, 0.28);
+  box-shadow:
+    0 12px 44px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(148, 163, 184, 0.1),
+    0 0 40px rgba(52, 211, 153, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.panel-block.panel-otdr:hover {
+  border-color: rgba(148, 163, 184, 0.32);
+  box-shadow:
+    0 16px 50px rgba(0, 0, 0, 0.32),
+    0 0 0 1px rgba(148, 163, 184, 0.14),
+    0 0 44px rgba(52, 211, 153, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.panel-block.panel-actions {
+  background:
+    radial-gradient(100% 80% at 100% 0%, rgba(99, 102, 241, 0.16), transparent 54%),
+    radial-gradient(85% 70% at 0% 100%, rgba(56, 189, 248, 0.1), transparent 50%),
+    rgba(10, 12, 24, 0.42);
+  border-color: rgba(129, 140, 248, 0.15);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.28),
+    0 0 44px rgba(99, 102, 241, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.panel-block h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #cbd5e1;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.panel-icon {
+  color: var(--accent);
+  font-size: 0.55rem;
+  opacity: 0.9;
+}
+
+.panel-icon-img {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+  opacity: 0.92;
+}
+
+.panel-desc {
+  font-size: 0.75rem;
+  color: var(--muted2);
+  margin: -4px 0 12px;
+  line-height: 1.35;
+}
+
+.panel-desc--tight {
+  margin: -2px 0 10px;
+  font-size: 0.72rem;
+  line-height: 1.32;
+}
+
+.panel-actions--essential .action-section--flush {
+  margin-top: 10px;
+}
+
+.panel-actions--essential .action-section--flush:first-of-type {
+  margin-top: 0;
+}
+
+.panel-actions--essential.panel-block h2 {
+  margin-bottom: 10px;
+}
+
+/* Panel Trazar (OTDR) plegable — clases técnicas panel-otdr / otdr-* */
+.sidebar-details {
+  position: relative;
+}
+
+.sidebar-details > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--sidebar-panel-bg);
+  border: 1px solid var(--sidebar-panel-border);
+  box-shadow: var(--sidebar-panel-shadow);
+  transition: all 0.3s ease;
+  color: var(--sidebar-text);
+}
+
+.sidebar-details[open] > summary {
+  border-radius: 12px 12px 0 0;
+  border-bottom-color: transparent;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.88), rgba(30, 41, 59, 0.72));
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 28px rgba(52, 211, 153, 0.1),
+    0 0 36px rgba(0, 0, 0, 0.28);
+}
+
+.sidebar-details > summary:hover {
+  border-color: var(--sidebar-hover-border);
+  color: var(--sidebar-title-color);
+  background: var(--sidebar-hover-bg);
+  box-shadow: 0 4px 16px rgba(30, 64, 175, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.sidebar-details[open] > summary:hover {
+  border-color: rgba(148, 163, 184, 0.3);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.92), rgba(30, 41, 59, 0.78));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 32px rgba(52, 211, 153, 0.12),
+    0 0 28px rgba(59, 130, 246, 0.06);
+}
+
+.sidebar-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sidebar-details-summary-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sidebar-details-chev {
+  display: block;
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  border-right: 2px solid rgba(148, 163, 184, 0.75);
+  border-bottom: 2px solid rgba(148, 163, 184, 0.75);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-details[open] > summary .sidebar-details-chev {
+  transform: rotate(-135deg);
+  margin-top: 4px;
+}
+
+.sidebar-details-body {
+  padding: 14px 12px 10px;
+  margin-top: 0;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-top: none;
+  border-radius: 0 0 14px 14px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+/* Trazar (OTDR): bloque elegante con acento azul moderno */
+.sidebar-details.panel-otdr > summary {
+  background: linear-gradient(135deg, var(--sidebar-panel-bg) 0%, var(--sidebar-hover-bg) 100%);
+  border: 1px solid var(--sidebar-panel-border);
+  color: var(--sidebar-title-color);
+  padding: 14px 18px;
+  border-radius: 12px;
+  border-bottom: 1px solid transparent;
+  box-shadow: var(--sidebar-panel-shadow);
+  transition: all 0.3s ease;
+}
+
+.sidebar-details.panel-otdr[open] > summary {
+  background: linear-gradient(135deg, var(--sidebar-active-bg) 0%, var(--sidebar-hover-bg) 100%);
+  border-color: var(--sidebar-active-border);
+  border-bottom-color: transparent;
+  transform: translateY(-1px);
+}
+
+.sidebar-details.panel-otdr > summary:hover {
+  border-color: var(--sidebar-hover-border);
+  color: var(--sidebar-title-color);
+  box-shadow: var(--sidebar-panel-shadow);
+  transform: translateY(-2px);
+}
+
+.sidebar-details.panel-otdr .sidebar-details-body {
+  background: linear-gradient(135deg, var(--sidebar-panel-bg) 0%, var(--sidebar-hover-bg) 100%);
+  border: 1px solid var(--sidebar-panel-border);
+  box-shadow: var(--sidebar-panel-shadow);
+  border-radius: 12px;
+}
+
+.sidebar-details.panel-otdr .sidebar-details-chev {
+  border-right-color: var(--sidebar-text-muted);
+  border-bottom-color: var(--sidebar-text-muted);
+}
+
+.status-body {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.5;
+  min-height: 2.6em;
+  color: var(--text);
+}
+
+.metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.metric-row:hover {
+  border-color: rgba(52, 211, 153, 0.28);
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.metric-row-accent {
+  background: linear-gradient(135deg, var(--accent2-dim), var(--panel-solid));
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+.metric-click-block {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-strong);
+}
+
+.metric-click-desc {
+  margin: 0 0 8px;
+}
+
+/* Trazar */
+.panel-otdr .otdr-fieldset {
+  border: 1px solid rgba(100, 116, 139, 0.28);
+  border-radius: var(--radius-md);
+  padding: 10px 10px 8px;
+  margin: 0 0 12px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.panel-otdr .otdr-fieldset--seg {
+  position: relative;
+  padding-top: 8px;
+}
+
+.panel-otdr .otdr-fieldset--dir {
+  margin-bottom: 0;
+}
+
+.panel-otdr .otdr-legend {
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted2);
+  padding: 0 6px;
+}
+
+.panel-otdr .otdr-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.panel-otdr .otdr-seg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.panel-otdr .otdr-seg-grid--dir {
+  grid-template-columns: 1fr 1fr;
+}
+
+.panel-otdr .otdr-seg-card--wide {
+  grid-column: 1 / -1;
+}
+
+.panel-otdr .otdr-seg-card {
+  position: relative;
+  display: block;
+  margin: 0;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  background: rgba(15, 23, 42, 0.55);
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.panel-otdr .otdr-seg-card:hover {
+  border-color: rgba(148, 163, 184, 0.32);
+}
+
+.panel-otdr .otdr-seg-card:has(.otdr-seg-input:checked) {
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(52, 211, 153, 0.1);
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.22);
+}
+
+/* Mismo aspecto sin :has() (WebView antiguas) — estado por clase en JS del editor. */
+.panel-otdr .otdr-seg-card.otdr-seg-card--selected {
+  border: 2px solid rgba(34, 197, 94, 0.9);
+  background: rgba(52, 211, 153, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.35),
+    0 0 16px rgba(34, 197, 94, 0.2);
+}
+.panel-otdr .otdr-seg-card.otdr-seg-card--selected .otdr-seg-ico-wrap {
+  border-color: rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.12);
+}
+.panel-otdr .otdr-seg-card.otdr-seg-card--selected .otdr-seg-ico-wrap .otdr-ref-pin-ico,
+.panel-otdr .otdr-seg-card.otdr-seg-card--selected .otdr-seg-ico-wrap--svg {
+  color: #4ade80;
+}
+
+.panel-otdr .otdr-seg-card:has(.otdr-seg-input:focus-visible) {
+  outline: 2px solid rgba(251, 191, 36, 0.55);
+  outline-offset: 1px;
+}
+
+.panel-otdr .otdr-seg-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.panel-otdr .otdr-seg-face {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr;
+  align-items: center;
+  column-gap: 10px;
+  padding: 10px 10px 10px 8px;
+  min-height: 2.85rem;
+}
+
+.panel-otdr .otdr-seg-card--dir .otdr-seg-face {
+  padding: 10px 8px;
+}
+
+.panel-otdr .otdr-seg-ico-wrap {
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.panel-otdr .otdr-seg-ico-wrap .otdr-ref-pin-ico {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #cbd5e1;
+}
+
+.panel-otdr .otdr-seg-card:has(.otdr-seg-input:checked) .otdr-seg-ico-wrap .otdr-ref-pin-ico {
+  color: #6ee7b7;
+}
+
+.panel-otdr .otdr-seg-ico-wrap--svg {
+  color: #94a3b8;
+}
+
+.panel-otdr .otdr-seg-card:has(.otdr-seg-input:checked) .otdr-seg-ico-wrap--svg {
+  color: #6ee7b7;
+}
+
+.panel-otdr .otdr-arrow-ico--flip {
+  transform: scaleX(-1);
+}
+
+.panel-otdr .otdr-seg-title {
+  grid-column: 2;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.panel-otdr .otdr-seg-sub {
+  display: none;
+}
+
+.panel-otdr .otdr-click-panel {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  background: linear-gradient(160deg, rgba(52, 211, 153, 0.08), rgba(15, 23, 42, 0.42));
+}
+
+.panel-otdr .otdr-arm-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.65);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.panel-otdr .otdr-arm-btn:hover:not(:disabled) {
+  border-color: rgba(148, 163, 184, 0.38);
+  background: rgba(30, 41, 59, 0.55);
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.08);
+}
+
+.panel-otdr .otdr-arm-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.panel-otdr .otdr-arm-btn.active {
+  border-color: rgba(52, 211, 153, 0.42);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.14), rgba(30, 41, 59, 0.75));
+  color: #ecfdf5;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.28), 0 0 24px rgba(52, 211, 153, 0.12);
+}
+
+.panel-otdr .otdr-arm-btn-ico {
+  flex-shrink: 0;
+  display: flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.panel-otdr .otdr-arm-btn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.panel-otdr .otdr-arm-btn-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.panel-otdr .otdr-arm-btn-sub {
+  display: none;
+}
+
+.panel-otdr .otdr-click-status {
+  margin: 0 0 12px;
+  font-size: 0.76rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.panel-otdr .otdr-fiber-block {
+  margin-bottom: 12px;
+}
+
+.panel-otdr .otdr-fiber-block__head {
+  margin: 0 0 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted2);
+}
+
+.panel-otdr .otdr-fiber-dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  align-items: start;
+}
+
+@media (max-width: 420px) {
+  .panel-otdr .otdr-fiber-dual {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel-otdr .otdr-fcol {
+  min-width: 0;
+}
+
+.panel-otdr .otdr-fiber-geom__mini {
+  margin: 8px 0 0;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--muted2);
+}
+
+.panel-otdr .otdr-tendido-or {
+  margin-top: 12px;
+}
+
+.panel-otdr .otdr-input-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted2);
+  margin-bottom: 6px;
+}
+
+.panel-otdr .otdr-input-label-ico {
+  opacity: 0.85;
+}
+
+.panel-otdr .otdr-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-otdr .otdr-input:focus {
+  outline: 2px solid rgba(251, 191, 36, 0.5);
+  outline-offset: 1px;
+}
+
+.panel-otdr .otdr-input:disabled {
+  opacity: 0.45;
+}
+
+.panel-otdr .otdr-fiber-geom-hint {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.panel-otdr .otdr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Trazar: CTA verde a ancho completo (misma receta que «Usar mi ubicación (GPS)» en Montar evento) */
+.panel-otdr .otdr-actions--field {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 6px;
+}
+.panel-otdr .otdr-actions--field .reporte-ev-btn--gps {
+  width: 100%;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.panel-otdr .otdr-locate-cta__ico {
+  flex-shrink: 0;
+  display: block;
+  filter: brightness(0) invert(1);
+  opacity: 0.95;
+}
+.panel-otdr .otdr-actions--field .otdr-btn--quitar {
+  width: 100%;
+  min-height: 44px;
+  flex: 0 0 auto;
+  justify-content: center;
+}
+
+.panel-otdr .otdr-btn {
+  flex: 1;
+  min-width: min(100%, 140px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.panel-otdr .otdr-btn-ico {
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+
+.panel-otdr .otdr-btn--primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, #059669 0%, #0d9488 38%, #0369a1 100%);
+  color: #f8fafc;
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.32);
+}
+
+.panel-otdr .otdr-btn--primary:hover:not(:disabled) {
+  box-shadow: 0 6px 22px rgba(5, 150, 105, 0.4);
+}
+
+.panel-otdr .otdr-btn--primary:disabled {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--muted);
+  box-shadow: none;
+}
+
+.panel-otdr .otdr-btn--ghost {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.45);
+  color: var(--muted);
+}
+
+.panel-otdr .otdr-btn--ghost:hover:not(:disabled) {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.panel-otdr .otdr-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+

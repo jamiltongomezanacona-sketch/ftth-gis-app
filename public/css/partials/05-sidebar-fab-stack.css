@@ -1,0 +1,230 @@
+/* ===========================================================================
+   Menú hamburguesa (`.sidebar--fab-stack`): superior izquierda, ancho al texto;
+   filas icono + nombre (Trazar, Montar evento, Medir).
+   =========================================================================== */
+#sidebar.sidebar--fab-stack,
+body.editor-body #sidebar.sidebar--fab-stack,
+#layout:not(.sidebar-collapsed) #sidebar.sidebar--fab-stack,
+#layout.sidebar-collapsed #sidebar.sidebar--fab-stack {
+  position: fixed !important;
+  display: flex !important;
+  left: max(10px, env(safe-area-inset-left, 0px)) !important;
+  right: auto !important;
+  top: calc(var(--editor-chrome-stack, 80px) + 8px) !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  /* Sobre el lienzo (0–520); por debajo de chrome 560 y paneles 585, pero por encima de
+     interceptores intermedios (evita que clics vayan al mapa creyendo tocar un botón). */
+  z-index: 570 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
+}
+
+/* Móvil: antes se forzaba visibilidad del FAB stack; el sheet «Operación» lo sustituye. */
+
+/* El rail vertical se controla con la hamburguesa:
+   - abierto cuando #layout NO está colapsado
+   - oculto cuando #layout está colapsado */
+body.editor-body #layout:not(.sidebar-collapsed) #sidebar.sidebar--fab-stack {
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+body.editor-body #layout.sidebar-collapsed #sidebar.sidebar--fab-stack {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.editor-body #map .mapboxgl-ctrl-top-right {
+  display: none !important;
+}
+
+body.editor-body #map .mapboxgl-ctrl-bottom-right {
+  display: none !important;
+}
+
+#sidebar.sidebar--fab-stack::before {
+  display: none !important;
+}
+
+#sidebar.sidebar--fab-stack .sidebar-inner,
+#sidebar.sidebar--fab-stack .sidebar-body {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  overflow: visible;
+}
+
+/* Menú hamburguesa: cristal azul-gris (vidrio difuminado). */
+#sidebar.sidebar--fab-stack .sidebar-tool-table,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: max-content;
+  max-width: min(calc(100vw - 24px), 320px);
+  min-width: 0;
+  padding: 7px;
+  border-radius: 18px;
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  background: linear-gradient(
+    165deg,
+    rgba(51, 65, 85, 0.42) 0%,
+    rgba(30, 41, 59, 0.5) 38%,
+    rgba(15, 23, 42, 0.52) 100%
+  );
+  backdrop-filter: blur(24px) saturate(1.05);
+  -webkit-backdrop-filter: blur(24px) saturate(1.05);
+  box-shadow:
+    0 10px 36px rgba(2, 6, 23, 0.38),
+    0 0 0 1px rgba(56, 189, 248, 0.06),
+    inset 0 1px 0 rgba(186, 230, 253, 0.1);
+}
+
+/* Filas: grises con acento azul suave. */
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row {
+  display: grid;
+  grid-template-columns: 36px max-content;
+  align-items: center;
+  column-gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 6px 10px 6px 6px;
+  text-align: left;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.28);
+  box-shadow: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgba(226, 232, 240, 0.95);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.12s ease;
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row:hover,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.22);
+  color: #f8fafc;
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row:active,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row:active {
+  transform: scale(0.99);
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row::before,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row::before {
+  display: none;
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  justify-self: center;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  background: rgba(30, 58, 95, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico img,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__ico img {
+  width: 20px;
+  height: 20px;
+  filter: none;
+  opacity: 0.94;
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico {
+  border-color: rgba(96, 165, 250, 0.22);
+  background: rgba(30, 58, 95, 0.45);
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico img,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte .sidebar-tool-btn__ico img {
+  width: 22px;
+  height: 22px;
+  filter: saturate(0.9) brightness(1.04);
+  opacity: 0.96;
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__lbl,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn__lbl {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding-right: 2px;
+  overflow: visible;
+  clip: auto;
+  white-space: nowrap;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: 1.25;
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte:hover,
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte:hover {
+  border-color: rgba(96, 165, 250, 0.28);
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row[aria-expanded='true'],
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row[aria-expanded='true'] {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.28);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.1);
+}
+
+#sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte.sidebar-tool-table__row[aria-expanded='true'],
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn--reporte.sidebar-tool-table__row[aria-expanded='true'] {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(96, 165, 250, 0.32);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.45);
+}
+
+@media (pointer: coarse) {
+  body.editor-body #sidebar.sidebar--fab-stack .sidebar-tool-table .sidebar-tool-btn.sidebar-tool-table__row {
+    min-height: 48px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
