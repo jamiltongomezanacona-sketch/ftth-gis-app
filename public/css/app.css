@@ -1522,10 +1522,11 @@ body.editor-body .editor-ftw__close.editor-float-panel__close {
 .editor-ftw-mode__face {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  padding: 11px 13px;
-  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 10px 12px;
+  min-height: 46px;
   border-radius: 12px;
   border: 1px solid rgba(45, 212, 191, 0.35);
   background: linear-gradient(160deg, rgba(45, 212, 191, 0.1) 0%, rgba(15, 23, 42, 0.92) 72%);
@@ -1537,17 +1538,12 @@ body.editor-body .editor-ftw__close.editor-float-panel__close {
 }
 
 .editor-ftw-mode__name {
+  width: 100%;
+  text-align: center;
   font-size: 0.92rem;
   font-weight: 700;
   color: #f8fafc;
   letter-spacing: -0.02em;
-}
-
-.editor-ftw-mode__hint {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: rgba(148, 163, 184, 0.88);
-  line-height: 1.25;
 }
 
 .editor-ftw-mode__input:checked + .editor-ftw-mode__face {
@@ -1558,8 +1554,7 @@ body.editor-body .editor-ftw__close.editor-float-panel__close {
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
-.editor-ftw-mode__input:checked + .editor-ftw-mode__face .editor-ftw-mode__name,
-.editor-ftw-mode__input:checked + .editor-ftw-mode__face .editor-ftw-mode__hint {
+.editor-ftw-mode__input:checked + .editor-ftw-mode__face .editor-ftw-mode__name {
   color: #ecfdf5;
 }
 
