@@ -640,7 +640,7 @@ function initEditorChromeMapBridge(mapInstance, opts) {
 }
 
 /**
- * Menú ☰ (junto a la casita): panel con Fibra GIS, Medir, Montar evento/cierre/ruta, etc.
+ * Menú ☰ (junto a la casita): panel con Montar evento/cierre/ruta (Trazar/Medir solo desde FAB en mapa).
  * @param {{
  *   scheduleMapResize?: () => void,
  *   setStatus: (msg: string) => void,
@@ -803,22 +803,6 @@ function initEditorFieldSidebarMenu(opts) {
     requestResize();
   });
 
-  document.getElementById('btn-sidebar-fiber-gis')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (isEditing()) {
-      setStatus('Fibra GIS: no disponible mientras editas un tendido.');
-      return;
-    }
-    if (isMeasurePolyDrawing()) {
-      setStatus('Fibra GIS: desactiva primero la medición por trazo en el mapa.');
-      return;
-    }
-    if (!trazarView) return;
-    onTrazarEnter();
-    if (!isTrazarViewOpen()) return;
-    showTrazarModal();
-  });
-
   /**
    * @param {string} id
    * @param {() => void} fn
@@ -834,7 +818,24 @@ function initEditorFieldSidebarMenu(opts) {
     });
   }
 
-  wire('btn-sidebar-medir', () => {
+  function activateTrazarFromFab(e) {
+    e.stopPropagation();
+    if (isEditing()) {
+      setStatus('Fibra GIS: no disponible mientras editas un tendido.');
+      return;
+    }
+    if (isMeasurePolyDrawing()) {
+      setStatus('Fibra GIS: desactiva primero la medición por trazo en el mapa.');
+      return;
+    }
+    if (!trazarView) return;
+    onTrazarEnter();
+    if (!isTrazarViewOpen()) return;
+    showTrazarModal();
+  }
+
+  function activateMeasureFromFab(e) {
+    e.stopPropagation();
     if (isEditing()) {
       setStatus('Medir: no disponible mientras editas una ruta.');
       return;
@@ -843,7 +844,7 @@ function initEditorFieldSidebarMenu(opts) {
       onTrazarDiscardMap();
     }
     toggleMeasurePolylineMode();
-  });
+  }
 
   wire('btn-sidebar-montar-evento', () => {
     if (isTrazarViewOpen()) onTrazarDiscardMap();
@@ -864,15 +865,9 @@ function initEditorFieldSidebarMenu(opts) {
     btnNewRoute.click();
   });
 
-  /** Acceso rápido (esquina superior derecha del mapa): misma lógica que el menú lateral Campo. */
-  document.getElementById('btn-editor-map-trazar')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('btn-sidebar-fiber-gis')?.click();
-  });
-  document.getElementById('btn-editor-map-medir')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('btn-sidebar-medir')?.click();
-  });
+  /** FAB mapa (esquina superior derecha): única entrada Trazar/Medir fuera del menú ☰. */
+  document.getElementById('btn-editor-map-trazar')?.addEventListener('click', activateTrazarFromFab);
+  document.getElementById('btn-editor-map-medir')?.addEventListener('click', activateMeasureFromFab);
 
   return { leaveTrazarView };
 }
