@@ -320,7 +320,11 @@ export function initReporteEventoSidebar(opts) {
   function handleMapTapPick(e, meta = {}) {
     if (!ensureMoleculeSelected(true)) return false;
     if (!awaitingMapPick) return false;
-    if (pickPlacementMode === 'cable' && !meta.hasRouteHit) return false;
+    /**
+     * No descartar aquí `cable && !hasRouteHit`: un clic junto al tendido (sin pegar al hit-box
+     * del layer) debe seguir al bloque `nearest` más abajo y anclar al tramo más cercano (≤150 m).
+     * El early-return anterior dejaba ese flujo muerto y «Montar evento» parecía roto al tocar el mapa.
+     */
     if (meta.hasRouteHit) return false;
     const lng = Number(e?.lngLat?.lng);
     const lat = Number(e?.lngLat?.lat);
