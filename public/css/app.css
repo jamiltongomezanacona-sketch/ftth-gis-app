@@ -1,4 +1,4 @@
-﻿/* Entrada única; el orden de los @import de partials reproduce la cascada anterior. */
+﻿/* Entrada en desarrollo (@import múltiple). Producción: link a app.bundle.css (npm run build:css). */
 @import url('tokens.css');
 @import url('partials/01-base-layout-gates.css');
 @import url('partials/02-editor-chrome-map-shell.css');
