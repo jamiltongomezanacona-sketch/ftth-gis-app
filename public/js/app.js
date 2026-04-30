@@ -3588,7 +3588,7 @@ export async function boot() {
       const html = `
     <div class="map-external-nav-popup">
       <div class="map-external-nav-popup__title">Navegar a este punto</div>
-      <div class="map-external-nav-popup__hint">Mantén pulsado el mapa ~2 s (sin mover). En PC: Mayús+clic.</div>
+      <div class="map-external-nav-popup__hint">Mantén pulsado el mapa medio segundo (sin mover). En PC: Mayús+clic.</div>
       <div class="map-external-nav-popup__coords">${escapeHtml(lat.toFixed(6))}, ${escapeHtml(lng.toFixed(6))}</div>
       <div class="map-external-nav-popup__actions">
         <a class="map-external-nav-popup__btn map-external-nav-popup__btn--gmaps" href="${gUrl}" target="_blank" rel="noopener noreferrer">Google Maps</a>
@@ -3611,8 +3611,8 @@ export async function boot() {
       });
     }
 
-    /** Waze / Google Maps: mantener pulsado ~2 s en el mapa (táctil o ratón). */
-    const LONG_PRESS_NAV_MS = 2000;
+    /** Waze / Google Maps: pulsación larga en el mapa (táctil o ratón). Corto = menos espera; sigue cancelándose al mover o al pan. */
+    const LONG_PRESS_NAV_MS = 650;
     const LONG_PRESS_MOVE_CANCEL_PX = 16;
     let navLongPressTimer = 0;
     /** @type {{ x: number, y: number, lngLat: mapboxgl.LngLat } | null} */
