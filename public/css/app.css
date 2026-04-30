@@ -6858,6 +6858,130 @@ body.editor-body #map-wrap #map-fab-row-measure {
   display: none !important;
 }
 
+/* Editor: Trazar + Medir — acceso rápido flotante (esquina superior derecha, bajo la barra). */
+body.editor-body .editor-map-tools-stack {
+  position: fixed;
+  z-index: 590;
+  top: calc(var(--editor-chrome-stack) + 8px);
+  right: max(12px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  pointer-events: none;
+  max-width: min(calc(100vw - 24px), 200px);
+}
+
+body.editor-body .editor-map-tool-fab {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px 8px 10px;
+  margin: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: linear-gradient(
+    165deg,
+    rgba(51, 65, 85, 0.55) 0%,
+    rgba(15, 23, 42, 0.94) 100%
+  );
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #e2e8f0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.12s ease;
+}
+
+body.editor-body .editor-map-tool-fab__ico {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  color: #94a3b8;
+}
+
+body.editor-body .editor-map-tool-fab__ico svg {
+  display: block;
+}
+
+body.editor-body .editor-map-tool-fab__txt {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+body.editor-body .editor-map-tool-fab:hover:not(:disabled) {
+  border-color: rgba(56, 189, 248, 0.35);
+  background: linear-gradient(
+    165deg,
+    rgba(56, 189, 248, 0.14) 0%,
+    rgba(15, 23, 42, 0.96) 100%
+  );
+  color: #f8fafc;
+}
+
+body.editor-body .editor-map-tool-fab:hover:not(:disabled) .editor-map-tool-fab__ico {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.28);
+}
+
+body.editor-body .editor-map-tool-fab:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+body.editor-body .editor-map-tool-fab:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.75);
+  outline-offset: 2px;
+}
+
+body.editor-body .editor-map-tool-fab:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+}
+
+body.editor-body .editor-map-tool-fab--active:not(:disabled) {
+  border-color: rgba(45, 212, 191, 0.45);
+  background: linear-gradient(
+    165deg,
+    rgba(6, 95, 70, 0.55) 0%,
+    rgba(15, 23, 42, 0.96) 100%
+  );
+  color: #ecfdf5;
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.22),
+    0 8px 22px rgba(0, 0, 0, 0.38);
+}
+
+body.editor-body .editor-map-tool-fab--active:not(:disabled) .editor-map-tool-fab__ico {
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+body.editor-body.editor-network-corporativa .editor-map-tool-fab:hover:not(:disabled) {
+  border-color: rgba(96, 165, 250, 0.38);
+}
+
 /* Botón GPS: apariencia plana (sin resplandores/gradientes que se confundan con un halo). */
 body.editor-body .editor-gps-compass__btn {
   pointer-events: auto;

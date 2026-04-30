@@ -864,6 +864,16 @@ function initEditorFieldSidebarMenu(opts) {
     btnNewRoute.click();
   });
 
+  /** Acceso rápido (esquina superior derecha del mapa): misma lógica que el menú lateral Campo. */
+  document.getElementById('btn-editor-map-trazar')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('btn-sidebar-fiber-gis')?.click();
+  });
+  document.getElementById('btn-editor-map-medir')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('btn-sidebar-medir')?.click();
+  });
+
   return { leaveTrazarView };
 }
 
@@ -2065,6 +2075,16 @@ export async function boot() {
     btnCancel.disabled = !editing;
     measureFab.disabled = editing;
     measureFab.classList.toggle('measure-fab--muted', editing);
+    const fabTrazar = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-editor-map-trazar'));
+    const fabMedir = /** @type {HTMLButtonElement | null} */ (document.getElementById('btn-editor-map-medir'));
+    if (fabTrazar) {
+      fabTrazar.disabled = editing || polyDrawing;
+      fabTrazar.classList.toggle('editor-map-tool-fab--active', trOpen);
+    }
+    if (fabMedir) {
+      fabMedir.disabled = editing;
+      fabMedir.classList.toggle('editor-map-tool-fab--active', polyDrawing);
+    }
     cableSearch?.setDisabled(editing || polyDrawing || trOpen);
     try {
       fiberTrace?.syncForm();
