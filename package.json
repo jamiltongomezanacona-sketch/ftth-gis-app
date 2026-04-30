@@ -7,6 +7,7 @@
   "scripts": {
     "build:css": "node scripts/build-app-css.mjs",
     "verify:css": "node scripts/verify-app-bundle-css.mjs",
+    "ci": "npm run verify:css && node scripts/ci-syntax.mjs",
     "vercel-build": "node scripts/build-app-css.mjs && node scripts/generate-config-local.mjs",
     "start": "node scripts/build-app-css.mjs && node server/index.js",
     "dev": "node scripts/build-app-css.mjs && node --watch server/index.js",
