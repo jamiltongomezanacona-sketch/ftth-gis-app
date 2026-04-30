@@ -165,6 +165,8 @@ export class EventosReporteLayer {
     for (const id of [this.symbolLayerId, this.circleLayerId]) {
       if (!this.map.getLayer(id)) continue;
       try {
+        const cur = this.map.getLayoutProperty(id, 'visibility');
+        if (cur === v) continue;
         this.map.setLayoutProperty(id, 'visibility', v);
       } catch {
         /* */
