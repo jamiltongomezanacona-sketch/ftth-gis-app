@@ -1,0 +1,102 @@
+/**
+ * Tokens globales GIS FTTH — única fuente para :root compartida por app.css y dashboard.
+ * No incluir reglas de componentes aquí.
+ */
+:root {
+  /* Tema base: grises fríos + azul (toda la app) */
+  --bg: #0b1120;
+  --bg-elevated: #111827;
+  --panel: rgba(17, 24, 39, 0.85);
+  --panel-solid: #151f33;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --muted2: #64748b;
+  --accent: #1e40af;
+  --accent-dim: rgba(30, 64, 175, 0.18);
+  --accent2: #22d3ee;
+  --accent2-dim: rgba(34, 211, 238, 0.14);
+  --danger: #f87171;
+  --danger-dim: rgba(248, 113, 113, 0.12);
+  --border: rgba(148, 163, 184, 0.12);
+  --border-strong: rgba(148, 163, 184, 0.22);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.45);
+  --font: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --sidebar-w-expanded: min(400px, 92vw);
+  --sidebar-rail: 52px;
+  --sidebar-w: var(--sidebar-w-expanded);
+
+  /* Paleta moderna para panel lateral */
+  --sidebar-bg: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+  --sidebar-border: rgba(30, 64, 175, 0.15);
+  --sidebar-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(30, 64, 175, 0.08);
+  --sidebar-header-bg: rgba(248, 250, 252, 0.95);
+  --sidebar-header-border: rgba(30, 64, 175, 0.2);
+  --sidebar-title-color: #1e40af;
+  --sidebar-text: #475569;
+  --sidebar-text-muted: #64748b;
+  --sidebar-panel-bg: rgba(255, 255, 255, 0.98);
+  --sidebar-panel-border: rgba(30, 64, 175, 0.12);
+  --sidebar-panel-shadow: 0 4px 16px rgba(30, 64, 175, 0.06);
+  --sidebar-hover-bg: rgba(30, 64, 175, 0.08);
+  --sidebar-hover-border: rgba(30, 64, 175, 0.25);
+  --sidebar-active-bg: rgba(30, 64, 175, 0.12);
+  --sidebar-active-border: rgba(30, 64, 175, 0.35);
+  --transition: 0.18s ease;
+  /* Títulos del sidebar: un solo tamaño y estilo */
+  --sidebar-title-fs: 0.75rem;
+  --sidebar-title-fw: 700;
+  --sidebar-title-ls: 0.11em;
+  --sidebar-title-lh: 1.25;
+  /* Halos difuminados en bordes (paneles / sidebar) */
+  --edge-glow-blue: 0 0 36px rgba(59, 130, 246, 0.16);
+  --edge-glow-blue-soft: 0 0 56px rgba(59, 130, 246, 0.08);
+  --edge-glow-mix: 0 0 40px rgba(59, 130, 246, 0.14), 0 0 72px rgba(52, 211, 153, 0.08);
+  --edge-inset-line: inset 0 0 0 1px rgba(148, 163, 184, 0.11);
+  --edge-left-haze: inset 8px 0 36px -8px rgba(59, 130, 246, 0.42);
+  /* Acento verde / cyan (éxito, foco secundario, halos mixtos) */
+  --success: #34d399;
+  --success-bright: #5eead4;
+  --success-dim: rgba(52, 211, 153, 0.14);
+  --success-glow: rgba(52, 211, 153, 0.24);
+  --cyan: #22d3ee;
+  --cyan-dim: rgba(34, 211, 238, 0.12);
+  --chrome-bg: rgba(5, 9, 16, 0.9);
+  --chrome-border: rgba(100, 116, 139, 0.22);
+  --hover-glow-mix: 0 0 28px rgba(59, 130, 246, 0.18), 0 0 44px rgba(52, 211, 153, 0.1);
+  --active-glow-strong: 0 0 0 1px rgba(59, 130, 246, 0.35), 0 0 32px rgba(59, 130, 246, 0.2),
+    0 0 48px rgba(52, 211, 153, 0.14);
+  --backdrop-medium: blur(18px) saturate(1.12);
+  /* Táctil: objetivo mínimo recomendado (Apple HIG / Material) */
+  --touch-target-min: 44px;
+
+  /* ----------------------------------------------------------------------
+     v2 (2026-04): tokens unificados para chrome / dock / status bar.
+     Objetivo: una sola paleta y una sola escala de sombras/radii para
+     evitar el aspecto "triple sombra + triple borde" que se sentía cargado.
+     ---------------------------------------------------------------------- */
+  --app-surface-1: rgba(15, 23, 42, 0.78);
+  --app-surface-2: rgba(15, 23, 42, 0.92);
+  --app-surface-3: rgba(8, 12, 22, 0.96);
+  --app-stroke: rgba(148, 163, 184, 0.16);
+  --app-stroke-strong: rgba(148, 163, 184, 0.28);
+  --app-text: #e2e8f0;
+  --app-text-soft: #94a3b8;
+  --app-text-strong: #f8fafc;
+  --app-accent: #1e40af;
+  --app-accent-soft: rgba(30, 64, 175, 0.16);
+  --app-warn: #fb923c;
+  --app-warn-soft: rgba(251, 146, 60, 0.16);
+  --app-radius-pill: 999px;
+  --app-radius-md: 12px;
+  --app-radius-lg: 16px;
+  --app-shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --app-shadow-elevated: 0 18px 38px rgba(0, 0, 0, 0.36);
+  --app-blur-soft: blur(10px) saturate(1.1);
+  --app-blur-strong: blur(18px) saturate(1.15);
+
+  /* Barra de estado / PWA (alinear con theme-color en HTML) */
+  --theme-color-brand: #0b1120;
+}

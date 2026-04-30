@@ -3,38 +3,39 @@
    Variables, glass surfaces, BEM-like .dash-* naming
    ============================================================================= */
 
+/* Variables de layout dashboard; colores/tipo/radios heredan de public/css/tokens.css */
 :root {
-  --dash-bg-deep: #0a0d12;
-  --dash-bg: #0d1117;
-  --dash-surface: rgba(24, 30, 40, 0.62);
-  --dash-surface-2: rgba(30, 37, 50, 0.78);
-  --dash-elevated: rgba(36, 44, 59, 0.86);
-  --dash-border: rgba(148, 163, 184, 0.08);
-  --dash-border-strong: rgba(148, 163, 184, 0.14);
-  --dash-text: #e5e7eb;
-  --dash-muted: #94a3b8;
-  --dash-muted-2: #64748b;
-  --dash-accent: #60a5fa;
-  --dash-accent-soft: rgba(96, 165, 250, 0.1);
-  --dash-cyan: #7dd3fc;
-  --dash-cyan-dim: rgba(125, 211, 252, 0.08);
-  --dash-green: #34d399;
-  --dash-green-neon: #34d399;
-  --dash-green-dim: rgba(52, 211, 153, 0.08);
-  --dash-amber: #f59e0b;
+  --dash-bg-deep: var(--bg);
+  --dash-bg: var(--bg-elevated);
+  --dash-surface: var(--app-surface-1);
+  --dash-surface-2: var(--app-surface-2);
+  --dash-elevated: var(--app-surface-2);
+  --dash-border: var(--border);
+  --dash-border-strong: var(--border-strong);
+  --dash-text: var(--text);
+  --dash-muted: var(--muted);
+  --dash-muted-2: var(--muted2);
+  --dash-accent: var(--accent);
+  --dash-accent-soft: var(--accent-dim);
+  --dash-cyan: var(--accent2);
+  --dash-cyan-dim: var(--accent2-dim);
+  --dash-green: var(--success);
+  --dash-green-neon: var(--success-bright);
+  --dash-green-dim: var(--success-dim);
+  --dash-amber: var(--app-warn);
   --dash-rose: #fb7185;
-  --dash-danger: #f87171;
-  --dash-radius-lg: 18px;
-  --dash-radius-md: 12px;
-  --dash-radius-sm: 9px;
+  --dash-danger: var(--danger);
+  --dash-radius-lg: var(--radius-lg);
+  --dash-radius-md: var(--radius-md);
+  --dash-radius-sm: var(--radius-sm);
   --dash-sidebar-w: 252px;
   --dash-sidebar-w-collapsed: 72px;
-  --dash-shadow-soft: 0 6px 22px rgba(0, 0, 0, 0.32);
+  --dash-shadow-soft: var(--app-shadow-soft);
   --dash-shadow-glow: 0 0 36px rgba(59, 130, 246, 0.04);
-  --dash-glow-hover: 0 8px 24px rgba(2, 6, 23, 0.4);
-  --dash-active-glow: 0 0 0 1px rgba(148, 163, 184, 0.18), 0 8px 24px rgba(2, 6, 23, 0.4);
-  --dash-font: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --dash-font-display: "Plus Jakarta Sans", var(--dash-font);
+  --dash-glow-hover: var(--app-shadow-elevated);
+  --dash-active-glow: var(--active-glow-strong);
+  --dash-font: var(--font);
+  --dash-font-display: var(--font);
   --dash-transition: 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
