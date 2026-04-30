@@ -3504,11 +3504,16 @@ export async function boot() {
       const polyBusy = measurePolylineActive && !measurePolylineConfirmed;
       if (editing || polyBusy) return;
       const f0 = e.features?.[0];
-      if (f0 && fiberTrace?.handleRouteLineClick(e, f0)) return;
-      const ovRoute = queryMoleculeOverlayFeatureAtPoint(e.point);
-      if (ovRoute?.properties && String(ovRoute.properties.ftth_overlay_kind ?? '').trim()) {
-        openCierreMapPopupFromFeature(ovRoute, e.lngLat);
-        return;
+      const awaitingReportePick = Boolean(reporteCtl?.isAwaitingRoutePick?.());
+      /* Montar evento «Sobre el tendido»: no dejar que Fibra GIS ni el popup de cierre/NAP
+       * consuman el clic antes de fijar el pin (antes el overlay ganaba y el flujo parecía roto). */
+      if (!awaitingReportePick && f0 && fiberTrace?.handleRouteLineClick(e, f0)) return;
+      if (!awaitingReportePick) {
+        const ovRoute = queryMoleculeOverlayFeatureAtPoint(e.point);
+        if (ovRoute?.properties && String(ovRoute.properties.ftth_overlay_kind ?? '').trim()) {
+          openCierreMapPopupFromFeature(ovRoute, e.lngLat);
+          return;
+        }
       }
       const f = e.features?.[0];
       if (!f) return;
