@@ -7603,7 +7603,7 @@ body.editor-body .measure-fab .measure-fab-ico {
   flex-shrink: 0;
   overflow: visible;
   pointer-events: none;
-  background-image: url("/icons/editor/measure-fab.svg?v=20260427");
+  background-image: url("/icons/editor/measure-fab.svg?v=20260429ruler");
   background-repeat: no-repeat;
   background-position: center;
   background-size: 24px 24px;
@@ -7613,12 +7613,12 @@ body.editor-body .measure-fab .measure-fab-ico {
 
 #map .map-widget-stack--arcgis .measure-fab:not(:disabled):not(.measure-fab--active) .measure-fab-ico,
 body.editor-body #map .map-widget-stack--arcgis .measure-fab:not(:disabled):not(.measure-fab--active) .measure-fab-ico {
-  background-image: url("/icons/editor/measure-fab-arcgis.svg?v=20260427");
+  background-image: url("/icons/editor/measure-fab-arcgis.svg?v=20260429ruler");
 }
 
 #map .map-widget-stack--arcgis .measure-fab--active:not(:disabled) .measure-fab-ico,
 body.editor-body #map .map-widget-stack--arcgis .measure-fab--active:not(:disabled) .measure-fab-ico {
-  background-image: url("/icons/editor/measure-fab-arcgis-active.svg?v=20260427");
+  background-image: url("/icons/editor/measure-fab-arcgis-active.svg?v=20260429ruler");
 }
 
 #map .map-widget-stack--arcgis .measure-fab-ico {
