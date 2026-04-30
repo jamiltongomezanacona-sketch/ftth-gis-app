@@ -28,6 +28,7 @@ body.editor-body .map-field-sidebar.map-field-sidebar--waze {
     0 -4px 28px rgba(2, 6, 23, 0.35),
     0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   overflow: hidden;
+  contain: layout;
   pointer-events: auto;
   max-height: var(--editor-op-sheet-expanded-max, min(300px, 34vh));
   transition: max-height 0.3s cubic-bezier(0.22, 1, 0.36, 1);

@@ -2099,6 +2099,7 @@ body.editor-body .editor-float-panel__body {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  contain: layout;
   padding: 10px 10px 12px;
   -webkit-overflow-scrolling: touch;
 }

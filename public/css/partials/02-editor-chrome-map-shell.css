@@ -266,6 +266,7 @@ body.editor-body .editor-field-sidebar {
     visibility 0.32s ease;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  contain: layout;
 }
 
 /* Menú Campo: halo verde difuminado como acento visual. */
